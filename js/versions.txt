@@ -1,0 +1,5 @@
+dc 2.0 dev 2014 April plus local changes
+
+fix for brushing to include sample at +xmax and/or ymax
+
+improvement for dynamic table headers

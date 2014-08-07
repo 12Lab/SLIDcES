@@ -1,0 +1,70 @@
+Make,Model Yr,Model,Trim,Price Per Mo,Initial Payment,Months,Miles Per Mo,Lease Cost,Total Miles,Cost Per Mile,Each Addnl Mile,Additional Terms
+Buick,2014,Encore,1SB,$199.00 ,"$3,769.00 ",39,833,"$11,530.00 ","32,500",$0.35 ,$0.25 ,For non-GM owners or lessees.
+Buick,2014,Encore,1SB,$199.00 ,"$4,269.00 ",39,833,"$12,030.00 ","32,500",$0.37 ,$0.25 ,For GM owners or lessees.
+Buick,2014,Verano,1SB,$199.00 ,"$2,949.00 ",39,833,"$10,710.00 ","32,500",$0.33 ,$0.25 ,For GM owners or lessees.
+Buick,2014,Verano,1SD,$199.00 ,"$2,449.00 ",39,833,"$10,210.00 ","32,500",$0.31 ,$0.25 ,For non-GM owners or lessees.
+Chevrolet,2014,Equinox,LS,$199.00 ,"$3,219.00 ",36,"1,000","$10,383.00 ","36,000",$0.29 ,$0.25 ,Residency restrictions apply.
+Chevrolet,2014,Malibu,LT,$189.00 ,"$2,569.00 ",36,"1,000","$9,373.00 ","36,000",$0.26 ,$0.25 ,Residency restrictions apply.
+Chevrolet,2014,Sonic,LT,$189.00 ,"$2,169.00 ",36,"1,000","$8,973.00 ","36,000",$0.25 ,$0.25 ,Western region offer.
+Chevrolet,2014,Spark,EV LT,$199.00 ,$949.00 ,36,"1,000","$8,113.00 ","36,000",$0.23 ,$0.25 ,California and Oregon Only
+Chrysler,2015,200,Limited,$199.00 ,"$2,469.00 ",36,"1,000","$9,633.00 ","36,000",$0.27 ,$0.25 ,Residency restrictions apply. Plus $395  disposition fee.
+Fiat,2014,500e,,$199.00 ,$999.00 ,36,"1,000","$8,163.00 ","36,000",$0.23 ,$0.25 ,California only. Plus $395  disposition fee.
+Fiat,2014,500L,Pop,$199.00 ,"$2,699.00 ",36,"1,000","$9,863.00 ","36,000",$0.27 ,$0.25 
+Ford,2014,Escape,SE FWD,$199.00 ,"$2,769.00 ",24,875,"$7,545.00 ","21,000",$0.36 ,$0.15 
+Ford,2014,Flex,SEL FWD Titanium,$189.00 ,"$3,829.00 ",24,875,"$8,365.00 ","21,000",$0.40 ,$0.20 
+Ford,2014,Fusion,SE FWD I4,$189.00 ,"$2,729.00 ",24,875,"$7,265.00 ","21,000",$0.35 ,$0.15 
+Honda,2014,Accord,Cpe CVT LX-S,$209.00 ,"$2,999.00 ",36,"1,000","$10,523.00 ","36,000",$0.29 ,$0.15 ,Available in 29 states plus Northern California and DC.
+Honda,2014,Accord,Cpe CVT LX-S,$209.00 ,"$2,499.00 ",36,"1,000","$10,023.00 ","36,000",$0.28 ,$0.15 ,Available in 23 states plus Southern California.
+Honda,2014,Accord,Sed CVT LX,$199.00 ,"$1,999.00 ",36,"1,000","$9,163.00 ","36,000",$0.25 ,$0.15 ,Available in 23 states plus Southern California.
+Honda,2014,Accord,Sed CVT LX,$199.00 ,"$2,499.00 ",36,"1,000","$9,663.00 ","36,000",$0.27 ,$0.20 ,Available in 29 states plus Northern California and DC.
+Honda,2014,CR-V,2WD LX,$209.00 ,"$2,499.00 ",36,"1,000","$10,023.00 ","36,000",$0.28 ,$0.15 ,Available in 29 states plus Northern California and DC.
+Honda,2014,CR-V,2WD LX,$209.00 ,"$1,999.00 ",36,"1,000","$9,523.00 ","36,000",$0.26 ,$0.15 ,Available in 23 states plus Southern California.
+Hyundai,2014,Elantra,Coupe,$189.00 ,"$2,599.00 ",36,"1,000","$9,403.00 ","36,000",$0.26 ,$0.20 ,Disposition fees vary by state.
+Hyundai,2014,Elantra,GT,$189.00 ,"$2,799.00 ",36,"1,000","$9,603.00 ","36,000",$0.27 ,$0.20 ,Disposition fees vary by state.
+Hyundai,2014,Sonata,GLS,$199.00 ,"$2,199.00 ",36,"1,000","$9,363.00 ","36,000",$0.26 ,$0.20 ,Disposition fees vary by state.
+Hyundai,2015,Sonata,GLS,$209.00 ,"$2,499.00 ",36,"1,000","$10,023.00 ","36,000",$0.28 ,$0.20 ,Disposition fees vary by state.
+Jeep,2014,Cherokee,Sport FWD,$199.00 ,"$3,999.00 ",36,833,"$11,163.00 ","30,000",$0.37 ,$0.25 ,Offer varies by region.
+Kia,2015,Optima,LX Auto,$249.00 ,$0.00 ,39,"1,000","$9,711.00 ","39,000",$0.25 ,$0.20 ,Disposition fees vary by state. Offer varies by region.
+Kia,2014,Sportage,LX,$189.00 ,"$1,999.00 ",36,"1,000","$8,803.00 ","36,000",$0.24 ,$0.20 ,Disposition fees vary by state. Offer varies by region.
+Kia,2014,Sportage,LX,$219.00 ,"$1,499.00 ",36,"1,000","$9,383.00 ","36,000",$0.26 ,$0.20 ,Disposition fees vary by state. Offer varies by region.
+Mazda,2014,Mazda 3,iSport 5-Dr,$199.00 ,"$1,999.00 ",36,"1,000","$9,163.00 ","36,000",$0.25 ,$0.15 
+Mazda,2014,Mazda 6,Sport Auto,$199.00 ,"$1,999.00 ",36,"1,000","$9,163.00 ","36,000",$0.25 ,$0.15 
+Mazda,2015,Mazda 6,Sport Auto,$249.00 ,$0.00 ,36,"1,000","$8,964.00 ","36,000",$0.25 ,$0.15 
+Mini,2014,Clubman,Cooper,$207.00 ,"$2,867.00 ",36,833,"$10,319.00 ","30,000",$0.34 ,$0.20 
+Mini,2014,Countryman,Cooper,$207.00 ,"$3,222.00 ",36,833,"$10,674.00 ","30,000",$0.36 ,$0.20 
+Mini,2014,Paceman,Cooper,$207.00 ,"$2,787.00 ",36,833,"$10,239.00 ","30,000",$0.34 ,$0.20 
+Mitsubishi,2014,Lancer Sportback,ES CVT,$199.00 ,"$2,898.00 ",24,"1,000","$7,674.00 ","24,000",$0.32 ,$0.20 
+Mitsubishi,2014,Outlander 2.4,ES 2WD,$209.00 ,"$3,333.00 ",36,"1,000","$10,857.00 ","36,000",$0.30 ,$0.20 ,Through Ally Financial
+Mitsubishi,2014,Outlander 2.4,ES 2WD,$209.00 ,"$3,358.00 ",36,"1,000","$10,882.00 ","36,000",$0.30 ,$0.15 ,Through Mitsubishi Motors Credit
+Nissan,2014,Altima,2.5 S,$189.00 ,"$1,999.00 ",36,"1,000","$8,803.00 ","36,000",$0.24 ,$0.15 ,Residency restrictions apply.
+Nissan,2014,Altima,2.5 S,$189.00 ,"$2,699.00 ",36,"1,000","$9,503.00 ","36,000",$0.26 ,$0.15 ,Residency restrictions apply.
+Nissan,2014,Juke,S FWD,$189.00 ,"$2,999.00 ",39,"1,000","$10,370.00 ","39,000",$0.27 ,$0.15 ,Residency restrictions apply.
+Nissan,2014,Leaf,S,$199.00 ,"$1,999.00 ",36,"1,000","$9,163.00 ","36,000",$0.25 ,$0.15 ,Residency restrictions apply.
+Scion,2014,tC,10 Series,$205.00 ,"$1,999.00 ",24,"1,000","$6,919.00 ","24,000",$0.29 ,$0.15 
+Scion,2014,tC,10 Series,$201.00 ,"$1,999.00 ",36,"1,000","$9,235.00 ","36,000",$0.26 ,$0.15 
+Scion,2014,tC,18-inch Wheels,$182.00 ,"$1,999.00 ",24,"1,000","$6,367.00 ","24,000",$0.27 ,$0.15 
+Scion,2014,tC,18-inch Wheels,$179.00 ,"$1,999.00 ",36,"1,000","$8,443.00 ","36,000",$0.23 ,$0.15 
+Scion,2015,tC,Panorama Roof,$203.00 ,"$1,999.00 ",24,"1,000","$6,871.00 ","24,000",$0.29 ,$0.15 
+Scion,2015,tC,Panorama Roof,$199.00 ,"$1,999.00 ",36,"1,000","$9,163.00 ","36,000",$0.25 ,$0.15 
+Scion,2014,xB,,$200.00 ,"$1,999.00 ",24,"1,000","$6,799.00 ","24,000",$0.28 ,$0.15 
+Scion,2014,xB,,$189.00 ,"$1,999.00 ",36,"1,000","$8,803.00 ","36,000",$0.24 ,$0.15 
+Smart,2014,Cabriolet,Passion,$199.00 ,"$1,493.00 ",36,833,"$8,657.00 ","30,000",$0.29 ,$0.25 ,$395  Disposition fee at lease end.
+Smart,2014,Cabriolet,ED,$219.00 ,"$1,889.00 ",24,833,"$7,145.00 ","20,000",$0.36 ,$0.25 ,$395  Disposition fee at lease end.
+Smart,2014,Cabriolet,ED,$199.00 ,"$1,294.00 ",36,833,"$8,458.00 ","30,000",$0.28 ,$0.25 ,$395  Disposition fee at lease end.
+Subaru,2014,Impreza,2.0i Premium EJD,$208.00 ,$0.00 ,36,"1,000","$7,488.00 ","36,000",$0.21 ,$0.15 ,Regional offer. Not available in Hawaii.
+Subaru,2014,Impreza,2.0i Premium ELD,$217.00 ,$0.00 ,36,"1,000","$7,812.00 ","36,000",$0.22 ,$0.15 ,Regional offer. Not available in Hawaii.
+Subaru,2014,Legacy,2.5i 6MT,$189.00 ,"$1,989.00 ",36,"1,000","$8,793.00 ","36,000",$0.24 ,$0.15 ,Regional offer. Not available in Hawaii.
+Subaru,2014,Legacy,2.5i Premium CVT,$243.00 ,$0.00 ,36,"1,000","$8,748.00 ","36,000",$0.24 ,$0.15 ,Regional offer. Not available in Hawaii.
+Subaru,2014,Legacy,2.5i Limited CVT,$291.00 ,$0.00 ,36,"1,000","$10,476.00 ","36,000",$0.29 ,$0.15 ,Regional offer. Not available in Hawaii.
+Toyota,2014,Camry,LE,$219.00 ,$999.00 ,36,"1,000","$8,883.00 ","36,000",$0.25 ,$0.15 ,Regional offer
+Toyota,2014.5,Camry,LE,$189.00 ,"$1,999.00 ",24,"1,000","$6,535.00 ","24,000",$0.27 ,$0.15 ,Regional offer
+Toyota,2014.5,Camry,Hybrid LE,$219.00 ,"$1,799.00 ",24,"1,000","$7,055.00 ","24,000",$0.23 ,$0.15 ,Regional offer
+Toyota,2014.5,Camry,LE,$219.00 ,$999.00 ,36,"1,000","$8,883.00 ","36,000",$0.25 ,$0.15 ,Regional offer
+Toyota,2014.5,Camry,Hybrid,$199.00 ,"$1,699.00 ",24,"1,000","$6,475.00 ","24,000",$0.27 ,$0.15 ,Regional offer
+Toyota,2014,Corolla,S Plus,$199.00 ,$999.00 ,36,"1,000","$8,163.00 ","36,000",$0.23 ,$0.15 ,Regional offer
+Toyota,2014,Corolla,LE Plus,$199.00 ,$999.00 ,36,"1,000","$8,163.00 ","36,000",$0.23 ,$0.15 ,Regional offer
+Toyota,2014,Corolla,LE Plus,$199.00 ,$999.00 ,24,"1,000","$5,775.00 ","24,000",$0.24 ,$0.15 ,Regional offer
+Toyota,2014,Prius,,$209.00 ,"$2,199.00 ",24,"1,000","$7,215.00 ","24,000",$0.30 ,$0.15 ,Regional offer
+Toyota,2014,Prius,C,$199.00 ,$999.00 ,36,"1,000","$8,163.00 ","36,000",$0.23 ,$0.15 ,Regional offer
+Toyota,2014,RAV4,,$199.00 ,"$1,999.00 ",24,"1,000","$6,775.00 ","24,000",$0.28 ,$0.15 ,Regional offer
+Volkswagen,2014,Jetta,SE 1.8T,$199.00 ,"$2,349.00 ",36,"1,000","$9,513.00 ","36,000",$0.26 ,$0.20 
