@@ -14,23 +14,23 @@ Browser Requirements, tested:
 * Chrome
 
 Roadmap:
-* WYSIWYG Editing
-* Overridable pre-filter
-* Default checkpoint; an initial set of filters/options to achieve a desired view when launched or refreshed (Browser F5).
-o Recallable checkpoints; allows quickly returning to 'discovery', or interesting, points
-o Embeddable in another context, for example in a FileMaker13 Form or a .Net app, presently it can be used in any HTML context.
-o Date management/conversion
-o Precomputing Day,Month,Year
-d Pivottable 'Chart'
+* "*" WYSIWYG Editing
+* "*" Overridable pre-filter
+* "*" Default checkpoint; an initial set of filters/options to achieve a desired view when launched or refreshed (Browser F5).
+* "o" Recallable checkpoints; allows quickly returning to 'discovery', or interesting, points
+* "o" Embeddable in another context, for example in a FileMaker13 Form or a .Net app, presently it can be used in any HTML context.
+* "o" Date management/conversion
+* "o" Precomputing Day,Month,Year
+* "d" Pivottable 'Chart'
 
-Key:
-x Completed
-* Working draft, subject to change
-o Future development
-d Deferred
+Roadmap Key:
+* "x" Completed
+* "*" Working draft, subject to change
+* "o" Future development
+* "d" Deferred
 
 Installations Include:
-- Operations Group at a Minneapolis Semiconductor Equipment Manufacturer
+* Operations Group at a Minneapolis Semiconductor Equipment Manufacturer
 
 Notes
 * DC : Dimensional Charting, http://dc-js.github.io/dc.js/
