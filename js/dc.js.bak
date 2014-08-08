@@ -2356,12 +2356,7 @@ dc.coordinateGridMixin = function (_chart) {
         } else {
             // temp workaround, when using .xUnits(dc.units.fp.precision(p))
             // xAxisMax is extended by the resolution (=p). But the brushing extent isn't.
-            var bIsDate = Object.prototype.toString.call(extent[1]) === '[object Date]';
-            var e1 = bIsDate ? extent[1].getTime() : extent[1];
-            var xMax = bIsDate ? _chart.xAxisMax().getTime() : _chart.xAxisMax();
-            var bHasResolution = undefined !== _chart.xUnits().resolution;
-            // could stand some improvement for HasResolution case ?
-            var rangedFilter = dc.filters.RangedFilter(extent[0], extent[1], xMax === e1 || (bHasResolution && xMax === (_chart.xUnits().resolution + e1))); // now inclusive of xAxisMax
+            var rangedFilter = dc.filters.RangedFilter(extent[0], extent[1], _chart.xAxisMax() == extent[1] || _chart.xAxisMax() == (_chart.xUnits().resolution + extent[1])); // now inclusive of xAxisMax
 
             dc.events.trigger(function () {
                 _chart.replaceFilter(rangedFilter);
@@ -4381,6 +4376,13 @@ dc.dataTable = function(parent, chartGroup) {
 
     function renderGroups() {
 
+        // The 'original' example uses all 'functions'.
+	// If all 'functions' are used, then don't remove/add a header, and leave
+	// the html alone. This preserves the functionality of earlier releases.
+	// A 2nd option is a string representing a field in the data. 
+	// A third option is to supply an Object such as an array of 'information', and
+	// supply your own _doColumnHeaderFormat and _doColumnValueFormat functions to
+	// create what you need.
         var bAllFunctions = true;
             _columns.forEach(function(f,i) {
             bAllFunctions = bAllFunctions & (typeof f === 'function');

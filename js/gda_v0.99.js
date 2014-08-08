@@ -9,7 +9,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "35",
+    minor:   "36",
     branch:  "gdca-dev",
 
     _anchorEdit : null,  // document element, where Slide Edit controls are placed
