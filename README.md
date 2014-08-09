@@ -6,6 +6,9 @@ Early on in development the acronym 'gdca' was settled upon, which stands for Ge
 SLIDcES editing is near WYSIWYG; meaning, you add content by making selections in an Edit mode to form or change content. This is not a coding-heavy package. A Run mode is supported for displaying the content, something like PowerPoint presentations.
 Unlike PowerPoints, Slides made with SLIDcES are interactive, including Table contents.
 
+Pros
+* Your data stays at your business, no uploads to the Cloud
+
 Current Version
 The 1.0.0-dev branch contains the research prototype, and is a work in progress.
 
