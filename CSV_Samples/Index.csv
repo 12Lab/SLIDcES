@@ -4,6 +4,7 @@ Tests,Pareto,/GDCA_Html/TestPareto.html
 Tests,ScatterHist,/GDCA_Html/TestScatterHist.html
 Tests,Bar,/GDCA_Html/TestBar.html
 Tests,AllTests,/GDCA_Html/TestAll.html
+Tests,Scatter,/GDCA_Html/TestScatter.html
 Samples,Auto Leases,/GDCA_Html/Leases.html
 Editor,Prototype,Edit.html
 Project,Notes,/GDCA_Html/VisAnalTable.html
