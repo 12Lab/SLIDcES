@@ -1,21 +1,28 @@
-Information,Description,Privacy,Pricing Model,Package URL
-"Bostock, D3 related Projects","Data Driven Documents, aka D3; Author's project section. Scroll up or dig around for examples.",,Free,http://bost.ocks.org/mike/#Projects
-"Bostock, NYT","Author, NYT published (principle employment is graphics)",,Free,http://carpetbagger.blogs.nytimes.com/author/mike-bostock/
-D3.js,"D3 created by Mike Bostock, open sourced by The Times.",Any,Free,http://D3js.org/
-BI Frameworks,"General Frameworks, BI",,,http://en.wikipedia.org/wiki/Business_intelligence_tools
-Stat Packages,"General Packages, Stats",,,http://en.wikipedia.org/wiki/Comparison_of_statistical_packages
-Web Frameworks,"General Frameworks, Web",,,http://en.wikipedia.org/wiki/Comparison_of_web_application_frameworks
-IgniteUI,control level,,,http://igniteui.com/application-samples
-BIRT,"alternative data mgmt, charting etc purchased",,,http://www.actuate.com/
-Machete,"Single Page, Alpha",,,http://www.machete.io/featured/list
-Insights,"alternative data mgmt, charting etc purchased. Has KPI. Has annotation.",,,http://www.metricinsights.com/product/javascript-charting/
-Qlik,"alternative, BI. Charting similar to DC. Has conferencing.",,,http://www.qlik.com/us/explore/experience/product-tour
-DC.js,DC website,Any,Free,https://github.com/dc-js/dc.js/wiki
-"Bostock, GitHub","Author's Github, including D3",,Free,https://github.com/mbostock
-Pivot Table,"alternative, pivot table. Could be used as a table choice, unknown yet about crossfilter data sourcing. Limitations include non-sorting, no oob drilling",Any,Free,https://github.com/nicolaskruchten/pivottable
-Crossfilter.js,Crossfilter website,Any,Free,https://github.com/square/crossfilter
-"Bostock, Twitter","Author, Twitter",,Free,https://twitter.com/mbostock
-Vida,"Partial, but similar",,,https://vida.io/
-StatWing,"Single Page, has Notes, Excel/PPT Export, Sharing (as web page)",Cloud,$25-$100/mo,https://www.statwing.com/demos/dev-survey-2#workspaces/18726
-Domo,,,,http://www.domo.com/solution/excel-reporting-dashboard
-Domo-comps,,,,http://www.getapp.com/domo-application
+Information,Type,Description,Privacy,Pricing Model,Package URL
+"Bostock, D3 related Projects",Author,"Data Driven Documents, aka D3; Author's project section. Scroll up or dig around for examples.",,Free,http://bost.ocks.org/mike/#Projects
+"Bostock, NYT",Author,"Author, NYT published (principle employment is graphics)",,Free,http://carpetbagger.blogs.nytimes.com/author/mike-bostock/
+D3.js,Library,"D3 created by Mike Bostock, open sourced by The Times.",Any,Free,http://D3js.org/
+DC.js,Library,D3+Crossfilter,Any,Free,http://dc-js.github.io/dc.js/
+BI Frameworks,General Frameworks,BIV,,,http://en.wikipedia.org/wiki/Business_intelligence_tools
+Stat Packages,General Packages,Stats,,,http://en.wikipedia.org/wiki/Comparison_of_statistical_packages
+Web Frameworks,General Frameworks,Web,,,http://en.wikipedia.org/wiki/Comparison_of_web_application_frameworks
+IgniteUI,Library,control level library,,,http://igniteui.com/application-samples
+BIRT,BIV,"alternative data mgmt, charting etc purchased",,,http://www.actuate.com/
+Machete,V,"Single Page, Alpha",,,http://www.machete.io/featured/list
+Insights,BIVK,"alternative data mgmt, charting etc purchased. Has KPI. Has annotation.",,,http://www.metricinsights.com/product/javascript-charting/
+Qlik,BIV,"alternative, BI. Charting similar to DC. Has conferencing.",,,http://www.qlik.com/us/explore/experience/product-tour
+"Bostock, GitHub",Author,"Author's Github, including D3",,Free,https://github.com/mbostock
+Pivot Table,Library,"alternative, pivot table. Could be used as a table choice, unknown yet about crossfilter data sourcing. Limitations include non-sorting, no oob drilling",Any,Free,https://github.com/nicolaskruchten/pivottable
+Crossfilter.js,Library,Crossfilter website,Any,Free,https://github.com/square/crossfilter
+"Bostock, Twitter","Author, Twitter","Author, Twitter",,Free,https://twitter.com/mbostock
+Vida,BIV,"Partial, but similar",,,https://vida.io/
+StatWing,BIV,"Single Page, has Notes, Excel/PPT Export, Sharing (as web page)",Cloud,300,https://www.statwing.com/demos/dev-survey-2#workspaces/18726
+Domo,BIV,BIV,Internal,,http://www.domo.com/solution/excel-reporting-dashboard
+SiSense,BIV,BIV,,,http://www.sisense.com/
+BIME,BIV,BIV,,2160,http://www.bimeanalytics.com/index.html
+Tableau,BIV,BIV,,1000,http://www.tableausoftware.com/
+Zoho,BIV,BIV,Cloud,600,http://www.zoho.com/reports/
+Looker,BIV,BIV,,,http://www.looker.com/
+AndMore,BIV,BIV,,,http://www.getapp.com/compare/m/91545+90800
+Animetrix,BIV,BIV,,,http://anametrix.com/
+DataWrapper,BIV,BIV,,,https://www.datawrapper.de/

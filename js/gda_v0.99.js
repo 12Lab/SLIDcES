@@ -1,6 +1,7 @@
 // make dataset globally available
 
 var sThisChartGroup = "FileListGroup";  // temporary, for the File List table
+var sChartGroupRoot = "grp";                // temporary, for all Slide charts
 var sChartGroup = "one";                // temporary, for all Slide charts
 
 // load miso dataset and create table
@@ -9,7 +10,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "36",
+    minor:   "37",      // adding data source
     branch:  "gdca-dev",
 
     _anchorEdit : null,  // document element, where Slide Edit controls are placed
@@ -45,7 +46,8 @@ var gda = {
     // registered simple or aggregated charts
     availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "ScatterHist"], // "YHist" //  
     numFormats : [".2f", "%Y%m%d" ],
-    defFormat : 0
+    defFormat : 0,
+    runGrpNumber : 0
 };
 
     //gda.datasource(gda.newDataSourceState());
@@ -169,7 +171,7 @@ gda.slide = function( _slide ) {
     };
     _aSlide.clearDisplay = function() {
         if (gda._anchorSlide) gda._anchorSlide.innerHTML = "";
-        dc.deregisterAllCharts(sChartGroup);    // ugh sChartGroup
+        dc.deregisterAllCharts(sChartGroup);
     };
     // starts with a slide clear (and data structures) since the view level uses this to change pages
     _aSlide.display = function() {   // move to view.
@@ -333,31 +335,23 @@ gda.showAvailable = function() {
 if (gda.cf) { //gda.myCols.csetupChartCols.length>0) {//}
     var s1 = document.getElementById('AvailChoices');
     if (s1) {
-        gda.chooseFromAvailCharts(s1,gda.cf,gda.myCols.csetupChartCols, gda.addSelectedChart );
+        gda.chooseFromAvailCharts(s1,gda.cf,gda.myCols.csetupChartCols, gda.addSelectedChart);//, sChartGroup );
     }
     }
 }
 
 // creates a chart container and adds to the slide state's chart list
 // needs to change to generate from the slide state's chart list
-gda.addSelectedChart = function(tObj) { //aclass) {
+gda.addSelectedChart = function(tObj){//, sChtGroup) { //aclass) {
     var aclass = tObj.class;
     var aChart = gda.newChartState(); // eventually, gda.chart(gda.newChartState());
     aChart.myCols.csetupChartCols = JSON.parse(JSON.stringify(gda.myCols.csetupChartCols)); // retain selections
     aChart.sChartGroup = sChartGroup;
     aChart.type = aclass;    // this.class
-    // no .title support yet
     gda._slide().charts.push(aChart);   // add to the end for now. View dependent. Could drag-n-drop eventually
     gda.addLastChart();
-    //gda.displayCharts();
-    //gda._slide().refresh();
 
     gda._slide().addDisplayChart(aChart.sChartGroup);
-
-    //gda._slide().clearDisplay();    // remove displayed contents
-    //gda._slide().refreshControls(); // some standard HTML controls need forced refresh
-    //gda.slides.show();  // moved from first in block
-    //gda._slide().displayPopulate() 
 }
 
 gda.removeChart = function(chtId) {
@@ -425,15 +419,14 @@ gda.colTabCheckboxChanged = function() {
   }
   else {
     console.log("removed col " + col);
-    gda.myCols[c] = _.without(gda.myCols[c],col);    // was c = ...
+    gda.myCols[c] = _.without(gda.myCols[c],col);
   }
     // if editing, update the slide defaults
-    if (gda._anchorEdit) {    // could be better
+    if (gda._anchorEdit) {
         gda._slide().myCols.csetupHiddenTableCols = gda.myCols.csetupHiddenTableCols;
         gda._slide().myCols.csetupSortTableCols = gda.myCols.csetupSortTableCols;
     }
   gda.regenerateTable(gda.bShowTable);
-  //gda.regenerateCharts();
 }
 
 gda.colDimCheckboxChanged = function() {
@@ -443,23 +436,17 @@ gda.colDimCheckboxChanged = function() {
   var checked = this.checked;
   if (checked) {
     console.log("added   col " + col);
-    //gda.myCols[c].push(col);
     gda._slide().myCols[c].push(col);
-    //if (!gda.hasSelector(col)) {
-	//gda.newSelector(col, sChartGroup, "pieChart");
-    //}
   }
   else {
     console.log("removed col " + col);
-    //gda.myCols[c] = _.without(gda.myCols[c],col);    // was c = ...
-    gda._slide().myCols[c] = _.without(gda._slide().myCols[c],col);    // was c = ...
+    gda._slide().myCols[c] = _.without(gda._slide().myCols[c],col);
     if (gda.hasSelector(col)) {
         gda.removeSelector(col, sChartGroup);
     }
   }
 
   gda.updateDimCharts();
-  //gda.regenerateCharts(); // might be need to properly redisplay charts after adding/removing a Selector
 }
 
 // this controls populating the 'available chart' choices, not the slide contents
@@ -472,10 +459,9 @@ gda.colCheckboxChanged = function() {
     if (checked)
         gda.myCols[c].push(col);
     else
-        gda.myCols[c] = _.without(gda.myCols[c],col);    // was c = ...
+        gda.myCols[c] = _.without(gda.myCols[c],col);
 
-    gda.showAvailable();    // already done in displayPopulate
-    //gda.regenerateCharts();   // 5/13/2014 swapped in showAvailable for regenerateCharts
+    gda.showAvailable();
 }
 
 gda.updateChartCols = function(defV) {
@@ -483,7 +469,6 @@ gda.updateChartCols = function(defV) {
     if (s1) {
         s1.innerHTML = "";
 
-        // defaults need to come from a "selected" chart, no support for that yet.
         gda.showColumnChoices(gda._slide(),s1,'csetupChartCols', defV, gda.colCheckboxChanged );
     }
 }
@@ -491,7 +476,7 @@ gda.updateChartCols = function(defV) {
 gda.updateDimCharts = function() {
     _.each(gda._slide().myCols.csetupDimsCols, function(col,i) {
         if (!gda.hasSelector(col)) {
-            gda.newSelector(col, sChartGroup, "pieChart");  // needs options !
+            gda.newSelector(col, sChartGroup, "pieChart");  // needs options ?
         }
     });
     gda.redrawDimCharts();
@@ -579,9 +564,7 @@ gda.regenerateTotalReset = function() {
 }
 
 gda.regenerateCharts = function() {
-    //gda.showAvailable();    // already done in displayPopulate, removed to colCheckboxChanged
     gda._slide().refresh(sChartGroup);
-//  dc.renderAll(sChartGroup);
 }
 
 gda.dataComplete = function() {
@@ -594,11 +577,6 @@ gda.dataComplete = function() {
     console.log("gda.dataComplete");
     console.log("gda.dataComplete columns " + gda._slide().columns);
 
-    //gda.dateDimension = gda.cf.dimension(function (d) {
-    //            return d.dd;
-    //        });
-
-    //gda._slide().display();
     gda.view.show();
 }
 
@@ -632,7 +610,10 @@ gda.showTable = function() {
                 function () {
                     gda._slide().bShowTableColumnSelectors = this.checked;
                     gda.showTable();
-                    //gda.view.redraw();
+                    //gda.view.redraw();    // could add, to workaround slide.next.tablechecked.notabledisplayed bug
+                                            // at expense of a full redraw.
+                                            // need to fix checkbox management instead
+                                            // so for now, uncheck recheck to display (user).
                     } );
         if (gda._anchorEdit) {  // only show this item if editing
             var dEl = gda.addElement(s3,"br");
@@ -653,7 +634,7 @@ gda.showTable = function() {
                         gda.showTable();
                         } );
         }
-        if (gda._slide().bShowTableColumnSelectors ) { // bShowColumnSelectors
+        if (gda._slide().bShowTableColumnSelectors ) {
             // sorting key(s)
             var dEl = gda.addElement(s3,"br");
             var dEl = gda.addElement(s3,"strong");
@@ -674,7 +655,6 @@ gda.showTable = function() {
 };
 
 // temporary, don't expose eventually
-// this needs to take in the defV set for the columns, and check the approp boxes, or change gda to generate the charts upon restore as if just checked.
 gda.showColumnChoices = function(lgda,dEl,colArrayName,defV, changedCallback) {
     _.each(lgda.columns, function(cname) {
     if (jQuery.isArray(defV)) {
@@ -887,6 +867,10 @@ gda.slides = function() {
         //  if (dElS) { gda._anchorSlide = dElS; }
         //},
         run: function(slidespath,dElN,dElS) {
+            //sChartGroup = sChartGroupRoot + gda.runGrpNumber;   // temp hack to try mult runs
+            //console.log("sCG " + sChartGroup + ", " + gda.runGrpNumber);
+            //gda.runGrpNumber++;
+
             gda._anchorEdit = null;
             if (dElN) { gda._anchorNav = dElN; }
             if (dElS) { gda._anchorSlide = dElS; }
@@ -1715,7 +1699,6 @@ gda.newLineDisplay = function(iChart, dEl) {
         console.log("gda nLD: _id " + dElP.id + " i " + iChart );
         
         addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
-        //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
         gda.charts[iChart].dElid = dElP.id;
 
         var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
@@ -2570,13 +2553,13 @@ gda.newTableDisplay = function(dEl, iChart) {
 
 // create a table object						note myCols is temporary. sorted by date unless myCols>=2 and uses [1].
                                                 // remove sDCData Table,Count later
-gda.createTable = function(cf, dateDim, columns, sGroup, bShowLinksInTable, selCols) {
+gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, selCols) {
     var chtObj = new Object();
     chtObj.cnameArray = columns;        // one per 'series' in the chart, often just 1 or 2.
                                     // establishes the dimensionality or series size of the chart
     //chtObj.chartType = chartType; // not yet. just one table type
     chtObj.cf = cf;
-    chtObj.sChartGroup = sGroup;
+    chtObj.sChartGroup = sChtGroup;
     chtObj.dDims = [dateDim]; // one per 'series' in the chart, often just 1 or 2.
     //chtObj.dGrps = [cf.groupAll()]; // one per 'series' in the chart, often just 1 or 2.
     //chtObj.wChart = 400;    // reasonable default. Can override.
