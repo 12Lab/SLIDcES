@@ -10,18 +10,18 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "37",
+    minor:   "38",
     branch:  "gdca-dev",
 
     _anchorEdit : null,     // document element, where Slide Edit controls are placed
     _anchorNav : null,      // document element, where Slide Navigation controls are placed
     _anchorSlide : null,    // document element, where the Slide is placed
 
-    _current : 0,           // active slide in set
+    _currentSlide : 0,           // active slide in set
     _slidefile : "",
     _slide: function() {
                 var sl = gda.slides.list();
-                return sl[gda._current];
+                return sl[gda._currentSlide];
             },
     cf : null,              // data is aggregated in crossfilter
     myCols : {              // selections, really just the current checkboxes selected in the control section.
@@ -140,6 +140,17 @@ gda.chart = function( _chart ) {    // used to decorate a chart definition for o
             var dTxtT = gda.addTextNode(aChart.titleEl,chtObj.title);
         }
     };
+    _aChart.settingCurrent = function(setting,text) {
+        // update stored slide definition
+        var aChart = _.findWhere(gda._slide().charts, {title: _aChart.title});
+        aChart[setting] =  text ? text : _aChart[setting];
+        _aChart[setting] = aChart[setting];
+//      if (!_aChart.overrides) // test 08/10/2014
+//          _aChart.overrides = {};
+//      _aChart.overrides[setting] = aChart[setting];
+        //_aChart.redraw();
+//      gda.view.redraw();
+    };
     return _aChart;
 };
 
@@ -176,8 +187,8 @@ gda.slide = function( _slide ) {
     };
     // starts with a slide clear (and data structures) since the view level uses this to change pages
     _aSlide.display = function() {   // move to view.
-        console.log("slide.display from " + gda._current + " to " +  _aSlide.myId);
-        gda._current = _aSlide.myId;
+        console.log("slide.display from " + gda._currentSlide + " to " +  _aSlide.myId);
+        gda._currentSlide = _aSlide.myId;
 
         // set gda's control state up with slide specifics
         gda.myCols.csetupHiddenTableCols = gda._slide().myCols.csetupHiddenTableCols;
@@ -380,7 +391,15 @@ gda.editSelectedChart = function(tObj) { //chtId) {
                 });
                 gda.addTextEntry(s4, "Chart Title:", _aChart.title,
                         function(newVal) {  // adopt same form as below  .title as a function
-                        _aChart.titleCurrent(newVal); // was _name =
+                        _aChart.titleCurrent(newVal);
+                        });
+                gda.addTextEntry(s4, "Width:", _aChart.wChart,
+                        function(newVal) {
+                        _aChart.settingCurrent("wChart",newVal);
+                        });
+                gda.addTextEntry(s4, "Height:", _aChart.hChart,
+                        function(newVal) {
+                        _aChart.settingCurrent("hChart",newVal);
                         });
             }
         }
@@ -574,7 +593,7 @@ gda.dataComplete = function() {
     //var filepath = gda._slide().dataprovider + gda._slide().datafile;
     //gda.datafile = filepath;        // most recent loaded. Only one is available at a time, changed per slide.
 
-    sl[gda._current].bLoaded = true;
+    sl[gda._currentSlide].bLoaded = true;
     console.log("gda.dataComplete");
     console.log("gda.dataComplete columns " + gda._slide().columns);
 
@@ -762,7 +781,7 @@ gda.Controls = function() {
             //var dEl = gda.addElement(dHostEl,"br");
 
             gda.addButton(dHostEl,"clearState", "Clear Slide", gda.view.clear);
-            gda.addButton(dHostEl,"delSlide", "Remove Slide", function() {gda.view.remove(gda._current);});
+            gda.addButton(dHostEl,"delSlide", "Remove Slide", function() {gda.view.remove(gda._currentSlide);});
             gda.addButton(dHostEl,"refresh", "Refresh Slide", gda.view.redraw);
 
             var dEl = gda.addElement(dHostEl,"br");
@@ -893,8 +912,8 @@ gda.slides = function() {
             return gda.slideRegistry.list();
         },
         //current: function() {
-        //  //if (gda._current<gda.slides.length)
-        //    return gda.slideRegistry.list()[gda._current];
+        //  //if (gda._currentSlide<gda.slides.length)
+        //    return gda.slideRegistry.list()[gda._currentSlide];
         //},
         titleCurrent: function(text) {
             gda._slide().title = text ? text : "Blank";
@@ -908,13 +927,13 @@ gda.slides = function() {
         ///////////////////////////////////////////////////////////////////
         insert: function(slide) {
             if (!slide) slide = gda.slide(gda.newSlideState());
-            gda.slideRegistry.list().splice(gda._current, 0, slide);
+            gda.slideRegistry.list().splice(gda._currentSlide, 0, slide);
         },
 
         append: function(slide) {
             if (!slide) slide = gda.slide(gda.newSlideState());
             gda.slideRegistry.list().push(slide);
-            //gda._current = gda.slideRegistry.list().length-1;
+            //gda._currentSlide = gda.slideRegistry.list().length-1;
         },
         remove: function(i) {
             gda.slideRegistry.remove(i);
@@ -923,22 +942,6 @@ gda.slides = function() {
         ///////////////////////////////////////////////////////////////////
         // 
         ///////////////////////////////////////////////////////////////////
-  //    refresh: function () {  // move to 'view'
-  //        gda.slides.show();
-  //    },
-  //    show: function() {   // slide
-  //        if (gda._anchorSlide) {
-  //            if (gda._current<gda.slides.list().length) {
-  //                gda.view.showList();    // was after slide display, below
-  //                var sl = gda.slides.list();
-  //                sl[gda._current].display();
-  //            }
-  //        }
-  //    },
-  //    goTo: function(sNo) {
-  //        gda._current = (sNo< _slideMap.length) ? sNo : 0;
-  //        show();
-  //    },
         createContent: function() {
             if (gda._anchorEdit) {
             var dHostEl = gda._anchorEdit;
@@ -1009,45 +1012,45 @@ gda.view = function() {
             if (gda.slideRegistry.list().length === 1) {
                 gda.slides.append();    // append new one, to replace last/current
             }
-            gda.slides.remove(gda._current);
-            if (gda._current>gda.slideRegistry.list().length-1)
-                gda._current = gda.slideRegistry.list().length-1;
+            gda.slides.remove(gda._currentSlide);
+            if (gda._currentSlide>gda.slideRegistry.list().length-1)
+                gda._currentSlide = gda.slideRegistry.list().length-1;
             gda.view.redraw();
         },
         insert: function() {
             gda.slides.insert();
-            // gda._current stays as-is.
+            // gda._currentSlide stays as-is.
             gda.view.redraw();
         },
         append: function() {
             gda.slides.append();
-            gda._current = gda.slideRegistry.list().length-1;
+            gda._currentSlide = gda.slideRegistry.list().length-1;
             gda.view.redraw();
         },
         show: function() {
             gda.view.redraw();
         },
         showPrev: function() {
-            var iPrev = gda._current-1;
+            var iPrev = gda._currentSlide-1;
             var sl = gda.slides.list();
             if (iPrev<0)
                 iPrev = 0;
             else {
                 console.log("iPrev " + iPrev);
                 //sl[iPrev].display();  // was this, now...
-                gda._current = iPrev;
+                gda._currentSlide = iPrev;
                 gda.view.redraw();
             }
         },
         showNext: function() {
-            var iNext = gda._current+1;
+            var iNext = gda._currentSlide+1;
             var sl = gda.slides.list();
             if (iNext>=sl.length)
                iNext = sl.length-1;
             else {
                 console.log(" iNext " + iNext);
                 //sl[iPrev].display();  // was this, now...
-                gda._current = iNext;
+                gda._currentSlide = iNext;
                 gda.view.redraw();
             }
         },
@@ -1091,7 +1094,7 @@ gda.view = function() {
                                         i = i + "showSlide".length;
                                         i = thisB.id.substring(i);
                                         i = +i;
-                                        gda._current = i;
+                                        gda._currentSlide = i;
                                         gda.view.redraw();
                                     }
                         });
@@ -1152,7 +1155,7 @@ gda.view = function() {
                 //gda.slides.show();  // moved from first in block
                     gda.view.showList();    // was after slide display, below
                                                 //var sl = gda.slides.list();
-                    gda._slide().display();     // old form, sl[gda._current].display();
+                    gda._slide().display();     // old form, sl[gda._currentSlide].display();
                 gda._slide().displayPopulate() 
             }
         },
@@ -1210,6 +1213,9 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
                                         [["nBins",10],
                                          ["wChart",200],
                                          ["hChart",150]]);  // gda overrides
+                                 //     {"nBins":"10",  // test 8/10/2014
+                                 //      "wChart":"200",
+                                 //      "hChart":"150"});  // gda overrides
         });
         // need some way to choose from these. Could be dependent on how they are presented.
         // such as a column, or grid; integrate the radio button into the display, flagged
@@ -1384,14 +1390,14 @@ gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverr
     var iChart = newBaseChart(cf, cnameArray, sChtGroup, chartType);
     gda.charts[iChart].title = cTitle;
     if (chartOverrides)
-        for (var i = 0, length = chartOverrides.length; i < length; i++) {
-            gda.charts[iChart][chartOverrides[i][0]] = chartOverrides[i][1];
-        }
+      for (var i = 0, length = chartOverrides.length; i < length; i++) {
+          gda.charts[iChart][chartOverrides[i][0]] = chartOverrides[i][1];
+      }
+//  if (chartOverrides) // test 8/10/2014
+//      _.each(chartOverrides, function(key, value) {
+//          gda.charts[iChart][key] = value;
+//      });
 
-    if (chartType === "Monthly") {
-        alert("Monthly! => Timeline");
-        chartType = "Timeline";
-    }
     var fn = 'new'+chartType+'Chart';        // function name template
     if (gda)
         gda[fn](iChart, cf);
