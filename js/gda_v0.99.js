@@ -10,7 +10,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "38",
+    minor:   "39",
     branch:  "gdca-dev",
 
     _anchorEdit : null,     // document element, where Slide Edit controls are placed
@@ -45,7 +45,8 @@ var gda = {
     bFirstRowOnly : false,
 
     // registered simple or aggregated charts
-    availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "ScatterHist"], // "YHist" //  
+    availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "ScatterHist", "Choropleth"], // "YHist" //  
+    //availCharts : ["Choropleth"],
     numFormats : [".2f", "%Y%m%d" ],
     defFormat : 0,
     runGrpNumber : 0
@@ -59,6 +60,7 @@ gda.newDataSourceState = function() {
     _aDatasource.datafile = "";
     _aDatasource.bLoaded = false;
     _aDatasource.bListOfMany = false;
+    _aDatasource.bLocalFile = true;
     _aDatasource.bAggregate = false;
 
     return _aDatasource;
@@ -84,6 +86,7 @@ gda.newSlideState = function() {
     _aSlide.datafile = "";
     _aSlide.bLoaded = false;
     _aSlide.bListOfMany = false;
+    _aSlide.bLocalFile = true;
     _aSlide.bAggregate = false;
     _aSlide._idCounter = 0;
 
@@ -199,11 +202,22 @@ gda.slide = function( _slide ) {
         _aSlide.clearDisplay();
         _aSlide.refreshControls();  // all
         var bDeferredDisplay = false;
-        console.log("slide.display: file " + gda._slide().datafile);
-        if (gda._slide().datafile) {
+     //   if (gda.utils.fieldExists(gda._slide().bLocalFile) &&
+     //      (gda._slide().bLocalFile))
+     //   {
+     //   console.log("slide.display: file " + gda._slide().datafile);
+     //   if (gda._slide().datafile) {
                         // For a csv file, this is: folder + file
             bDeferredDisplay = gda.fileLoadImmediate ();    // could do this with a callback passed in
-        }
+     //   }
+     //   }
+     //   else
+     //   {
+     //       console.log("slide.display: provider " + gda._slide().dataprovider);
+     //       if (gda._slide().dataprovider) {
+     //           bDeferredDisplay = gda.fileLoadImmediate ();    // could do this with a callback passed in
+     //       }
+     //   }
 
         console.log("slide.display: continuing after fLoadI");
         if (!bDeferredDisplay) {
@@ -590,9 +604,6 @@ gda.regenerateCharts = function() {
 gda.dataComplete = function() {
     var sl = gda.slides.list();
 
-    //var filepath = gda._slide().dataprovider + gda._slide().datafile;
-    //gda.datafile = filepath;        // most recent loaded. Only one is available at a time, changed per slide.
-
     sl[gda._currentSlide].bLoaded = true;
     console.log("gda.dataComplete");
     console.log("gda.dataComplete columns " + gda._slide().columns);
@@ -643,6 +654,7 @@ gda.showTable = function() {
                         gda.bFirstRowOnly = this.checked;
                         //gda._slide().bLoaded = false;
                         gda.datafile = null;   // override to force reload
+                        gda.dataprovider = null;   // override to force reload  added .38
                         gda.fileLoadImmediate();
                         gda.showTable();
                         } );
@@ -867,9 +879,14 @@ gda.slides = function() {
                 var filename = filepath.substring(i+1);
                 var folderpath = filepath.substring(0,i+1); // retain separator
                 gda._slide().datafile = filename;   // retain for Slide setup, may already be set
-                gda._slide().provider = folderpath;   // retain for Slide setup, may already be set
+                gda._slide().dataprovider = folderpath;   // retain for Slide setup, may already be set  fixed was .provider .38
             } else { 
-                gda._slide().datafile = filepath;   // assume local (last) folder and just a filename
+                if (gda.utils.fieldExists(gda._slide().bLocalFile) && !gda._slide().bLocalFile)
+                    gda._slide().dataprovider = filepath;
+                else
+                    gda._slide().datafile = filepath;   // assume local (last) folder and just a filename
+                
+                    
             }
             gda.fileLoadImmediate();
         },
@@ -949,19 +966,41 @@ gda.slides = function() {
             //var dElS = gda.addElementWithId(dHostEl,"div","slideSet");
 
             var dEl = gda.addElement(dHostEl,"h3");
-                var dTxtT = gda.addTextNode(dEl,"Load Data");
+                var dTxtT = gda.addTextNode(dEl,"Data Source");
             var dTb = gda.addElement(dHostEl,"table");
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
+                        var dCEl = gda.addElementWithId(dTd,"div","dataProviderType");
+                        gda.addRadioB(dCEl, "SLFile", "SLFile", "Local File", 'objmemberSource', gda._slide().bLocalFile, 
+                                function () {
+                                    console.log("as Local");
+                                    gda._slide().bLocalFile = true;
+                                    gda.view.redraw();
+                            })
+                            .addRadioB(dCEl, "SHttp", "SHttp", "Http Source", 'objmemberSource', !gda._slide().bLocalFile, 
+                                function () {
+                                    console.log("as Http");
+                                    gda._slide().bLocalFile = false;
+                                    gda.view.redraw();
+                            });
+
+                //var dTr = gda.addElement(dTb,"tr");
+                    var dTd = gda.addElement(dTr,"td");
                         var doChartEl = gda.addElementWithId(dTd,"div","dataProviderEntry");
+                if (gda.utils.fieldExists(gda._slide().bLocalFile) && !gda._slide().bLocalFile) {
+                    var dTd = gda.addElement(dTr,"td");
+                        var dTxtT = gda.addTextNode(dTd,"https://mysafeinfo.com/content/datasets");
+                }
+
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
-                        gda.addRadioB(dTd, "One", "One", "Single CSV File", 'objmember', !gda._slide().bListOfMany, 
+                        var dCEl = gda.addElementWithId(dTd,"div","dataFileQty");
+                        gda.addRadioB(dCEl, "One", "One", "Single CSV File", 'objmember', !gda._slide().bListOfMany, 
                                 function () {
                                     console.log("newOne");
                                     gda._slide().bListOfMany = false;
                             })
-                            .addRadioB(dTd, "Many", "Many", "CSV File of File List", 'objmember', gda._slide().bListOfMany, 
+                            .addRadioB(dCEl, "Many", "Many", "CSV File of File List", 'objmember', gda._slide().bListOfMany, 
                                 function () {
                                     console.log("newMany");
                                     gda._slide().bListOfMany = true;
@@ -973,10 +1012,12 @@ gda.slides = function() {
                                     console.log("Aggregate? " + this.checked);
                                     gda._slide().bAggregate = this.checked;
                         });
+                if (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         gda.addUploader(dTd, "uploader");
                         var dEl = gda.addElementWithId(dTd,"span","dataFilenameDisplay");
+                }
             }
         }
     };
@@ -1036,8 +1077,6 @@ gda.view = function() {
             if (iPrev<0)
                 iPrev = 0;
             else {
-                console.log("iPrev " + iPrev);
-                //sl[iPrev].display();  // was this, now...
                 gda._currentSlide = iPrev;
                 gda.view.redraw();
             }
@@ -1048,8 +1087,6 @@ gda.view = function() {
             if (iNext>=sl.length)
                iNext = sl.length-1;
             else {
-                console.log(" iNext " + iNext);
-                //sl[iPrev].display();  // was this, now...
                 gda._currentSlide = iNext;
                 gda.view.redraw();
             }
@@ -1115,10 +1152,12 @@ gda.view = function() {
 
             var dElDPE = document.getElementById("dataProviderEntry");
             dElDPE.innerHTML = "";
-            gda.addTextEntry(dElDPE, "Folder", gda._slide().dataprovider,
-                    function(newVal) {    // duplicated!   (use .dataprovide as a function?
+            gda.addTextEntry(dElDPE, (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) ? "Folder" : "Provider", gda._slide().dataprovider,
+                    function(newVal) {
+                        if (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) {
                         if (!(endsWith(newVal,"/") || endsWith(newVal,"\\")))
                             newVal = newVal + "\\";  // preserve form?
+                        }
                         gda._slide().dataprovider = newVal;
                     });
             }
@@ -1385,7 +1424,7 @@ gda.utils.titleFunction = function (d,v,i) {
 // below are the 'informational display' charts/support
 
 gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverrides) {
-    console.log("gda nC: add " + +cTitle + " " + chartType + " " + cnameArray + " overrides " + chartOverrides);
+    console.log("gda nC: add " + cTitle + " " + chartType + " " + cnameArray + " overrides " + chartOverrides);
 
     var iChart = newBaseChart(cf, cnameArray, sChtGroup, chartType);
     gda.charts[iChart].title = cTitle;
@@ -1556,6 +1595,21 @@ gda.newRowChart = function(iChart, cf) {
     chtObj.dDims.push(xDimension);
     var dXGrp = xDimension.group();//.top(5);// parameterize, allow adjusting n
     chtObj.dGrps.push(dXGrp);
+}
+
+gda.newChoroplethChart = function(iChart, cf) {
+    var chtObj=gda.charts[iChart];
+    if (chtObj.cnameArray.length>1)
+    {
+    var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
+    chtObj.dDims.push(xDimension);
+    var dXGrp = xDimension.group().reduceCount();//reduceSum(function (d) { // or reduceCount(); if column not a numerical value
+    //    return d[chtObj.cnameArray[1]];
+    //});
+    chtObj.dGrps.push(dXGrp);
+    //chtObj.wChart = 400;
+    //chtObj.hChart = 200;
+    }
 }
 
 // break this up into a hist/barchart function
@@ -2190,6 +2244,53 @@ gda.newRowDisplay = function(iChart, dEl) {
     return false;
 }
 
+gda.newChoroplethDisplay = function(iChart, dEl) {
+    var chtObj=gda.charts[iChart];
+    var dDims = chtObj.dDims;
+
+    if (dDims.length>0) {
+    var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+    console.log("gda nCD: _id " + dElP.id + " i " + iChart );
+    
+    addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
+    gda.charts[iChart].dElid = dElP.id;
+
+var states = gda.cf.dimension(function (d) {
+            return d["State"];
+        });
+
+var stateRaisedSum = states.group().reduceSum(function (d) {
+            return d["Raised"];
+        });
+
+    // was dEl.id
+    console.log("add row for Row @ " + chtObj.dElid);
+    var ftX = dc.geoChoroplethChart("#"+chtObj.dElid,chtObj.sChartGroup);
+    chtObj.chart = ftX;        // for now. hold ref
+    ftX.gdca_chart = chtObj;
+    ftX.width(900) //chtObj.wChart)    // same as scatterChart
+        .height(500) //chtObj.hChart)        // not nearly as high
+        .dimension(states) //dDims[0])
+        .group(stateRaisedSum); //chtObj.dGrps[0])
+
+    d3.json("../JSON_Samples/geo_us-states.json", function( statesJson) {
+    console.log("json states loaded, " + statesJson);
+    ftX.colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
+        .colorDomain([0, 200])
+        .colorCalculator(function (d) { return d ? ftX.colors()(d) : '#555'; })
+        .overlayGeoJson(statesJson.features, "state", function (d) {
+                        return d.properties.name; 
+                    })
+        .title(function (d) {
+                        return "State: " + d.key + "\nTotal Amount Raised: " + gda.numberFormat(d.value ? d.value : 0) + "M";
+                    }) ;
+        //.on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+    });
+    return true;
+    }
+    return false;
+}
+
 // Hist charts use dDim(s) so a "trendline" or fitted line or another variable can be displayed as well
 // HistDisplay is a standard orientation histogram using a dc.barChart
 gda.newHistDisplay = function(iChart, dEl) {
@@ -2677,8 +2778,16 @@ gda.restoreStateDeferred = function(error, oArray) {
 };
 gda.restoreStateFromObject = function(o) {
     if (o && o.slideRefs) {
-        _.each(o.slideRefs, function(aSlideRef) {
-            var filepath = aSlideRef.dataprovider + aSlideRef.datafile;
+        _.each(o.slideRefs, function(aSlideRef) {  
+            var filepath = aSlideRef.dataprovider;
+            if (!gda.utils.fieldExists(aSlideRef.bLocalFile)|| aSlideRef.bLocalFile)
+            {
+                    filepath = filepath + aSlideRef.datafile;
+            }
+            else
+            {
+                //filepath = filepath + aSlideRef.datafile;
+            }
             gda.slideFileLoad(filepath);
         });
     }
@@ -2903,13 +3012,18 @@ gda.isSlideFileTypeSupported = function(filepath) {
     return filetype;
 };
 gda.isDataFileTypeSupported = function(filepath) {
-    var filetypeI = filepath.lastIndexOf(".");
+    var filetypeI = filepath.lastIndexOf("=");
+    if (filetypeI<0 || filetypeI > filepath.length-1) {
+        filetypeI = filepath.lastIndexOf(".");
     if (filetypeI<0 || filetypeI > filepath.length-1) {
         return false;
     }
+    }
     var filetype = filepath.substring(filetypeI+1).toLowerCase();
     switch (filetype) {
+//        case "txt":
         case "csv":
+//        case "jsonp":
         case "xml":
             break;  // continue
         default:
@@ -2920,12 +3034,11 @@ gda.isDataFileTypeSupported = function(filepath) {
 
 // returns true if it did a deferred load
 gda.fileLoadImmediate = function() {
-    var filepath = gda._slide().dataprovider + gda._slide().datafile;
+    var filepath = gda._slide().dataprovider;
+    if (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) filepath = filepath + gda._slide().datafile;
     if (gda.datafile !== filepath) {    // only if not already loaded.
         gda.datafile = filepath;        // most recent loaded. Only one is available at a time, changed per slide.
         gda._slide().bLoaded = false;
-        if (!gda._slide().bListOfMany) {
-        }
         if (gda._slide().bLoaded !== true) {
 
             var filetype = gda.isDataFileTypeSupported(filepath);
@@ -3103,7 +3216,7 @@ gda.addRadioB = function(dElHost, theId, theValue, sLabel, className, defV, chan
     radiob.type = "radio";
     radiob.class = className;
     radiob.id = "c"+dElHost.id+"c"+theId;
-    radiob.name = "Cradio";
+    radiob.name = "Cradio"+dElHost.id;
     radiob.value = theValue;
     radiob.checked = defV;
     dElHost.appendChild(radiob);

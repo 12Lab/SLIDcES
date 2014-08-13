@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>dc.js - US Venture Capital Landscape 2011</title>
+
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" type="text/css" href="/css/dc.css"/>
+</head>
+<body>
+    <div id="us-chart">
+        <strong>VC Distribution by States (color: total amount raised)</strong>
+        <a class="reset" href="javascript:usChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+        <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <div>
+        <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+    </div>
+
+<script type="text/javascript" src="/js/d3.js"></script>
+<script type="text/javascript" src="/js/crossfilter.js"></script>
+<script type="text/javascript" src="/js/dc.js"></script>
+<script type="text/javascript">
+    var numberFormat = d3.format(".2f");
+
+
+    d3.csv("/CSV_Samples/vc.csv", function (csv) {
+        var data = crossfilter(csv);
+
+        var states = data.dimension(function (d) {
+            return d["State"];
+        });
+        var stateRaisedSum = states.group().reduceSum(function (d) {
+            return d["Raised"];
+        });
+
+
+        d3.json("/JSON_Samples/geo_us-states.json", function (statesJson) {
+        var usChart = dc.geoChoroplethChart("#us-chart")
+                .width(990)
+                .height(500)
+                .dimension(states)
+                .group(stateRaisedSum)
+                    .colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
+                    .colorDomain([0, 200])
+                    .colorCalculator(function (d) { return d ? usChart.colors()(d) : '#444'; })
+                    .overlayGeoJson(statesJson.features, "state", function (d) {
+                        return d.properties.name;
+                    })
+                    .title(function (d) {
+                        return "State: " + d.key + "\nTotal Amount Raised: " + numberFormat(d.value ? d.value : 0) + "M";
+                    });
+
+
+            dc.renderAll();
+        });
+    });
+</script>
+
+</body>
+</html>
+
