@@ -10,7 +10,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "39",
+    minor:   "40",
     branch:  "gdca-dev",
 
     _anchorEdit : null,     // document element, where Slide Edit controls are placed
@@ -310,7 +310,7 @@ gda.slide = function( _slide ) {
 
     _aSlide.addDisplayChart = function(sChtGroup) {     // temp workaround, just adds the most recently added chart
             var docEl = document.getElementById('MyCharts');
-            gda.addDisplayChart(docEl, gda.charts.length-1, gda._anchorEdit ? gda.editSelectedChart  : false);
+            gda.addDisplayChart(docEl, gda.charts.length-1, gda._anchorEdit ? gda.addEditsToSelectedChart  : false);
             // would like to render just this chart
             dc.renderAll(sChtGroup);
             //gda.charts[iChart].chart.render();
@@ -320,7 +320,7 @@ gda.slide = function( _slide ) {
             docEl.innerHTML = "";
             // if editing, allow removal of a chart
             gda.displayCharts();  //5/15/2014 moved to here, generate then display, like Avail.
-            gda.addDisplayCharts(docEl, sChtGroup, gda._anchorEdit ? gda.editSelectedChart  : false);
+            gda.addDisplayCharts(docEl, sChtGroup, gda._anchorEdit ? gda.addEditsToSelectedChart  : false);
     };
     return _aSlide;
 };
@@ -391,35 +391,80 @@ gda.removeChart = function(chtId) {
         });
 }
 
-gda.editSelectedChart = function(tObj) { //chtId) {
+gda.addEditsToSelectedChart = function(tObj) {
     var chtId = tObj.value;
     var _aChart = _.findWhere(gda.charts, {"__dc_flag__": +chtId}); // or should use the doc id ?
     if (_aChart) {
-        var s3 = document.getElementById(_aChart.dElid);
-        if (s3 && s3.parentNode && s3.parentNode.id) {
-            var s4 = document.getElementById(s3.parentNode.id+"controls");
-            if (s4) {
-                s4.innerHTML = "";
-                gda.addButton(s4, "deleteChart", "X", function() {
-                    gda.removeSelectedChart(chtId)
-                });
-                gda.addTextEntry(s4, "Chart Title:", _aChart.title,
-                        function(newVal) {  // adopt same form as below  .title as a function
-                        _aChart.titleCurrent(newVal);
-                        });
-                gda.addTextEntry(s4, "Width:", _aChart.wChart,
-                        function(newVal) {
-                        _aChart.settingCurrent("wChart",newVal);
-                        });
-                gda.addTextEntry(s4, "Height:", _aChart.hChart,
-                        function(newVal) {
-                        _aChart.settingCurrent("hChart",newVal);
-                        });
-            }
-        }
+		gda.addEditsToChart(_aChart);
         gda.updateChartCols(_aChart.cnameArray);    // slide().charts[n].myCols.csetupChartCols
     }
 }
+
+gda.addEditsToChart = function(_aChart) {
+	var s3 = document.getElementById(_aChart.dElid);
+	if (s3 && s3.parentNode && s3.parentNode.id) {
+		var s4 = document.getElementById(s3.parentNode.id+"controls");
+		if (s4) {
+			s4.innerHTML = "";
+			gda.addButton(s4, "deleteChart", "X", function() {
+				gda.removeSelectedChart(_aChart.__dc_flag__)//chtId)
+			});
+			var dTb = gda.addElement(s4,"table");
+				var dTr = gda.addElement(dTb,"tr");
+					var dTd = gda.addElement(dTr,"td");
+					gda.addTextEntry(dTd, "Chart Title", _aChart.title,
+							function(newVal) {  // adopt same form as below  .title as a function
+							_aChart.titleCurrent(newVal);
+							});
+				var dTr = gda.addElement(dTb,"tr");
+					var dTd = gda.addElement(dTr,"td");
+					gda.addTextEntry(dTd, "Width", _aChart.wChart,
+							function(newVal) {
+							_aChart.settingCurrent("wChart",newVal);
+							});
+				var dTr = gda.addElement(dTb,"tr");
+					var dTd = gda.addElement(dTr,"td");
+					gda.addTextEntry(dTd, "Height", _aChart.hChart,
+							function(newVal) {
+							_aChart.settingCurrent("hChart",newVal);
+							});
+
+						//gda.charts[iChart][_aChart.overrides[i][0]] = _aChart.overrides[i][1];
+				if (_aChart.overrides) {
+					_.each(_aChart.overrides, function(value, key) {
+					//for (var i = 0 ; i < _aChart.overrides.length ; i++) {
+						var dTr = gda.addElement(dTb,"tr");
+							var dTd = gda.addElement(dTr,"td");
+							gda.addTextEntry(dTd, key, value,
+					//		gda.addTextEntry(dTd, _aChart.overrides[i][0], _aChart.overrides[i][1],
+									function(newVal, fieldName) {
+										// or does the following have to reference the gda.charts[iChart]
+										console.log("field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
+										_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
+
+					//					console.log("field " + fieldName + " override " + _aChart.overrides[fieldName][0] + " " + newVal);
+					//					_aChart[fieldName] = _aChart.overrides[fieldName][1] = newVal;
+										//_aChart.settingCurrent("hChart",newVal);
+									});
+					});
+				}
+				var dTr = gda.addElement(dTb,"tr");
+					var dTd = gda.addElement(dTr,"td");
+					gda.addTextEntry(dTd, "Add Field", "Blank",
+							function(newField) {
+								if (!_aChart.overrides)
+									_aChart.overrides = {};
+								_aChart.overrides[newField] = "Blank";
+					//				_aChart.overrides = [];
+					//			_aChart.overrides.push([newField, "Blank"]);
+								gda.addEditsToChart(_aChart);
+								//_aChart.redraw();
+								//gda.view.redraw();
+								});
+		}
+	}
+}
+
 gda.removeSelectedChart = function(chtId) {
     //console.log("removeSelectedChart? " + this.checked + " " + JSON.stringify(this));
     console.log("removeSelectedChart " + JSON.stringify(chtId));
@@ -1249,12 +1294,12 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
     if (columns && columns.length>0) {
         _.each(gda.availCharts, function(chartType) {
             gda.newChart(cf, "Choice", columns, sChtGroup, chartType,
-                                        [["nBins",10],
-                                         ["wChart",200],
-                                         ["hChart",150]]);  // gda overrides
-                                 //     {"nBins":"10",  // test 8/10/2014
-                                 //      "wChart":"200",
-                                 //      "hChart":"150"});  // gda overrides
+                                 //     [["nBins",10],
+                                 //      ["wChart",200],
+                                 //      ["hChart",150]]);  // gda overrides
+                                      {"nBins":"10",  // test 8/10/2014
+                                       "wChart":"200",
+                                       "hChart":"150"});  // gda overrides
         });
         // need some way to choose from these. Could be dependent on how they are presented.
         // such as a column, or grid; integrate the radio button into the display, flagged
@@ -1428,14 +1473,14 @@ gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverr
 
     var iChart = newBaseChart(cf, cnameArray, sChtGroup, chartType);
     gda.charts[iChart].title = cTitle;
-    if (chartOverrides)
-      for (var i = 0, length = chartOverrides.length; i < length; i++) {
-          gda.charts[iChart][chartOverrides[i][0]] = chartOverrides[i][1];
-      }
-//  if (chartOverrides) // test 8/10/2014
-//      _.each(chartOverrides, function(key, value) {
-//          gda.charts[iChart][key] = value;
-//      });
+//  if (chartOverrides)
+//    for (var i = 0 ; i < chartOverrides.length ; i++) {
+//        gda.charts[iChart][chartOverrides[i][0]] = chartOverrides[i][1];
+//    }
+    if (chartOverrides) // test 8/10/2014
+        _.each(chartOverrides, function(value, key) {
+            gda.charts[iChart][key] = value;
+        });
 
     var fn = 'new'+chartType+'Chart';        // function name template
     if (gda)
@@ -1602,11 +1647,15 @@ gda.newChoroplethChart = function(iChart, cf) {
     if (chtObj.cnameArray.length>1)
     {
     var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
-    chtObj.dDims.push(xDimension);
-    var dXGrp = xDimension.group().reduceCount();//reduceSum(function (d) { // or reduceCount(); if column not a numerical value
-    //    return d[chtObj.cnameArray[1]];
-    //});
+    chtObj.dDims.push(xDimension);	// reduceCount
+    var dXGrp = xDimension.group().reduceSum(function (d) { // or reduceCount(); if column not a numerical value
+        return d[chtObj.cnameArray[1]];
+    });
     chtObj.dGrps.push(dXGrp);
+	if (!chtObj.overrides) 
+		chtObj.overrides = {};
+	if (!gda.utils.fieldExists(chtObj.overrides.Pleth))
+		chtObj.overrides["Pleth"] = "../JSON_Samples/geo_us-states.json";//path to Pleth json file";
     //chtObj.wChart = 400;
     //chtObj.hChart = 200;
     }
@@ -1702,7 +1751,7 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
                 var dFilterEl = gda.addElementWithId(dTd,"div",docEl.id+dc.utils.uniqueId());
                 chtObj.filterEl = dFilterEl;
                 var dTxtT = gda.addTextNode(chtObj.titleEl,chtObj.title);
-                var doChartEl = gda.addElementWithId(dTd,"div",docEl.id+dc.utils.uniqueId());
+                var doChartEl = gda.addElementWithId(dTd,"div",docEl.id+dc.utils.uniqueId()); // might need to use chart title instead of uniqueId, to support 'closing' the edit.
                 console.log("gda aDC: _id " + doChartEl.id + " i " + iChart );
 
     var bAddedChart = gda.newDisplayDispatch(iChart, chtObj.chartType, doChartEl);
@@ -2255,13 +2304,13 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
     addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
-var states = gda.cf.dimension(function (d) {
-            return d["State"];
-        });
+//var states = gda.cf.dimension(function (d) {
+//            return d["State"];
+//        });
 
-var stateRaisedSum = states.group().reduceSum(function (d) {
-            return d["Raised"];
-        });
+//var stateRaisedSum = states.group().reduceSum(function (d) {
+//            return d["Raised"];
+//        });
 
     // was dEl.id
     console.log("add row for Row @ " + chtObj.dElid);
@@ -2270,10 +2319,14 @@ var stateRaisedSum = states.group().reduceSum(function (d) {
     ftX.gdca_chart = chtObj;
     ftX.width(900) //chtObj.wChart)    // same as scatterChart
         .height(500) //chtObj.hChart)        // not nearly as high
-        .dimension(states) //dDims[0])
-        .group(stateRaisedSum); //chtObj.dGrps[0])
+        .dimension(dDims[0]) //states) 
+        .group(chtObj.dGrps[0]); //stateRaisedSum); 
 
-    d3.json("../JSON_Samples/geo_us-states.json", function( statesJson) {
+	var p = gda.utils.fieldExists( chtObj.overrides.Pleth) ? chtObj.overrides.Pleth : "";
+    d3.json(p,
+			//"../JSON_Samples/geo_us-states.json",
+		   	function( statesJson) {
+				if (statesJson) {
     console.log("json states loaded, " + statesJson);
     ftX.colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
         .colorDomain([0, 200])
@@ -2285,6 +2338,7 @@ var stateRaisedSum = states.group().reduceSum(function (d) {
                         return "State: " + d.key + "\nTotal Amount Raised: " + gda.numberFormat(d.value ? d.value : 0) + "M";
                     }) ;
         //.on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+				}
     });
     return true;
     }
@@ -3040,25 +3094,27 @@ gda.fileLoadImmediate = function() {
         gda.datafile = filepath;        // most recent loaded. Only one is available at a time, changed per slide.
         gda._slide().bLoaded = false;
         if (gda._slide().bLoaded !== true) {
-
-            var filetype = gda.isDataFileTypeSupported(filepath);
-            if (!filetype) {
-                alert("Unsupported file type: " + filepath);
-                return false;
-            }
-            console.log("selFile " + filepath);
-            var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
-            switch (filetype) {
-                case "csv":
-                            qF.defer(d3.csv,filepath);  // ; added 4/21/2014. 
-                            qF.awaitAll((gda._slide().bListOfMany)?dataArrayReady:allDataLoaded);
-                            break;
-                case "xml":
-                            qF.defer(d3.xml,filepath);  // ; added 4/21/2014. 
-                            qF.awaitAll(xmlDataLoaded);
-                            break;
-            }
-            return true;
+			if (filepath.trim().length>0) {
+				var filetype = gda.isDataFileTypeSupported(filepath);
+				if (!filetype) {
+				alert("Unsupported file type: " + filepath);
+				return false;
+				}
+				console.log("selFile " + filepath);
+				var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
+				filepath = filepath + "?q="+Math.random();	// override caching
+				switch (filetype) {
+				case "csv":
+						qF.defer(d3.csv,filepath);
+						qF.awaitAll((gda._slide().bListOfMany)?dataArrayReady:allDataLoaded);
+						break;
+				case "xml":
+						qF.defer(d3.xml,filepath);
+						qF.awaitAll(xmlDataLoaded);
+						break;
+				}
+				return true;
+			}
         }
     }
     return false;
@@ -3283,18 +3339,18 @@ gda.addTextEntry = function(dElHost, fieldname, defV, callback) {
     // slide title
     var inputT = document.createElement("input");
     inputT.type = "text";
-    inputT.id = "C"+fieldname.replace(/ /g,"_").replace(/:/g,"_");
-    inputT.name = fieldname.replace(/ /g,"_").replace(/:/g,"_");
+    inputT.id = "C"+fieldname.replace(/ /g,"_").replace(/:/g,"_");	
+    inputT.name = fieldname;//.replace(/ /g,"_").replace(/:/g,""); 08/16/2014 unneeded?	// was ,"_", causes fieldname to not match list
     inputT.value = defV;
     var Luse = document.createElement("label");
     Luse.htmlFor = inputT;
-    Luse.appendChild(document.createTextNode(fieldname));
+    Luse.appendChild(document.createTextNode(fieldname+':'));
     dElHost.appendChild(Luse);
     dElHost.appendChild(inputT);
     d3.selectAll("input[id="+inputT.id+"]")
         .on("change",
             function() {
-            callback(this.value);
+            callback(this.value, this.name);
             });
     return gda;
 }
