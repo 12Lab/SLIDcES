@@ -442,6 +442,12 @@ gda.addEditsToChart = function(_aChart) {
 										console.log("field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
 										_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
 
+										// reformat slide/json to store charts as named objects, rather than array, simplifies this kind of update
+										_.each(gda._slide().charts, function(sChart) {
+											if (_aChart.title === sChart.title)
+												sChart.overrides = _aChart.overrides;	// update store.
+										});
+
 					//					console.log("field " + fieldName + " override " + _aChart.overrides[fieldName][0] + " " + newVal);
 					//					_aChart[fieldName] = _aChart.overrides[fieldName][1] = newVal;
 										//_aChart.settingCurrent("hChart",newVal);
@@ -980,7 +986,6 @@ gda.slides = function() {
         titleCurrent: function(text) {
             gda._slide().title = text ? text : "Blank";
             document.title = gda._slide().title;
-            //gda._slide().refreshControls();
             gda.view.showList();    // update navigation buttons
         },
 
@@ -995,7 +1000,6 @@ gda.slides = function() {
         append: function(slide) {
             if (!slide) slide = gda.slide(gda.newSlideState());
             gda.slideRegistry.list().push(slide);
-            //gda._currentSlide = gda.slideRegistry.list().length-1;
         },
         remove: function(i) {
             gda.slideRegistry.remove(i);
@@ -1118,7 +1122,6 @@ gda.view = function() {
         },
         showPrev: function() {
             var iPrev = gda._currentSlide-1;
-            var sl = gda.slides.list();
             if (iPrev<0)
                 iPrev = 0;
             else {
@@ -1239,7 +1242,7 @@ gda.view = function() {
                 //gda.slides.show();  // moved from first in block
                     gda.view.showList();    // was after slide display, below
                                                 //var sl = gda.slides.list();
-                    gda._slide().display();     // old form, sl[gda._currentSlide].display();
+                    gda._slide().display();
                 gda._slide().displayPopulate() 
             }
         },
@@ -1477,10 +1480,12 @@ gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverr
 //    for (var i = 0 ; i < chartOverrides.length ; i++) {
 //        gda.charts[iChart][chartOverrides[i][0]] = chartOverrides[i][1];
 //    }
-    if (chartOverrides) // test 8/10/2014
+    if (chartOverrides) { // test 8/10/2014 
+		gda.charts[iChart].overrides = chartOverrides;	// reference for editing, might rethink and keep at slide level
         _.each(chartOverrides, function(value, key) {
             gda.charts[iChart][key] = value;
         });
+	}
 
     var fn = 'new'+chartType+'Chart';        // function name template
     if (gda)
@@ -1654,8 +1659,8 @@ gda.newChoroplethChart = function(iChart, cf) {
     chtObj.dGrps.push(dXGrp);
 	if (!chtObj.overrides) 
 		chtObj.overrides = {};
-	if (!gda.utils.fieldExists(chtObj.overrides.Pleth))
-		chtObj.overrides["Pleth"] = "../JSON_Samples/geo_us-states.json";//path to Pleth json file";
+	if (!gda.utils.fieldExists(chtObj.overrides.GeoJSON))
+		chtObj.overrides["GeoJSON"] = "";//../JSON_Samples/geo_us-states.json";
     //chtObj.wChart = 400;
     //chtObj.hChart = 200;
     }
@@ -1969,7 +1974,6 @@ gda.newSeriesDisplay = function(iChart, dEl) {
         xu = d3.time.days;  // configurable, or automatic based on xmax-xmin?
     }
 
-    // was dEl.id
     console.log("add series for Series @ " + chtObj.dElid);
     var ftX = dc.seriesChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
@@ -2024,7 +2028,6 @@ gda.newBarDisplay = function(iChart, dEl) {
     // assume about 5 pixels for font until can extract. Doesn't account for angle
     var botMi = maxL>0 ? (maxL-1)*5 : 0;
 
-    // was dEl.id
     console.log("add bar for Bar @ " + chtObj.dElid);
     var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup);
     ftX
@@ -2267,7 +2270,6 @@ gda.newRowDisplay = function(iChart, dEl) {
     addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
-    // was dEl.id
     console.log("add row for Row @ " + chtObj.dElid);
     var ftX = dc.rowChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
@@ -2304,15 +2306,6 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
     addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
-//var states = gda.cf.dimension(function (d) {
-//            return d["State"];
-//        });
-
-//var stateRaisedSum = states.group().reduceSum(function (d) {
-//            return d["Raised"];
-//        });
-
-    // was dEl.id
     console.log("add row for Row @ " + chtObj.dElid);
     var ftX = dc.geoChoroplethChart("#"+chtObj.dElid,chtObj.sChartGroup);
     chtObj.chart = ftX;        // for now. hold ref
@@ -2322,7 +2315,7 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
         .dimension(dDims[0]) //states) 
         .group(chtObj.dGrps[0]); //stateRaisedSum); 
 
-	var p = gda.utils.fieldExists( chtObj.overrides.Pleth) ? chtObj.overrides.Pleth : "";
+	var p = gda.utils.fieldExists( chtObj.overrides.GeoJSON) ? chtObj.overrides.GeoJSON : "";
     d3.json(p,
 			//"../JSON_Samples/geo_us-states.json",
 		   	function( statesJson) {
@@ -2372,7 +2365,6 @@ gda.newHistDisplay = function(iChart, dEl) {
     }
 
 
-    // was dEl.id
     console.log("add bar for Hist @ " + chtObj.dElid);
     var ftHistX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup); //"#ftHistXEl",chtObj.sChartGroup);
     chtObj.chart = ftHistX;        // for now. hold ref
