@@ -10,7 +10,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "40",
+    minor:   "41",
     branch:  "gdca-dev",
 
     _anchorEdit : null,     // document element, where Slide Edit controls are placed
@@ -114,10 +114,10 @@ gda.newSlideState = function() {
     return _aSlide;
 };
 
-// prototype for a Chart: title, col dims, chart type
+// prototype for a Chart: Title, col dims, chart type
 gda.newChartState = function() {
     var _aChart = {};
-    _aChart.title = "Blank"+dc.utils.uniqueId();
+    _aChart.Title = "Blank"+dc.utils.uniqueId();
     _aChart.myCols = {              // selections, really just the current checkboxes selected in the control section.
         "csetupChartCols" : []      // which columns are used for chart creation
     };
@@ -134,26 +134,21 @@ gda.chart = function( _chart ) {    // used to decorate a chart definition for o
     };
     _aChart.titleCurrent = function(text) {
         // update stored slide definition
-        var aChart = _.findWhere(gda._slide().charts, {title: _aChart.title});
-        aChart.title =  text ? text : "Blank"+dc.utils.uniqueId();
-        _aChart.title = aChart.title;
+        var aChart = _.findWhere(gda._slide().charts, {Title: _aChart.Title});
+        aChart.Title =  text ? text : "Blank"+dc.utils.uniqueId();
+        _aChart.Title = aChart.Title;
         // redraw anything?
         if (aChart.titleEl) {
-            aChart.titleEl.innerHTML = "";
-            var dTxtT = gda.addTextNode(aChart.titleEl,chtObj.title);
+            aChart.titleEl.innerHTML = chtObj.Title;//"";	8/17/2014
+        //    var dTxtT = gda.addTextNode(aChart.titleEl,chtObj.Title);
         }
     };
-    _aChart.settingCurrent = function(setting,text) {
-        // update stored slide definition
-        var aChart = _.findWhere(gda._slide().charts, {title: _aChart.title});
-        aChart[setting] =  text ? text : _aChart[setting];
-        _aChart[setting] = aChart[setting];
-//      if (!_aChart.overrides) // test 08/10/2014
-//          _aChart.overrides = {};
-//      _aChart.overrides[setting] = aChart[setting];
-        //_aChart.redraw();
-//      gda.view.redraw();
-    };
+//  _aChart.settingCurrent = function(setting,text) {
+//      // update stored slide definition
+//      var aChart = _.findWhere(gda._slide().charts, {Title: _aChart.Title});
+//      aChart[setting] =  text ? text : _aChart[setting];
+//      _aChart[setting] = aChart[setting];
+//  };
     return _aChart;
 };
 
@@ -312,6 +307,7 @@ gda.slide = function( _slide ) {
             var docEl = document.getElementById('MyCharts');
             gda.addDisplayChart(docEl, gda.charts.length-1, gda._anchorEdit ? gda.addEditsToSelectedChart  : false);
             // would like to render just this chart
+			console.log("renderALL gda.slide.addDisplayChart");
             dc.renderAll(sChtGroup);
             //gda.charts[iChart].chart.render();
     };
@@ -331,7 +327,7 @@ gda.applySlideFilters = function() {
             var filters = gda._slide().filters;
             _.each(filters, function(f,key) {
                 if (f.length>0) {
-                    var _aSel = _.findWhere(gda.selCharts, {"title": key});
+                    var _aSel = _.findWhere(gda.selCharts, {"Title": key});
                     if (_aSel) {
                         _aSel.chart.filterAll();
                         //_aSel.chart.replaceFilter(f);
@@ -340,7 +336,7 @@ gda.applySlideFilters = function() {
                         });
                         _aSel.chart.redraw();
                     } else {
-                        var _aChart = _.findWhere(gda.charts, {"title": key});
+                        var _aChart = _.findWhere(gda.charts, {"Title": key});
                         if (_aChart) {
                             _aChart.chart.filterAll();
                             //_aChart.chart.replaceFilter(f);
@@ -412,45 +408,40 @@ gda.addEditsToChart = function(_aChart) {
 			var dTb = gda.addElement(s4,"table");
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
-					gda.addTextEntry(dTd, "Chart Title", _aChart.title,
-							function(newVal) {  // adopt same form as below  .title as a function
-							_aChart.titleCurrent(newVal);
+					gda.addTextEntry(dTd, "Title", _aChart.Title,
+							function(newVal, fieldName) {  // adopt same form as below  .Title as a function
+							_aChart.titleCurrent(newVal);	// use for several side effects
+							//_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
 							});
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
-					gda.addTextEntry(dTd, "Width", _aChart.wChart,
-							function(newVal) {
-							_aChart.settingCurrent("wChart",newVal);
+					gda.addTextEntry(dTd, "wChart", _aChart.wChart,
+							function(newVal, fieldName) {
+							//_aChart.settingCurrent("wChart",newVal);
+							_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
 							});
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
-					gda.addTextEntry(dTd, "Height", _aChart.hChart,
-							function(newVal) {
-							_aChart.settingCurrent("hChart",newVal);
+					gda.addTextEntry(dTd, "hChart", _aChart.hChart,
+							function(newVal, fieldName) {
+							//_aChart.settingCurrent("hChart",newVal);
+							_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
 							});
 
-						//gda.charts[iChart][_aChart.overrides[i][0]] = _aChart.overrides[i][1];
 				if (_aChart.overrides) {
 					_.each(_aChart.overrides, function(value, key) {
-					//for (var i = 0 ; i < _aChart.overrides.length ; i++) {
 						var dTr = gda.addElement(dTb,"tr");
 							var dTd = gda.addElement(dTr,"td");
 							gda.addTextEntry(dTd, key, value,
-					//		gda.addTextEntry(dTd, _aChart.overrides[i][0], _aChart.overrides[i][1],
 									function(newVal, fieldName) {
-										// or does the following have to reference the gda.charts[iChart]
-										console.log("field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
+										//console.log("field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
 										_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
 
 										// reformat slide/json to store charts as named objects, rather than array, simplifies this kind of update
 										_.each(gda._slide().charts, function(sChart) {
-											if (_aChart.title === sChart.title)
+											if (_aChart.Title === sChart.Title)
 												sChart.overrides = _aChart.overrides;	// update store.
 										});
-
-					//					console.log("field " + fieldName + " override " + _aChart.overrides[fieldName][0] + " " + newVal);
-					//					_aChart[fieldName] = _aChart.overrides[fieldName][1] = newVal;
-										//_aChart.settingCurrent("hChart",newVal);
 									});
 					});
 				}
@@ -461,11 +452,7 @@ gda.addEditsToChart = function(_aChart) {
 								if (!_aChart.overrides)
 									_aChart.overrides = {};
 								_aChart.overrides[newField] = "Blank";
-					//				_aChart.overrides = [];
-					//			_aChart.overrides.push([newField, "Blank"]);
 								gda.addEditsToChart(_aChart);
-								//_aChart.redraw();
-								//gda.view.redraw();
 								});
 		}
 	}
@@ -487,23 +474,23 @@ gda.removeSelectedChart = function(chtId) {
 //      s3.innerHTML = "";
         gda._slide().charts =   // remove chart definition
             _.filter(gda._slide().charts, function(chtObj) {
-                return chtObj.title !== _aChart.title;  // better name them !
+                return chtObj.Title !== _aChart.Title;  // better name them !
             });
         gda.view.redraw();
     }
 }
 
 gda.colTabCheckboxChanged = function() {
-  console.log("cTCbC");
+  //console.log("cTCbC");
   var col = this.value;
   var c = this.class;
   var checked = this.checked;
   if (checked) {
-    console.log("added   col " + col);
+    //console.log("added   col " + col);
     gda.myCols[c].push(col);
   }
   else {
-    console.log("removed col " + col);
+    //console.log("removed col " + col);
     gda.myCols[c] = _.without(gda.myCols[c],col);
   }
     // if editing, update the slide defaults
@@ -515,16 +502,16 @@ gda.colTabCheckboxChanged = function() {
 }
 
 gda.colDimCheckboxChanged = function() {
-  console.log("cDCbC");
+  //console.log("cDCbC");
   var col = this.value;
   var c = this.class;
   var checked = this.checked;
   if (checked) {
-    console.log("added   col " + col);
+    //console.log("added   col " + col);
     gda._slide().myCols[c].push(col);
   }
   else {
-    console.log("removed col " + col);
+    //console.log("removed col " + col);
     gda._slide().myCols[c] = _.without(gda._slide().myCols[c],col);
     if (gda.hasSelector(col)) {
         gda.removeSelector(col, sChartGroup);
@@ -536,10 +523,10 @@ gda.colDimCheckboxChanged = function() {
 
 // this controls populating the 'available chart' choices, not the slide contents
 gda.colCheckboxChanged = function() {
-    console.log("cCbC");
+    //console.log("cCbC");
     var col = this.value;
     var c = this.class;
-    console.log("cCbC col class " + col +" "+ c);
+    //console.log("cCbC col class " + col +" "+ c);
     var checked = this.checked;
     if (checked)
         gda.myCols[c].push(col);
@@ -579,14 +566,14 @@ gda.showFilters = function() {
         _.each(gda.charts, function(aChart,i) {
             var c = aChart.chart;
             if (c.filter) { //c.hasFilter()) { // }
-                var dTxtT = gda.addTextNode(dEl,aChart.title + " : " + JSON.stringify(aChart.cnameArray) + " : " + c.filters()); // and what is c.filters() in comparison
+                var dTxtT = gda.addTextNode(dEl,aChart.Title + " : " + JSON.stringify(aChart.cnameArray) + " : " + c.filters()); // and what is c.filters() in comparison
                 var dElBr = gda.addElement(dEl,"br");
             }
         });
         _.each(gda.selCharts, function(aChart,i) {
             var c = aChart.chart;
             if (c.filter) { //c.hasFilter()) { // }
-                var dTxtT = gda.addTextNode(dEl,aChart.title + " : " + JSON.stringify(aChart.cnameArray) + " : " + c.filters()); // and what is c.filters() in comparison
+                var dTxtT = gda.addTextNode(dEl,aChart.Title + " : " + JSON.stringify(aChart.cnameArray) + " : " + c.filters()); // and what is c.filters() in comparison
                 var dElBr = gda.addElement(dEl,"br");
             }
         });
@@ -597,19 +584,26 @@ gda.showFilter = function(c,f) {
     var dEl;// = document.getElementById('MySelectors');
     if (dEl) {
         if (c.hasFilter()) {
-        var dTxtT = gda.addTextNode(dEl,c.gdca_chart.title + " : " + c.filters());
+        var dTxtT = gda.addTextNode(dEl,c.gdca_chart.Title + " : " + c.filters());
         var dElBr = gda.addElement(dEl,"br");
         }
         else {
-        var dTxtT = gda.addTextNode(dEl,c.gdca_chart.title + " : filter cleared");
+        var dTxtT = gda.addTextNode(dEl,c.gdca_chart.Title + " : filter cleared");
         var dElBr = gda.addElement(dEl,"br");
         }
     }
     if (c.gdca_chart) {
-        gda._slide().filters[c.gdca_chart.title] = c.filters();
+        gda._slide().filters[c.gdca_chart.Title] = c.filters();
         if (c.gdca_chart.filterEl) {
             c.gdca_chart.filterEl.innerHTML = "";
-            var dTxtT = gda.addTextNode(c.gdca_chart.filterEl,gda._slide().filters[c.gdca_chart.title]);
+			var txt = gda._slide().filters[c.gdca_chart.Title];
+			if (txt.length>0) {
+			txt = JSON.stringify(txt);
+			txt = txt.replace(/,/g,", ");
+			if (txt.length === 0) txt = "-";
+            //var dTxtT = gda.addTextNode(c.gdca_chart.filterEl,txt);	8/17/2014
+            c.gdca_chart.filterEl.innerHTML = txt;
+			}
         }
     }
 }
@@ -629,6 +623,7 @@ gda.regenerateTable = function(bShowTable) {
             });
     var iTable = gda.createTable(gda.cf, gda.dateDimension, diff, sChartGroup, gda._slide().bShowLinksInTable, JSON.parse(JSON.stringify(gda.myCols))  );// myCols changes, need to retain state
     gda.newTableDisplay(s8,iTable);
+	console.log("renderALL gda.regenerateTable");
     dc.renderAll(sChartGroup);
     }
 }
@@ -640,7 +635,6 @@ gda.regenerateTotalReset = function() {
         if (gda.cf) {
             var sDcData = dEl.id+dc.utils.uniqueId();
                     var dEla = gda.addElement(dEl,"a");
-                        //dEla.setAttribute("href","javascript:gda."+chartType+"Reset("+iChart+",sChartGroup);");
                         dEla.setAttribute("href","javascript:gda.tablesReset("+0+",sChartGroup);");
                         var dTxtT = gda.addTextNode(dEla,"Reset All");
 
@@ -656,7 +650,6 @@ gda.dataComplete = function() {
     var sl = gda.slides.list();
 
     sl[gda._currentSlide].bLoaded = true;
-    console.log("gda.dataComplete");
     console.log("gda.dataComplete columns " + gda._slide().columns);
 
     gda.view.show();
@@ -849,7 +842,7 @@ gda.Controls = function() {
 
             var dEl = gda.addElement(dHostEl,"br");
 
-            // slide title
+            // slide Title
             var doChartEl = gda.addElementWithId(dHostEl,"div","slideTitleEntry");
 
             var dEl = gda.addElement(dHostEl,"br");
@@ -942,7 +935,7 @@ gda.slides = function() {
             gda.fileLoadImmediate();
         },
         dataAdd: function(data) {
-            console.log("who is using this ======================");
+            console.log("who is using this =X==X==X==X==X==X==X=");
             // needs refactor, no keymap etc
             if (!gda.cf) 
                 gda.new_crossfilter();
@@ -1297,10 +1290,7 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
     if (columns && columns.length>0) {
         _.each(gda.availCharts, function(chartType) {
             gda.newChart(cf, "Choice", columns, sChtGroup, chartType,
-                                 //     [["nBins",10],
-                                 //      ["wChart",200],
-                                 //      ["hChart",150]]);  // gda overrides
-                                      {"nBins":"10",  // test 8/10/2014
+                                      {"nBins":"10",
                                        "wChart":"200",
                                        "hChart":"150"});  // gda overrides
         });
@@ -1315,7 +1305,7 @@ gda.displayCharts = function() {
     if (gda.cf) {
     gda.charts = [];    // workaround
         _.each(gda._slide().charts, function(aChart) {
-            gda.newChart(gda.cf, aChart.title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type, aChart.overrides);
+            gda.newChart(gda.cf, aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type, aChart.overrides);
         });
     }
 }
@@ -1323,7 +1313,7 @@ gda.displayCharts = function() {
 gda.addLastChart = function() {
     if (gda.cf) {
         var aChart = gda._slide().charts[gda._slide().charts.length-1];
-        gda.newChart(gda.cf, aChart.title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type);
+        gda.newChart(gda.cf, aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type);
     }
 }
 
@@ -1337,11 +1327,11 @@ gda.dimensionByCol = function(cname,cf,bFilterNonNumbers) {
             return bFilterNonNumbers ? ( (isNaN(v))?0.0:v ) : v;
             });
         gda.dimensions.push({dName: cname, dDim: res});
-        console.log("DBC: " + JSON.stringify(gda.dimensions));
+        console.log("dBC: " + JSON.stringify(gda.dimensions));
     }
     else if (aDimObj) {
         res = aDimObj.dDim;
-        console.log("DBC: exists " + cname);
+        console.log("dBC: exists " + cname);
     }
     return res;
 }
@@ -1388,6 +1378,7 @@ gda.addSelectorCharts = function(docEl) {
             sGroups.push(selObj.sChartGroup);
     });
     _.each(sGroups, function(sGroup) {
+		console.log("renderALL gda.addSelectorCharts");
         dc.renderAll(sGroup);
     });
 }
@@ -1412,20 +1403,23 @@ gda.chartsReset = function(cname,sChtGroup) {        // needs chart group too.
 gda.tablesReset = function(cname,sChtGroup) {        // needs chart group too.
     //gda.tables[cname].chart.filterAll(sChtGroup);
     dc.filterAll(sChtGroup);
+	console.log("renderALL gda.chartsReset");
     dc.renderAll(sChtGroup);
 }
 
 // adds new dc pieChart under div dEl as a new sub div
 gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
     var chtObj= {};
-    chtObj.title = cname;
+    chtObj.Title = cname;
     var dStr = gda.addElement(dEl,"h3");
         var dTitleEl = gda.addElementWithId(dStr,"div",dEl.id+dc.utils.uniqueId());
         chtObj.titleEl = dTitleEl;
-    var dEl1 = dEl;
+    //var dEl1 = dEl;
+	var dEl1 = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+
     addDCdiv(dEl1, "selectors", i, cname, sChtGroup); // add div for DC chart
 
-    chtObj.title = cname;
+    chtObj.Title = cname;
     gda.selCharts.push(chtObj);
     //var ftChart = dc.pieChart("#"+dEl.id,sChtGroup);
     var ftChart = dc.pieChart("#"+dEl1.id,sChtGroup);
@@ -1444,8 +1438,9 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
         .renderLabel(true)
         .innerRadius(0)
         .transitionDuration(0) // ms
-    var dElCenter = gda.addElement(dEl, "center");
+    var dElCenter = gda.addElement(dEl1, "center");
         var dFilterEl = gda.addElementWithId(dElCenter,"div",dEl.id+dc.utils.uniqueId());
+		dFilterEl.setAttribute("class","filtered")
     chtObj.filterEl = dFilterEl;
     return ftChart;
 }
@@ -1472,14 +1467,10 @@ gda.utils.titleFunction = function (d,v,i) {
 // below are the 'informational display' charts/support
 
 gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverrides) {
-    console.log("gda nC: add " + cTitle + " " + chartType + " " + cnameArray + " overrides " + chartOverrides);
+    console.log("gda nC: add '" + cTitle + "' " + chartType + " [" + cnameArray + "] overrides: " + JSON.stringify(chartOverrides));
 
     var iChart = newBaseChart(cf, cnameArray, sChtGroup, chartType);
-    gda.charts[iChart].title = cTitle;
-//  if (chartOverrides)
-//    for (var i = 0 ; i < chartOverrides.length ; i++) {
-//        gda.charts[iChart][chartOverrides[i][0]] = chartOverrides[i][1];
-//    }
+    gda.charts[iChart].Title = cTitle;
     if (chartOverrides) { // test 8/10/2014 
 		gda.charts[iChart].overrides = chartOverrides;	// reference for editing, might rethink and keep at slide level
         _.each(chartOverrides, function(value, key) {
@@ -1651,16 +1642,21 @@ gda.newChoroplethChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     if (chtObj.cnameArray.length>1)
     {
-    var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
+    var xDimension = gda.dimensionByCol(chtObj.cnameArray[1],chtObj.cf);	// 1, State, is the accessor
     chtObj.dDims.push(xDimension);	// reduceCount
     var dXGrp = xDimension.group().reduceSum(function (d) { // or reduceCount(); if column not a numerical value
-        return d[chtObj.cnameArray[1]];
+        return d[chtObj.cnameArray[0]];	// swapped 0 and 1, this is the value to chart
     });
     chtObj.dGrps.push(dXGrp);
 	if (!chtObj.overrides) 
 		chtObj.overrides = {};
-	if (!gda.utils.fieldExists(chtObj.overrides.GeoJSON))
+	if (!gda.utils.fieldExists(chtObj.overrides.GeoJSON)) {	// need a JSON viewer/selector
 		chtObj.overrides["GeoJSON"] = "";//../JSON_Samples/geo_us-states.json";
+		chtObj.overrides["GeoJSON_Property_Accessor"] = "";
+		_.each(_.rest(chtObj.cnameArray,1), function(sCname) {
+			chtObj.overrides[sCname] = "";
+		});
+	}
     //chtObj.wChart = 400;
     //chtObj.hChart = 200;
     }
@@ -1727,12 +1723,15 @@ gda.addDisplayCharts = function(docEl,sChtGroup, callback) { //, dElIdBase) {
     var bSomeAdded = false;
     _.each(gda.charts, function(chtObj,i) {
         if (chtObj.sChartGroup === sChtGroup) {
-            console.log("gda aDC: i col grp " + i + " " + chtObj.sChartGroup + " " + chtObj.chartType + " " + chtObj.cnameArray + " @el " + docEl.id + " cb? " + callback!==null);
+            //console.log("gda aDC: i col grp " + i + " " + chtObj.sChartGroup + " " + chtObj.chartType + " " + chtObj.cnameArray + " @el " + docEl.id + " cb? " + callback!==null);
             gda.addDisplayChart(docEl, i, callback);
             bSomeAdded = true;
         }
     });
-    if (bSomeAdded) dc.renderAll(sChtGroup);
+    if (bSomeAdded) {
+		console.log("renderALL gda.addDisplayCharts");
+	   	dc.renderAll(sChtGroup);
+	}
 }
 
 // non-public
@@ -1750,14 +1749,18 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
             dTr = gda.addElement(dTb,"tr");
                 dTd = gda.addElement(dTr,"td");
     }
+
+    //addDCdiv(dTd, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
                   var dStr = gda.addElement(dTd,"h3");
                     var dTitleEl = gda.addElementWithId(dStr,"div",docEl.id+dc.utils.uniqueId());
                     chtObj.titleEl = dTitleEl;
+		//			var dTxtT = gda.addTextNode(chtObj.titleEl,chtObj.Title);
                 var dFilterEl = gda.addElementWithId(dTd,"div",docEl.id+dc.utils.uniqueId());
+				//var dElCenter = gda.addElement(dFilterEl, "center");
                 chtObj.filterEl = dFilterEl;
-                var dTxtT = gda.addTextNode(chtObj.titleEl,chtObj.title);
+				//dFilterEl.setAttribute("class","filtered")
                 var doChartEl = gda.addElementWithId(dTd,"div",docEl.id+dc.utils.uniqueId()); // might need to use chart title instead of uniqueId, to support 'closing' the edit.
-                console.log("gda aDC: _id " + doChartEl.id + " i " + iChart );
+                //console.log("gda aDC: _id " + doChartEl.id + " i " + iChart );
 
     var bAddedChart = gda.newDisplayDispatch(iChart, chtObj.chartType, doChartEl);
     if (bAddedChart) {
@@ -1788,10 +1791,11 @@ gda.newLineDisplay = function(iChart, dEl) {
             cname = cname + ((cname.length>0) ? "," : "") + sCname;
         });
 
-        var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        console.log("gda nLD: _id " + dElP.id + " i " + iChart );
+        var dElP = dEl;//gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+        //console.log("gda nLD: _id " + dElP.id + " i " + iChart );
         
-        addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
+		addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+        //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
         gda.charts[iChart].dElid = dElP.id;
 
         var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
@@ -1815,7 +1819,7 @@ gda.newLineDisplay = function(iChart, dEl) {
             gr = chtObj.dGrps[0];
         }
 
-        console.log("add line for Line @ " + chtObj.dElid);
+        //console.log("add line for Line @ " + chtObj.dElid);
         var ftX = dc.lineChart("#"+chtObj.dElid,chtObj.sChartGroup)
         chtObj.chart = ftX;        // for now. hold ref
         ftX.gdca_chart = chtObj;
@@ -1857,9 +1861,10 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    console.log("gda nMD: _id " + dElP.id + " i " + iChart );
+    //console.log("gda nMD: _id " + dElP.id + " i " + iChart );
     
-    addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
+	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+   // addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
     var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
@@ -1876,7 +1881,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
     }
     var xs = d3.time.scale().domain([xmin,xmax]);
 
-    console.log("add bar for Timeline @ " + chtObj.dElid);
+    //console.log("add bar for Timeline @ " + chtObj.dElid);
     var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
@@ -1927,7 +1932,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
                 console.log("monthly trigger");
 			    dc.events.trigger(function () {
                 if (chart.gdca_toFilter.chart.focus) {
-                    console.log("triggered");
+                    console.log("monthly triggered");
                     chart.gdca_toFilter.chart.focus(chart.filter());
                 }
 			    });
@@ -1961,9 +1966,10 @@ gda.newSeriesDisplay = function(iChart, dEl) {
     var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
 
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    console.log("gda nSD: _id " + dElP.id + " i " + iChart );
+    //console.log("gda nSD: _id " + dElP.id + " i " + iChart );
     
-    addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
+	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+    //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
     var xs = d3.scale.ordinal();
@@ -1974,7 +1980,7 @@ gda.newSeriesDisplay = function(iChart, dEl) {
         xu = d3.time.days;  // configurable, or automatic based on xmax-xmin?
     }
 
-    console.log("add series for Series @ " + chtObj.dElid);
+    //console.log("add series for Series @ " + chtObj.dElid);
     var ftX = dc.seriesChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
@@ -2013,9 +2019,10 @@ gda.newBarDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    console.log("gda nBD: _id " + dElP.id + " i " + iChart );
+    //console.log("gda nBD: _id " + dElP.id + " i " + iChart );
     
-    addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
+    addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+    //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
     var dom = [];   // .all() is faster than .top(Infinity)
@@ -2028,7 +2035,7 @@ gda.newBarDisplay = function(iChart, dEl) {
     // assume about 5 pixels for font until can extract. Doesn't account for angle
     var botMi = maxL>0 ? (maxL-1)*5 : 0;
 
-    console.log("add bar for Bar @ " + chtObj.dElid);
+    //console.log("add bar for Bar @ " + chtObj.dElid);
     var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup);
     ftX
         .margins({top: ftX.margins()["top"],
@@ -2082,9 +2089,10 @@ gda.newParetoDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        console.log("gda nBD: _id " + dElP.id + " i " + iChart );
+        //console.log("gda nBD: _id " + dElP.id + " i " + iChart );
     
-        addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
+		addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+        //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
         gda.charts[iChart].dElid = dElP.id;
 
 // dGrps[0] has a .all(), etc. prob want that.
@@ -2265,12 +2273,13 @@ gda.newRowDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    console.log("gda nBD: _id " + dElP.id + " i " + iChart );
+    //console.log("gda nBD: _id " + dElP.id + " i " + iChart );
     
-    addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
+	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+    //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
-    console.log("add row for Row @ " + chtObj.dElid);
+    //console.log("add row for Row @ " + chtObj.dElid);
     var ftX = dc.rowChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
@@ -2301,36 +2310,45 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    console.log("gda nCD: _id " + dElP.id + " i " + iChart );
+    //console.log("gda nCD: _id " + dElP.id + " i " + iChart );
     
-    addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
+	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+    //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[1], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
-    console.log("add row for Row @ " + chtObj.dElid);
+    //console.log("add row for Row @ " + chtObj.dElid);
     var ftX = dc.geoChoroplethChart("#"+chtObj.dElid,chtObj.sChartGroup);
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
-    ftX.width(900) //chtObj.wChart)    // same as scatterChart
-        .height(500) //chtObj.hChart)        // not nearly as high
+    ftX.width(chtObj.wChart)//  900) //chtObj.wChart)    // same as scatterChart
+        .height(chtObj.hChart)	//	500) //chtObj.hChart)        // not nearly as high
         .dimension(dDims[0]) //states) 
         .group(chtObj.dGrps[0]); //stateRaisedSum); 
 
-	var p = gda.utils.fieldExists( chtObj.overrides.GeoJSON) ? chtObj.overrides.GeoJSON : "";
+	var p = gda.utils.fieldExists( chtObj.overrides.GeoJSON) ? chtObj.overrides.GeoJSON : "";	// might want to use '.privproperties.' instead
     d3.json(p,
 			//"../JSON_Samples/geo_us-states.json",
 		   	function( statesJson) {
 				if (statesJson) {
-    console.log("json states loaded, " + statesJson);
-    ftX.colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
-        .colorDomain([0, 200])
-        .colorCalculator(function (d) { return d ? ftX.colors()(d) : '#555'; })
-        .overlayGeoJson(statesJson.features, "state", function (d) {
-                        return d.properties.name; 
-                    })
-        .title(function (d) {
-                        return "State: " + d.key + "\nTotal Amount Raised: " + gda.numberFormat(d.value ? d.value : 0) + "M";
-                    }) ;
-        //.on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+					console.log("GeoJSON loaded, " + statesJson);
+					ftX.colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
+						.colorDomain([0, 200])
+						.colorCalculator(function (d) { return d ? ftX.colors()(d) : '#555'; })
+						.title(function (d) {
+										//return "State: " + d.key + "\nTotal Amount Raised: " + gda.numberFormat(d.value ? d.value : 0) + "M";
+										return chtObj.cnameArray[1]+": " + d.key + "\nTotal Amount "+chtObj.cnameArray[0]+": " + gda.numberFormat(d.value ? d.value : 0) + "M";
+									}) ;
+						//.on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+					_.each(_.rest(chtObj.cnameArray,1), function(sCname) {
+					//var sCname = chtObj.cnameArray[1];
+						ftX
+							.overlayGeoJson(statesJson.features, sCname, function (d) { //"State", 
+											//return d["properties"]["name"];
+											return d[chtObj.overrides.GeoJSON_Property_Accessor][chtObj.overrides[sCname]];
+										})
+					});
+					console.log("renderALL GeoJSON");
+					dc.renderAll(sChartGroup);
 				}
     });
     return true;
@@ -2358,14 +2376,15 @@ gda.newHistDisplay = function(iChart, dEl) {
 
     {//if (!chtObj.dElid) { //}   // workaround until div creation vs layout resolved
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        console.log("gda nHD: _id " + dElP.id + " i " + iChart );
+        //console.log("gda nHD: _id " + dElP.id + " i " + iChart );
         
-        addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
+		addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+        //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
         gda.charts[iChart].dElid = dElP.id;
     }
 
 
-    console.log("add bar for Hist @ " + chtObj.dElid);
+    //console.log("add bar for Hist @ " + chtObj.dElid);
     var ftHistX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup); //"#ftHistXEl",chtObj.sChartGroup);
     chtObj.chart = ftHistX;        // for now. hold ref
     ftHistX.gdca_chart = chtObj;
@@ -2427,14 +2446,15 @@ gda.newYHistDisplay = function(iChart, dEl) {
 
     {//}if (!chtObj.dElid) {    // workaround until div creation vs layout resolved
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        console.log("gda nYHD: _id " + dElP.id + " i " + iChart );
+        //console.log("gda nYHD: _id " + dElP.id + " i " + iChart );
         
+		//addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
         gda.charts[iChart].dElid = dElP.id;
     }
 
 
-    console.log("add bar for YHst @ " + chtObj.dElid);
+    //console.log("add bar for YHst @ " + chtObj.dElid);
     var ftHistY = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup);//"#ftHistYEl",chtObj.sChartGroup);
     chtObj.chart = ftHistY;        // for now. hold ref
     ftHistY.gdca_chart = chtObj;
@@ -2482,9 +2502,10 @@ gda.newScatterDisplay = function(iChart, dEl) {
     });
 
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    console.log("gda nSD: _id " + dElP.id + " i " + iChart );
+    //console.log("gda nSD: _id " + dElP.id + " i " + iChart );
 
-    addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
+	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+    //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
     
     var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
@@ -2520,7 +2541,7 @@ gda.newScatterDisplay = function(iChart, dEl) {
 // load chart setups
 
     // need to 'create' the div
-    console.log("add scatter @ " + dElP.id);
+    //console.log("add scatter @ " + dElP.id);
     var scatterChart = dc.scatterPlot("#"+dElP.id, chtObj.sChartGroup );
     chtObj.chart = scatterChart;
     scatterChart.gdca_chart = chtObj;
@@ -2588,8 +2609,8 @@ gda.newScatterHistDisplay = function(iChart, dEl) {
         var dTr = gda.addElement(dTb,"tr");
             var dTd = gda.addElement(dTr,"td");
                 dTd.id = dEl.id+dc.utils.uniqueId();//temp workaround; should (a) dElP get created here still?
-                console.log("gda nSHD: S _id " + dTd.id + " i " + iChart );
                 gda.newScatterDisplay(iChart, dTd); // chart here!
+                //console.log("gda nSHD: S _id " + dTd.id + " i " + iChart );
 
             var dTd = gda.addElement(dTr,"td");
                 dTd.id = dEl.id+dc.utils.uniqueId();//temp workaround; should (a) dElP get created here still?
@@ -2621,7 +2642,7 @@ gda.newTableDisplay = function(dEl, iChart) {
     var chtObj=gda.tables[iChart];
     var chartType = "tables";
     var sDcData = dEl.id+dc.utils.uniqueId();//iChart;
-    console.log("gda nTD: _id " + sDcData + " i " + iChart );
+    //console.log("gda nTD: _id " + sDcData + " i " + iChart );
 
     var dEl0 = gda.addElementWithId(dEl,"div",sDcData);
 
@@ -2637,14 +2658,14 @@ gda.newTableDisplay = function(dEl, iChart) {
         var dTbl = gda.addElement(dEl0,"table");
         dTbl.setAttribute("class","table table-hover dc-"+sDcData+"-table"); // need to specialize this for each one
 
-    console.log("add table @ " + sDcData);//chtObj.dElid);
+    //console.log("add table @ " + sDcData);//chtObj.dElid);
 
     dc.dataCount(".dc-"+sDcData+"-count", chtObj.sChartGroup)
     .dimension(chtObj.cf)
     .group(chtObj.cf.groupAll());
 
-    console.log("sorting by "); 
-    (gda.myCols.csetupSortTableCols && gda.myCols.csetupSortTableCols.length>0) ? console.log("col " + gda.myCols.csetupSortTableCols[0]) :console.log("by date d.dd");
+    console.log("cT: sorting by "); 
+    (gda.myCols.csetupSortTableCols && gda.myCols.csetupSortTableCols.length>0) ? console.log(" col " + gda.myCols.csetupSortTableCols[0]) :console.log(" by date d.dd");
     //(chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ? console.log("col " + chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]) :console.log("by date d.dd");
     dc.dataTable(".dc-"+sDcData+"-table", chtObj.sChartGroup)
     // dDims[0] sets the table macro sort order. .sort specifies the order within groups
@@ -2685,9 +2706,6 @@ gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, s
     chtObj.cf = cf;
     chtObj.sChartGroup = sChtGroup;
     chtObj.dDims = [dateDim]; // one per 'series' in the chart, often just 1 or 2.
-    //chtObj.dGrps = [cf.groupAll()]; // one per 'series' in the chart, often just 1 or 2.
-    //chtObj.wChart = 400;    // reasonable default. Can override.
-    //chtObj.hChart = 400;
     chtObj.numberFormat = gda.numberFormat; // default for unspecified columns
     chtObj.selCols = selCols;       // such as this one... ? need to design*1
 // design*1 method to save 'choices' and have this reference that copy of 'choices'. Shared right now.
@@ -2746,7 +2764,6 @@ function addDCdiv(dEl, chartType, i, cname, sChtGroup) {
     // <center>
     //  <strong>A Filter</strong>
         //  <a class="reset" href="javascript:ftChart.filterAll(sChartGroup);dc.redrawAll(sChartGroup);" style="display: none;">reset</a>
-        //  <a class="reset" href="javascript:ftChart.filterAll(sChartGroup);dc.redrawAll(sChartGroup);" style="display: none;">reset</a>
         //  <div class="clearfix"></div>
     //</div>
 
@@ -2755,6 +2772,7 @@ function addDCdiv(dEl, chartType, i, cname, sChtGroup) {
             var dTxtT = gda.addTextNode(dStng,cname);
 
     // from http://www.zmslabs.org/svn/zmslabs/ZMS/tags/2.10.3/dtml/object/manage_menu.dtml
+        var dTxtT = gda.addTextNode(dCen," ");
         var dEla = gda.addElement(dCen,"a");
         //dEla.setAttribute("href","javascript:gda."+chartType+"["+i+"].chart.filterAll(sChartGroup);dc.redrawAll(sChartGroup);");
         dEla.setAttribute("href","javascript:gda."+chartType+"Reset("+i+",sChartGroup);");
@@ -3094,7 +3112,7 @@ gda.fileLoadImmediate = function() {
 				}
 				console.log("selFile " + filepath);
 				var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
-				filepath = filepath + "?q="+Math.random();	// override caching
+				filepath = filepath + "?q="+Math.random();	// override caching by randomly changing the request path
 				switch (filetype) {
 				case "csv":
 						qF.defer(d3.csv,filepath);
@@ -3130,6 +3148,7 @@ function dataArrayReady(error, dataArray) {    // [ [{},{}] , ... ]
     var iTable2 = gda.createTable(cf2, dateDimension2, ["Tests"], sThisChartGroup);// needs it's own group
     var s9 = document.getElementById('FileTable');
     gda.newTableDisplay(s9,iTable2);//, ".dc-list-table", ".dc-list-count");
+	console.log("renderALL dataArrayReady ");
     dc.renderAll(sThisChartGroup);
     for (var iDA=0;iDA<dataArray.length;iDA++){
     // add dataArray[iDA] to a dataTable with group sChartGroupList
@@ -3161,7 +3180,7 @@ function allDataLoaded(error, testArray) {
     }
     else
     {
-    console.log("allDataLoaded in " + testArray.length);
+    console.log("allDataLoaded in " + testArray.length + " <==========");
     if (testArray && testArray.length>0 && testArray[0] && testArray[0].length>0) {
         for (var i=0;i<testArray.length && (i===0 || !gda.bFirstRowOnly) ;i++){   // 1+. 0 is column headings
             console.log("allDataLoaded: filtering " + (i+1) + " of " + testArray.length);
@@ -3194,7 +3213,7 @@ function allDataLoaded(error, testArray) {
         }
     }
 
-    console.log("allDataLoaded done");
+    console.log("allDataLoaded done  <==========");
 
     gda.dataComplete();
     }
@@ -3202,10 +3221,9 @@ function allDataLoaded(error, testArray) {
 
 function dataAdd(data) {
     gda.cf.add(data);
-    console.log("dataAdd ");
     //console.log("dataAdd data " + data);
     //console.log("dataAdd data " + JSON.stringify(data));
-    console.log("dataAdd cf "+ gda.cf.size());
+    console.log("dataAdd cf now at "+ gda.cf.size());
 }
 
 // placeholder for user override

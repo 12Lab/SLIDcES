@@ -2,6 +2,11 @@ div.dc-chart {
     float: left;
 }
 
+.filtered {
+	float: none;
+	width: 200px;
+}
+
 .dc-chart rect.bar {
     stroke: none;
     cursor: pointer;
