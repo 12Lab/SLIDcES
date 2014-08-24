@@ -4,15 +4,25 @@ var sThisChartGroup = "FileListGroup";  // temporary, for the File List table
 var sChartGroupRoot = "grp";
 var sChartGroup = "one";                // temporary, for all Slide charts
 
+
 // load miso dataset and create table
 gda = (function(){
 'use strict';
 
 var gda = {
     version: "0.099",
-    minor:   "41",
+    minor:   "45",
     branch:  "gdca-dev",
 
+    T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
+    TdayIncMsecs     : 1000*60*60*24,     // 1 day
+    TweekIncMsecs    : 1000*60*60*24*7,   // 1 week
+    TmonthIncMsecs   : 1000*60*60*24*30,  // 1 month
+    TquarterIncMsecs : 1000*60*60*24*91,  // 1 quarter
+    TyearIncMsecs    : 1000*60*60*24*365, // 1 year
+
+
+    _allowEdit : true, //true,  // for charts
     _anchorEdit : null,     // document element, where Slide Edit controls are placed
     _anchorNav : null,      // document element, where Slide Navigation controls are placed
     _anchorSlide : null,    // document element, where the Slide is placed
@@ -42,15 +52,21 @@ var gda = {
     dimensions : [],
     dateDimension : null,
     bShowTable : false,  // move to slide !  yet, it is nice to be able to show/hide it when desired.
+    bAccessOverrides: false,
     bFirstRowOnly : false,
 
     // registered simple or aggregated charts
     availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "ScatterHist", "Choropleth"], // "YHist" //  
     //availCharts : ["Choropleth"],
-    numFormats : [".2f", "%Y%m%d" ],
+    numFormats : [".2f", "%Y%m%d", ".0f" ],
     defFormat : 0,
     runGrpNumber : 0
 };
+
+gda.numberFormat = d3.format(gda.numFormats[gda.defFormat]);
+gda.dateFormat = d3.time.format(gda.numFormats[1]);  // hmm not great
+gda.daysFormat = d3.format(gda.numFormats[2]); 
+
 
     //gda.datasource(gda.newDataSourceState());
 
@@ -108,6 +124,8 @@ gda.newSlideState = function() {
     // table related, refactor into table
     _aSlide.bUseTable = false;          // whether table should be used/allowed on this slide
     _aSlide.bShowTable = false;          // whether table should be shown on this slide
+    _aSlide.bAllowOverrideChanges = false;
+    _aSlide.bAccessOverrides = false;
     _aSlide.bShowTableColumnSelectors = true; // whether table column hide selectors should be available to user
     _aSlide.bShowLinksInTable = false;  // move to table definition when added
 
@@ -143,6 +161,7 @@ gda.chart = function( _chart ) {    // used to decorate a chart definition for o
         //    var dTxtT = gda.addTextNode(aChart.titleEl,chtObj.Title);
         }
     };
+
 //  _aChart.settingCurrent = function(setting,text) {
 //      // update stored slide definition
 //      var aChart = _.findWhere(gda._slide().charts, {Title: _aChart.Title});
@@ -150,6 +169,32 @@ gda.chart = function( _chart ) {    // used to decorate a chart definition for o
 //      _aChart[setting] = aChart[setting];
 //  };
     return _aChart;
+};
+
+gda.utils = {};
+gda.utils.fieldExists = function(f) {
+        if (f === undefined) return false;
+        if ((typeof f) === undefined) return false;
+        return true;
+    };
+gda.utils.labelFunction = function (d) {
+            return d.key.trim() === "" ? "(blank)" : d.key;
+        };
+gda.utils.titleFunction = function (d,v,i) {
+            if (gda.utils.fieldExists(d.key) && gda.utils.fieldExists(d.value) && d.key.trim) {
+                return (d.key.trim() === "" ? "(blank)" : d.key ) + ": " + d.value ;
+            } else if (gda.utils.fieldExists(d.data) && gda.utils.fieldExists(d.data.key) && gda.utils.fieldExists(d.data.value) && d.data.key.trim) {
+                return (d.data.key.trim() === "" ? "(blank)" : d.data.key ) + ": " + d.data.value ;
+            } else
+                return "(N/A)";
+        };
+
+gda.addOverride = function( anObj, key, value ) {
+        if (!anObj.overrides) 
+            anObj.overrides = {};
+        if (!gda.utils.fieldExists(anObj.overrides[key])) {
+            anObj.overrides[key] = value;
+        }
 };
 
 // this 'slide' is just the information content, not the page representation
@@ -316,7 +361,7 @@ gda.slide = function( _slide ) {
             docEl.innerHTML = "";
             // if editing, allow removal of a chart
             gda.displayCharts();  //5/15/2014 moved to here, generate then display, like Avail.
-            gda.addDisplayCharts(docEl, sChtGroup, gda._anchorEdit ? gda.addEditsToSelectedChart  : false);
+            gda.addDisplayCharts(docEl, sChtGroup, gda._allowEdit ? gda.addEditsToSelectedChart  : false);
     };
     return _aSlide;
 };
@@ -412,21 +457,48 @@ gda.addEditsToChart = function(_aChart) {
 							function(newVal, fieldName) {  // adopt same form as below  .Title as a function
 							_aChart.titleCurrent(newVal);	// use for several side effects
 							//_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
+										_.each(gda._slide().charts, function(sChart) {
+											if (_aChart.Title === sChart.Title)
+												sChart.overrides = _aChart.overrides;	// update store.
+										});
+                                        gda.view.redraw();  // 8/21/2014 for override edit
 							});
+                var bWidth = false;
+                var bHeight = false;
+				if (_aChart.overrides) {
+					_.each(_aChart.overrides, function(value, key) {
+                        if (key === "wChart") bWidth = true;
+                        if (key === "hChart") bHeight = true;
+                    });
+                }
+                if (!bWidth) {
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
 					gda.addTextEntry(dTd, "wChart", _aChart.wChart,
 							function(newVal, fieldName) {
 							//_aChart.settingCurrent("wChart",newVal);
 							_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
+										_.each(gda._slide().charts, function(sChart) {
+											if (_aChart.Title === sChart.Title)
+												sChart.overrides = _aChart.overrides;	// update store.
+										});
+                                        gda.view.redraw();  // 8/21/2014 for override edit
 							});
+                }
+                if (!bHeight) {
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
 					gda.addTextEntry(dTd, "hChart", _aChart.hChart,
 							function(newVal, fieldName) {
 							//_aChart.settingCurrent("hChart",newVal);
 							_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
+										_.each(gda._slide().charts, function(sChart) {
+											if (_aChart.Title === sChart.Title)
+												sChart.overrides = _aChart.overrides;	// update store.
+										});
+                                        gda.view.redraw();  // 8/21/2014 for override edit
 							});
+                }
 
 				if (_aChart.overrides) {
 					_.each(_aChart.overrides, function(value, key) {
@@ -442,6 +514,7 @@ gda.addEditsToChart = function(_aChart) {
 											if (_aChart.Title === sChart.Title)
 												sChart.overrides = _aChart.overrides;	// update store.
 										});
+                                        gda.view.redraw();  // 8/21/2014 for override edit
 									});
 					});
 				}
@@ -674,6 +747,16 @@ gda.showTable = function() {
                     gda.view.redraw();
                 } );
         }
+        var s3 = document.getElementById('slideUseOverrides');
+        if (s3) {
+        s3.innerHTML = "";
+        gda.addCheckB(s3, "useOverrides", "Allow Overrides", 'objmember',
+                gda._slide().bAllowOverrideChanges, 
+                function () {
+                    gda._slide().bAllowOverrideChanges = this.checked;
+                    gda.view.redraw();
+                } );
+        }
     }
 
     var s3 = document.getElementById('setupTable');
@@ -852,6 +935,7 @@ gda.Controls = function() {
             // 2. Table Controls (shown when table Use is selected, edit or run).
             // 3. Table Display
             var docEl = gda.addElementWithId(dHostEl,"div","slideUseTable");
+            var docEl = gda.addElementWithId(dHostEl,"div","slideUseOverrides");
 
 if (false) {
             gda.addCheckB(dHostEl, "useTable", "Use Table", 'objmember',
@@ -895,6 +979,16 @@ if (false) {
                         gda.bShowTable = this.checked;
                         gda._slide().bShowTable = gda.bShowTable;
                         gda.showTable();
+                    });
+            }
+
+            if (gda._slide().bAllowOverrideChanges) {
+            gda.addCheckB(dHostEl, "accessOverrides", "Access Overrides", 'objmember',
+                    gda.bAccessOverrides, 
+                    function () {
+                        gda.bAccessOverrides = this.checked;
+                        gda._slide().bAccessOverrides = gda.bAccessOverrides;
+                        gda.view.redraw();
                     });
             }
 
@@ -962,6 +1056,7 @@ gda.slides = function() {
              gda.slidesLoadImmediate(slidespath);    // add slidepath immediate load
         },
         edit: function(dElC,dElN,dElS) {   // control
+            gda._allowEdit = true;
             if (dElC) { gda._anchorEdit = dElC; }
             if (dElN) { gda._anchorNav = dElN; }
             if (dElS) { gda._anchorSlide = dElS; }
@@ -1259,9 +1354,6 @@ gda.clearWorkingState = function() {
     gda.tables = [];                // definition of a tables
 };
 
-gda.numberFormat = d3.format(gda.numFormats[gda.defFormat]);
-gda.dateFormat = d3.time.format(gda.numFormats[1]);  // hmm not great
-
 gda.sampleData = function(ndims) {
     var sd = [];
     for(var iN = 0; iN<10; iN++) {
@@ -1445,24 +1537,6 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
     return ftChart;
 }
 
-gda.utils = {};
-gda.utils.fieldExists = function(f) {
-        if (f === undefined) return false;
-        if ((typeof f) === undefined) return false;
-        return true;
-    };
-gda.utils.labelFunction = function (d) {
-            return d.key.trim() === "" ? "(blank)" : d.key;
-        };
-gda.utils.titleFunction = function (d,v,i) {
-            if (gda.utils.fieldExists(d.key) && gda.utils.fieldExists(d.value) && d.key.trim) {
-                return (d.key.trim() === "" ? "(blank)" : d.key ) + ": " + d.value ;
-            } else if (gda.utils.fieldExists(d.data) && gda.utils.fieldExists(d.data.key) && gda.utils.fieldExists(d.data.value) && d.data.key.trim) {
-                return (d.data.key.trim() === "" ? "(blank)" : d.data.key ) + ": " + d.data.value ;
-            } else
-                return "(N/A)";
-        };
-
 // above are the 'selector' charts/support
 // below are the 'informational display' charts/support
 
@@ -1540,7 +1614,7 @@ gda.newYHistChart = function(iChart, cf) {
 
 gda.isDate = function (cname) {
     var bRet = false;
-    if (cname.indexOf("date")>=0 || cname.indexOf("Date")>=0 || cname.indexOf("Month")>=0 || cname.indexOf("Start")>=0 || cname==="dd") {
+    if (cname.indexOf("date")>=0 || cname.indexOf("Date")>=0 || cname.indexOf("Year")>=0 || cname.indexOf("Quarter")>=0 || cname.indexOf("Month")>=0 || cname.indexOf("Week")>=0 || cname.indexOf("Day")>=0 || cname.indexOf("Start")>=0 || cname==="dd") {
         bRet = true;
     }
     return bRet;
@@ -1571,8 +1645,8 @@ gda.newLineChart = function(iChart, cf) {
     chtObj.lineGroup = chtObj.lineDimension.group().reduceSum(function(d) {
             return +d[chtObj.cnameArray[1]]; });
 
-    chtObj.wChart = 800;
-    chtObj.hChart = 200;
+//    chtObj.wChart = 800;
+//    chtObj.hChart = 200;
     }
 }
 
@@ -1583,7 +1657,14 @@ gda.newTimelineChart = function(iChart, cf) {
     // should factor out dDims to allow date specification, poss in dataSource
 
     if (chtObj.cnameArray.length>1) {
-        var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
+        gda.addOverride(chtObj,"timefield","Month");
+        //gda.addOverride(chtObj,"reportingresolution","month");
+        gda.addOverride(chtObj,"axisresolution","months");
+
+        var xDimension = gda.dimensionByCol(
+                                chtObj.overrides["timefield"],
+                                //chtObj.cnameArray[0],
+                                chtObj.cf);
           if (gda.isDate(chtObj.cnameArray[0]))
             xDimension.isDate = true;
         chtObj.dDims.push(xDimension);
@@ -1591,14 +1672,11 @@ gda.newTimelineChart = function(iChart, cf) {
       if (!xDimension.isDate)
           dXGrp = xDimension.group();//.reduceCount();
       else
-            dXGrp = xDimension.group().reduceSum(function (d) {
-            return d3.time.month(d[chtObj.cnameArray[0]]);
+            dXGrp = xDimension.group().reduceCount();//function (d) {
+            //return d3.time.month(d[chtObj.cnameArray[0]]);
 //            return d[chtObj.cnameArray[1]];  // + ?
-            });
+            //});
         chtObj.dGrps.push(dXGrp); 
-
-        chtObj.wChart = 800;
-        chtObj.hChart = 200;
     }
 }
 
@@ -1648,17 +1726,12 @@ gda.newChoroplethChart = function(iChart, cf) {
         return d[chtObj.cnameArray[0]];	// swapped 0 and 1, this is the value to chart
     });
     chtObj.dGrps.push(dXGrp);
-	if (!chtObj.overrides) 
-		chtObj.overrides = {};
-	if (!gda.utils.fieldExists(chtObj.overrides.GeoJSON)) {	// need a JSON viewer/selector
-		chtObj.overrides["GeoJSON"] = "";//../JSON_Samples/geo_us-states.json";
-		chtObj.overrides["GeoJSON_Property_Accessor"] = "";
-		_.each(_.rest(chtObj.cnameArray,1), function(sCname) {
-			chtObj.overrides[sCname] = "";
-		});
-	}
-    //chtObj.wChart = 400;
-    //chtObj.hChart = 200;
+    gda.addOverride(chtObj,"GeoJSON","");//../JSON_Samples/geo_us-states.json";	// need a JSON viewer/selector
+    gda.addOverride(chtObj,"GeoJSON_Property_Accessor","");
+
+    _.each(_.rest(chtObj.cnameArray,1), function(sCname) {
+        chtObj.overrides[sCname] = "";
+    });
     }
 }
 
@@ -1764,7 +1837,7 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
 
     var bAddedChart = gda.newDisplayDispatch(iChart, chtObj.chartType, doChartEl);
     if (bAddedChart) {
-        if (callback && chtObj.bChooseable === true)
+        if (gda._allowEdit && gda.bAccessOverrides && callback && chtObj.bChooseable === true)
             gda.addRadioB(doChartEl, chtObj.chartType, gda.chart(chtObj).__dc_flag__, chtObj.chartType, chtObj.chartType, false, callback);
             gda.addElementWithId(doChartEl,"span",doChartEl.id+"controls");
             //gda.addRadioB(doChartEl, chtObj.chartType, gda.chart(chtObj).__dc_flag__, "Remove", chtObj.chartType, false, function() {// remove chart });
@@ -1867,19 +1940,39 @@ gda.newTimelineDisplay = function(iChart, dEl) {
    // addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
-    var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
+    var v0 = chtObj.overrides["timefield"]; //chtObj.cnameArray[0]
+    var xmin = dDims[0].bottom(1)[0][v0];
     if (!dDims[0].isDate)
     {
         if (isNaN(xmin)) xmin = 0;
     }
-    var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
+    var xmax = dDims[0].top   (1)[0][v0];
     var xu = dc.units.ordinal();
+    var xe = null;  // default
     if (dDims[0].isDate) {
-        xmin = d3.time.month.floor(xmin);
-        xmax = d3.time.month.ceil(xmax);
-        xu = d3.time.months;//days;  // or maybe weeks // make configurable
+        xe = d3.time.month;
+        if (chtObj.overrides["timefield"]) {
+            var p = "month";//chtObj.overrides["reportingresolution"];
+            var tInc = gda["T"+p+"IncMsecs"];   // time increment to assure max!=min
+            var d = xmax;//new Date(xmax);
+            var t = d.getTime();
+            t = t + tInc;
+            xmax = new Date(t);
+            //xmax.setTime(t);
+            xe = d3.time[p];
+            xmin = xe.floor(xmin); //.month.floor(xmin);
+            xmax = xe.ceil(xmax);  //.month.ceil(xmax);
+            var r = chtObj.overrides["axisresolution"];
+        xu = d3.time[r]; //.months
+        } else {
+            xu = d3.time.months;
+            xe = d3.time.month;
+            xmin = xe.floor(xmin);
+            xmax = xe.ceil(xmax);
+        }
+        var xs = d3.time.scale().domain([xmin,xmax]);
+        console.log("time scale " + xmin + " to " + xmax);
     }
-    var xs = d3.time.scale().domain([xmin,xmax]);
 
     //console.log("add bar for Timeline @ " + chtObj.dElid);
     var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
@@ -1891,7 +1984,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         .height(chtObj.hChart)
         .centerBar(true)
         .gap(30)
-        .x(xs)
+        .x(xs)//.nice())
         .xUnits(xu)
         .elasticX(true)
         .elasticY(true)
@@ -1905,9 +1998,11 @@ gda.newTimelineDisplay = function(iChart, dEl) {
      //   var dR = (xmax-xmin)/1000/60/60/24;
      //   if (dR>95) 
         {
-          ftX
-              .round(d3.time.month.round);
-            ftX .xAxis().ticks(d3.time.months,1);
+          if (dDims[0].isDate) {
+              ftX
+              .round(xe.round);
+            }
+          ftX .xAxis().ticks(xu,1);//d3.time.months,1);
         }
     }
 
@@ -1919,7 +2014,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
             }
             ftX.renderlet(function (chart) {
                 if (chart.gdca_toFilter) {
-                console.log("monthly renderlet");
+                console.log("period renderlet");
         // why was this being removed? ohloh ex https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=renderlet%20select(%22g.y%22).style(%22display%22%2C%20%22none%22)
 		//	    chart.select("g.y").style("display", "none");
 			    chart.gdca_toFilter.chart.filter(chart.filter()); // need method to specify [0]
@@ -1929,10 +2024,10 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 			})
 			.on("filtered", function (chart) {
                 if (chart.gdca_toFilter) {
-                console.log("monthly trigger");
+                console.log("period trigger");
 			    dc.events.trigger(function () {
                 if (chart.gdca_toFilter.chart.focus) {
-                    console.log("monthly triggered");
+                    console.log("period triggered");
                     chart.gdca_toFilter.chart.focus(chart.filter());
                 }
 			    });

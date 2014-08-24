@@ -1,0 +1,69 @@
+Make,Model Yr,Model Trim,Price per Mo,Initial Payment,Months,Miles perMo,Lease Cost,Total Miles,Cost per Mile,Each Additional Mile,Additional Terms
+Buick,2014,Encore 1SB,199,3769,39,833,11530,32500,0.35,0.25,For non-GM owners and lessees.
+Buick,2014,Encore 1SB,199,4269,39,833,12030,32500,0.37,0.25,For GM owners.
+Buick,2014,Verano 1SD,199,2949,39,833,10710,32500,0.33,0.25,For GM owners.
+Buick,2014,Verano 1SD,199,2449,39,833,10210,32500,0.31,0.25,For non-GM owners and lessees.
+Chevrolet,2014,Equinox LS,199,3219,36,1000,10383,36000,0.29,0.25,Residency restrictions apply.
+Chevrolet,2014,Malibu LT,189,2569,36,1000,9373,36000,0.26,0.25,Residency restrictions apply.
+Chevrolet,2014,Sonic LT,189,2169,36,1000,8973,36000,0.25,0.25,Western region offer.
+Chevrolet,2014,Spark EV LT ,199,949,36,1000,8113,36000,0.23,0.25,California and Oregon Only
+Chrysler,2015,200 Limited,229,2499,36,1000,10743,36000,0.3,0.25,Residency restrictions apply. Plus 395 disposition fee.
+Fiat,2014,500e,199,999,36,1000,8163,36000,0.23,0.25,California only. Plus 395 disposition fee.
+Fiat,2014,500L Pop,199,2699,36,833,9863,30000,0.33,0.25,
+Ford,2014,Escape SE FWD,199,2769,24,875,7545,21000,0.36,0.15,
+Ford,2014,Flex SEL FWD Titanium,189,3829,24,875,8365,21000,0.4,0.2,
+Ford,2014,Fusion SE FWD I4,189,2729,24,875,7265,21000,0.35,0.15,
+GMC,2014,Terrain SLE-1,199,2869,24,833,7645,20000,0.38,0.25,Residency restrictions apply.
+Honda,2014,Accord Coupe CVT LX-S,209,2999,36,1000,10523,36000,0.29,0.15,Available in 29 states plus Northern California and DC.
+Honda,2014,Accord Coupe CVT LX-S,209,2499,36,1000,10023,36000,0.28,0.15,Available in 23 states plus Southern California.
+Honda,2014,Accord Sedan CVT LX,199,1999,36,1000,9163,36000,0.25,0.15,Available in 23 states plus Southern California.
+Honda,2014,Accord Sedan CVT LX,199,2499,36,1000,9663,36000,0.27,0.2,Available in 29 states plus Northern California and DC.
+Honda,2014,CR-V 2WD LX,209,2499,36,1000,10023,36000,0.28,0.15,Available in 29 states plus Northern California and DC.
+Honda,2014,CR-V 2WD LX,209,1999,36,1000,9523,36000,0.26,0.15,Available in 23 states plus Southern California.
+Hyundai,2014,Elantra Coupe,189,2599,36,1000,9403,36000,0.26,0.2,Disposition fees vary by state.
+Hyundai,2014,Elantra GT,189,2799,36,1000,9603,36000,0.27,0.2,Disposition fees vary by state.
+Hyundai,2014,Sonata GLS,199,2199,36,1000,9363,36000,0.26,0.2,Disposition fees vary by state.
+Hyundai,2015,Sonata GLS,199,2399,36,1000,9563,36000,0.27,0.2,Disposition fees vary by state.
+Jeep,2014,Cherokee Sport FWD,199,3999,36,833,11163,30000,0.37,0.25,Offer varies by region. 395 disposition fee at lease end.
+Kia,2014,Soul LX Auto,239,-,39,1000,9321,39000,0.24,0.2,400 disposition fee at lease end.
+Kia,2015,Optima XL Auto,249,-,39,1000,9711,39000,0.25,0.2,Disposition fees vary by state. Offer varies by region.
+Mazda,2014,Mazda 3i SV Auto 4-Dr,219,-,36,1000,7884,36000,0.22,0.15,
+Mazda,2015,Mazda 6 Sport Auto,259,-,36,1000,9324,36000,0.26,0.15,
+Mini,2014,Clubman Cooper,207,2867,36,833,10319,30000,0.34,0.2,350 disposition fee at lease end.
+Mini,2014,Countryman Cooper,207,2972,36,833,10424,30000,0.35,0.2,350 disposition fee at lease end.
+Mini,2014,Paceman Cooper,207,2787,36,833,10239,30000,0.34,0.2,350 disposition fee at lease end.
+Mitsubishi,2014,i-MiEV ES,189,3388,36,1000,10192,36000,0.28,0.2,Through Ally Financial. Not available through Mitsubishi Motors Credit.
+Mitsubishi,2014,Lancer Sportback ES CVT,199,2898,24,1000,7674,24000,0.32,0.15,Through Mitsubishi Motors Credit
+Mitsubishi,2014,Lancer Sportback ES CVT,199,2898,24,1000,7674,24000,0.32,0.2,Through Ally Financial. 
+Mitsubishi,2014,Outlander 2.4 ES 2WD,209,3333,36,1000,10857,36000,0.3,0.2,Through Ally Financial.
+Mitsubishi,2014,Outlander 2.4 ES 2WD,209,3358,36,1000,10882,36000,0.3,0.15,Through Mitsubishi Motors Credit.
+Nissan,2014,Altima 2.5 S,189,1999,36,1000,8803,36000,0.24,0.15,Residency restrictions apply.
+Nissan,2014,Altima 2.5 S,189,2699,36,1000,9503,36000,0.26,0.15,Residency restrictions apply.
+Nissan,2014,Juke S FWD,189,2999,39,1000,10370,39000,0.27,0.15,Residency restrictions apply.
+Nissan,2014,Leaf S,199,1999,36,1000,9163,36000,0.25,0.15,Residency restrictions apply.
+Nissan,2014,Rogue Select S FWD,179,2599,36,1000,9043,36000,0.25,0.15,Residency restrictions apply.
+Nissan,2014,Sentra SV,209,-,36,1000,7524,36000,0.21,0.15,Residency restrictions apply. Disposition fees may apply.
+Scion,2014,tC 10 Series,205,1999,24,1000,6919,24000,0.29,0.15,
+Scion,2014,tC 10 Series,201,1999,36,1000,9235,36000,0.26,0.15,
+Scion,2014,tC 18-inch Wheels,182,1999,24,1000,6367,24000,0.27,0.15,
+Scion,2014,tC 18-inch Wheels,179,1999,36,1000,8443,36000,0.23,0.15,
+Scion,2014,xB,200,1999,24,1000,6799,24000,0.28,0.15,
+Scion,2014,xB,189,1999,36,1000,8803,36000,0.24,0.15,
+Scion,2015,tC Panorama Roof,203,1999,24,1000,6871,24000,0.29,0.15,
+Scion,2015,tC Panorama Roof,199,1999,36,1000,9163,36000,0.25,0.15,
+Subaru,2014,Impreza 2.0i Premium EJD,208,-,36,1000,7488,36000,0.21,0.15,Regional offer. Not available in Hawaii.
+Subaru,2014,Impreza 2.0i Premium ELD,217,-,36,1000,7812,36000,0.22,0.15,Regional offer. Not available in Hawaii.
+Subaru,2014,Legacy 2.5i 6MT,189,1989,36,1000,8793,36000,0.24,0.15,Regional offer. Not available in Hawaii.
+Subaru,2014,Legacy 2.5i Premium,243,-,36,1000,8748,36000,0.24,0.15,Regional offer. Not available in Hawaii.
+Subaru,2014,Legacy 2.5i Limited,291,-,36,1000,10476,36000,0.29,0.15,Regional offer. Not available in Hawaii.
+Toyota,2014,Camry LE,219,999,36,1000,8883,36000,0.25,0.15,Regional offer
+Toyota,2014,Corolla S Plus,199,999,36,1000,8163,36000,0.23,0.15,Regional offer 
+Toyota,2014,Corolla LE Plus,199,999,36,1000,8163,36000,0.23,0.15,Regional offer 
+Toyota,2014,Corolla LE Plus,199,999,24,1000,5775,24000,0.24,0.15,Regional offer 
+Toyota,2014,Prius,209,2199,24,1000,7215,24000,0.3,0.15,Regional offer
+Toyota,2014,Prius C,199,999,36,1000,8163,36000,0.23,0.15,Regional offer 
+Toyota,2014,RAV4,199,1999,24,1000,6775,24000,0.28,0.15,Regional offer
+Toyota,2014.5,Camry LE,189,1999,24,1000,6535,24000,0.27,0.15,Regional offer
+Toyota,2014.5,Camry LE,219,999,36,1000,8883,36000,0.25,0.15,Regional offer 
+Volkswagen,2014,Passat 1.8T S (Manual),179,2349,36,1000,8793,36000,0.24,0.2,350 disposition fee at lease end.
+Volkswagen,2014,Tiguan S 2.0T,209,2999,36,1000,10523,36000,0.29,0.2,350 disposition fee at lease end.
