@@ -1730,7 +1730,7 @@ gda.newChoroplethChart = function(iChart, cf) {
     gda.addOverride(chtObj,"GeoJSON_Property_Accessor","");
 
     _.each(_.rest(chtObj.cnameArray,1), function(sCname) {
-        chtObj.overrides[sCname] = "";
+        gda.addOverride(chtObj,sCname,"");
     });
     }
 }
