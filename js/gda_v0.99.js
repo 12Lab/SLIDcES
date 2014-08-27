@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "46",
+    minor:   "47",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -188,6 +188,13 @@ gda.utils.titleFunction = function (d,v,i) {
             } else
                 return "(N/A)";
         };
+gda.utils.addDateOptions = function(d,base) {
+    d.Year = d3.time.year(base);
+    d.Quarter = 1+Math.floor(d3.time.month(base).getMonth()/3); // this one isn't supported by D3 (yet).
+    d.Month = d3.time.month(base);
+    d.Week = d3.time.week(base);
+    d.Day = d3.time.day(base);
+};
 
 gda.addOverride = function( anObj, key, value ) {
         if (!anObj.overrides) 
