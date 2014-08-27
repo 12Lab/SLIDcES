@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "45",
+    minor:   "46",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -1613,8 +1613,8 @@ gda.newYHistChart = function(iChart, cf) {
 }
 
 gda.isDate = function (cname) {
-    var bRet = false;
-    if (cname.indexOf("date")>=0 || cname.indexOf("Date")>=0 || cname.indexOf("Year")>=0 || cname.indexOf("Quarter")>=0 || cname.indexOf("Month")>=0 || cname.indexOf("Week")>=0 || cname.indexOf("Day")>=0 || cname.indexOf("Start")>=0 || cname==="dd") {
+    var bRet = false; // need more sophisticated method, breaks ServiceInst. 
+    if (cname.indexOf("date")>=0 || cname.indexOf("Date")>=0 || cname.indexOf("Year")>=0 || cname.indexOf("Quarter")>=0 || cname.indexOf("Month")>=0 || cname.indexOf("Week")>=0 || cname.indexOf("Day")===0 || cname.indexOf("Start")>=0 || cname.indexOf("_Complete")>=0 || cname==="dd") {
         bRet = true;
     }
     return bRet;
@@ -1949,6 +1949,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
     var xmax = dDims[0].top   (1)[0][v0];
     var xu = dc.units.ordinal();
     var xe = null;  // default
+    var xs = d3.scale.ordinal();
     if (dDims[0].isDate) {
         xe = d3.time.month;
         if (chtObj.overrides["timefield"]) {
@@ -1970,12 +1971,19 @@ gda.newTimelineDisplay = function(iChart, dEl) {
             xmin = xe.floor(xmin);
             xmax = xe.ceil(xmax);
         }
-        var xs = d3.time.scale().domain([xmin,xmax]);
+        xs = d3.time.scale().domain([xmin,xmax]);
         console.log("time scale " + xmin + " to " + xmax);
+    }
+    else {
+        xs = d3.time.scale().domain([xmin,xmax]);
     }
 
     //console.log("add bar for Timeline @ " + chtObj.dElid);
     var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
+    ftX.stdMarginBottom = ftX.margins().bottom;
+    ftX.margins().bottom = ftX.stdMarginBottom + 30;    // temp workaround.
+    // setting that in the renderlet is 'too late' ? not working.
+
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
     ftX
@@ -2005,6 +2013,25 @@ gda.newTimelineDisplay = function(iChart, dEl) {
           ftX .xAxis().ticks(xu,1);//d3.time.months,1);
         }
     }
+
+    ftX // new 8/25/2014
+        .renderlet(function(c) {
+            //if (c.xAxis().ticks()>9)
+            //var st=   
+                c.svg().select('g').select('.axis.x').selectAll('.tick').select('text')
+                    //;
+//            c.margins().bottom = c.stdMarginBottom + 30;
+// would like to _.each(st,...
+// and measure the text length, find max, and set margin based on that,
+// but the simple test case of .bottom= above doesn't work here.
+            //st
+                    .attr("dx", "-.8em")                    // -.8
+                    .attr("dy", "-.50em")    // .35          // .15
+                    .attr("transform", function(d) {        // -45
+                            return "rotate(-90)";
+                        })
+                    .style("text-anchor", "end");
+        })
 
 // chart.gdca_toFilter needs to be set by user (via title) through 'Timeline' editing interface.
     // this and another chart. assume for now these two are 0,1 or 1,0
@@ -2830,7 +2857,7 @@ gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, s
     return iTable;
 
 function isHttp(d) {
-    return (typeof(d)==="string" && (d.indexOf("mailto:")===0 || d.indexOf("http:")===0 || d.indexOf("https:")===0 || d.indexOf("file:")===0) || d.indexOf(".html")>0);
+    return (typeof(d)==="string" && (d.indexOf("mailto:")===0 || d.indexOf("http:")===0 || d.indexOf("https:")===0 || d.indexOf("file:")===0 || d.indexOf(".html")>0 ));
 }
 function createLink(d) {
     return '<a href=\"' + d + '\" target=\"_blank\">' + d + "</a>";
