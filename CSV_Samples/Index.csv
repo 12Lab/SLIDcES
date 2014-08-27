@@ -8,5 +8,7 @@ Tests,Scatter,/GDCA_Html/TestScatter.html
 Tests,Choropleth,/GDCA_Html/TestChoropleth.html
 Samples,Auto Leases,/GDCA_Html/Leases2014Jul.html
 Samples,Auto Leases,/GDCA_Html/Leases2014Aug.html
+Samples,Auto Leases,/GDCA_Html/AllLeases.html
 Editor,Prototype,Edit.html
 Project,Notes,/GDCA_Html/VisAnalTable.html
+AllInclusive,All,/GDCA_Html/AllEverything.html
