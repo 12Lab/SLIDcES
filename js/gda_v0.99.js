@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "47",
+    minor:   "48",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -56,8 +56,8 @@ var gda = {
     bFirstRowOnly : false,
 
     // registered simple or aggregated charts
-    availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "ScatterHist", "Choropleth"], // "YHist" //  
-    //availCharts : ["Choropleth"],
+    availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "Bubble", "ScatterHist", "Choropleth"], // "YHist" //  
+    //availCharts : ["Bar","Bubble"],
     numFormats : [".2f", "%Y%m%d", ".0f" ],
     defFormat : 0,
     runGrpNumber : 0
@@ -1388,10 +1388,10 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
 
     if (columns && columns.length>0) {
         _.each(gda.availCharts, function(chartType) {
-            gda.newChart(cf, "Choice", columns, sChtGroup, chartType,
-                                      {"nBins":"10",
-                                       "wChart":"200",
-                                       "hChart":"150"});  // gda overrides
+            gda.newChart(cf, "Choice", columns, sChtGroup, chartType,{});
+                            //        {"nBins":"10",
+                            //         "wChart":"200",
+                            //         "hChart":"150"});  // gda overrides
         });
         // need some way to choose from these. Could be dependent on how they are presented.
         // such as a column, or grid; integrate the radio button into the display, flagged
@@ -1654,6 +1654,41 @@ gda.newLineChart = function(iChart, cf) {
 
 //    chtObj.wChart = 800;
 //    chtObj.hChart = 200;
+    }
+}
+
+gda.newBubbleChart = function(iChart, cf) {
+    var chtObj=gda.charts[iChart];
+
+    // would also like to add: d.month = d3.time.month(d.dd); 
+    // should factor out dDims to allow date specification, poss in dataSource
+
+    if (chtObj.cnameArray.length>0) {	// for now, 0
+        var xDimension = gda.dimensionByCol(
+                                //chtObj.overrides["timefield"],
+                                chtObj.cnameArray[0],
+                                chtObj.cf);
+          if (gda.isDate(chtObj.cnameArray[0]))
+            xDimension.isDate = true;
+        chtObj.dDims.push(xDimension);
+	var dXGrp = xDimension.group().reduce(
+                function (p, v) {
+                    p.amountRaised += +v[chtObj.cnameArray[1]];//"Raised"];
+                    p.deals += +v[chtObj.cnameArray[2]];//"Deals"];
+                    return p;
+                },
+                function (p, v) {
+                    p.amountRaised -= +v[chtObj.cnameArray[1]];//"Raised"];
+                    if (p.amountRaised < 0.001) p.amountRaised = 0; // do some clean up
+                    p.deals -= +v[chtObj.cnameArray[2]];//"Deals"];
+                    return p;
+                },
+                function () {
+                    return {amountRaised: 0, deals: 0}
+                }
+        );
+	
+        chtObj.dGrps.push(dXGrp); 
     }
 }
 
@@ -1934,6 +1969,105 @@ gda.newLineDisplay = function(iChart, dEl) {
     }
     return false;
 }
+
+gda.newBubbleDisplay = function(iChart, dEl) {
+    var chtObj=gda.charts[iChart];
+    var dDims = chtObj.dDims;
+
+    if (dDims.length>0) {	// need cnamearray test > 2
+    var cnameArray = chtObj.cnameArray;
+    var cname = "";
+    _.each(cnameArray, function(sCname,i) {
+        if (i>0)
+        cname = cname + ((cname.length>0) ? "," : "") + sCname;
+    });
+
+    var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
+    if (!dDims[0].isDate)
+    {
+        if (isNaN(xmin)) xmin = 0;
+    }
+    var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
+
+    var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+    //console.log("gda nSD: _id " + dElP.id + " i " + iChart );
+    
+    addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+    //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
+    gda.charts[iChart].dElid = dElP.id;
+
+    var xs = d3.scale.ordinal();
+    var xu = dc.units.ordinal();
+    //var xu = dc.units.integers;
+    if (dDims[0].isDate) {
+        xs = d3.time.scale().domain([xmin,xmax]);
+        xu = d3.time.days;  // configurable, or automatic based on xmax-xmin?
+    }
+
+    //console.log("add series for Series @ " + chtObj.dElid);
+    var ftX = dc.bubbleChart("#"+chtObj.dElid,chtObj.sChartGroup)
+    chtObj.chart = ftX;        // for now. hold ref
+    ftX.gdca_chart = chtObj;
+    ftX
+        .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+	.margins({top: 10, right: 50, bottom: 30, left: 60})
+        .width(chtObj.wChart)    // same as scatterChart
+        .height(chtObj.hChart)
+   //   .x(xs.domain([xmin,xmax]))
+   //   .xUnits(xu)
+     // .x(d3.scale.linear().domain([xmin,xmax]))
+     // .x(d3.scale.ordinal().domain([xmin,xmax]))
+     // .xUnits(dc.units.ordinal)
+   //   .seriesAccessor(function(d) {
+   //           return d.value; })
+   //   .keyAccessor(function(d) {
+   //           return d.key; })
+     // .renderHorizontalGridLines(true)
+     // .renderVerticalGridLines(true)
+        .dimension(dDims[0])
+        .group(chtObj.dGrps[0])
+	.colors(d3.scale.category10())
+	.keyAccessor(function (p) {
+	    return p.value["amountRaised"];
+	})
+	.valueAccessor(function (p) {
+	    return p.value["deals"];
+	})
+	.radiusValueAccessor(function (p) {
+	    return p.value["amountRaised"];
+	})
+	.x(d3.scale.linear().domain([0, 5000]))
+	.r(d3.scale.linear().domain([0, 4000]))
+	.minRadiusWithLabel(15)
+	.elasticY(true)
+	.yAxisPadding(100)
+	.elasticX(true)
+	.xAxisPadding(200)
+	.maxBubbleRelativeSize(0.07)
+	.renderHorizontalGridLines(true)
+	.renderVerticalGridLines(true)
+	.renderLabel(true)
+	.renderTitle(true)
+	.title(function (p) {
+	    return p.key
+		    + "\n"
+		    + "Amount Raised: " + gda.numberFormat(p.value["amountRaised"]) + "M\n"
+		    + "Number of Deals: " + gda.numberFormat(p.value["deals"]);
+	});
+    ftX
+	.yAxis().tickFormat(function (s) {
+	    return s + " deals";
+	});
+    ftX
+	.xAxis().tickFormat(function (s) {
+	    return s + "M";
+	});
+
+        return true;
+    }
+    return false;
+}
+
 
 gda.newTimelineDisplay = function(iChart, dEl) {
     var chtObj=gda.charts[iChart];

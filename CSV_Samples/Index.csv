@@ -6,9 +6,11 @@ Tests,Bar,/GDCA_Html/TestBar.html
 Tests,AllTests,/GDCA_Html/TestAll.html
 Tests,Scatter,/GDCA_Html/TestScatter.html
 Tests,Choropleth,/GDCA_Html/TestChoropleth.html
+Tests,Bubble,/GDCA_Html/TestBubble.html
 Samples,Auto Leases,/GDCA_Html/Leases2014Jul.html
 Samples,Auto Leases,/GDCA_Html/Leases2014Aug.html
 Samples,Auto Leases,/GDCA_Html/AllLeases.html
+Samples,US Venture Capital Landscape 2011,/GDCA_Html/USVentureCapital.html
 Editor,Prototype,Edit.html
 Project,Notes,/GDCA_Html/VisAnalTable.html
 AllInclusive,All,/GDCA_Html/AllEverything.html

@@ -3,7 +3,7 @@ Information,Type,Description,Privacy,Pricing Model,Package URL
 "Bostock, NYT",Author,"Author, NYT published (principle employment is graphics)",,Free,http://carpetbagger.blogs.nytimes.com/author/mike-bostock/
 D3.js,Library,"D3 created by Mike Bostock, open sourced by The Times.",Any,Free,http://D3js.org/
 DC.js,Library,D3+Crossfilter,Any,Free,http://dc-js.github.io/dc.js/
-BI Frameworks,General Frameworks,BIV,,,http://en.wikipedia.org/wiki/Business_intelligence_tools
+BI Frameworks,Info,General Frameworks,,,http://en.wikipedia.org/wiki/Business_intelligence_tools
 Stat Packages,General Packages,Stats,,,http://en.wikipedia.org/wiki/Comparison_of_statistical_packages
 Web Frameworks,General Frameworks,Web,,,http://en.wikipedia.org/wiki/Comparison_of_web_application_frameworks
 IgniteUI,Library,control level library,,,http://igniteui.com/application-samples
@@ -17,13 +17,14 @@ Crossfilter.js,Library,Crossfilter website,Any,Free,https://github.com/square/cr
 "Bostock, Twitter","Author, Twitter","Author, Twitter",,Free,https://twitter.com/mbostock
 Vida,BIV,"Partial, but similar",,,https://vida.io/
 StatWing,BIV,"Single Page, has Notes, Excel/PPT Export, Sharing (as web page)",Cloud,300,https://www.statwing.com/demos/dev-survey-2#workspaces/18726
-Domo,BIV,BIV,Internal,,http://www.domo.com/solution/excel-reporting-dashboard
-SiSense,BIV,BIV,,,http://www.sisense.com/
-BIME,BIV,BIV,,2160,http://www.bimeanalytics.com/index.html
+Domo,BIV,,Internal,,http://www.domo.com/solution/excel-reporting-dashboard
+SiSense,BIV,,,,http://www.sisense.com/
+BIME,BIV,,,2160,http://www.bimeanalytics.com/index.html
 Tableau,BIV,R Integration,,1000,http://www.tableausoftware.com/
-Zoho,BIV,BIV,Cloud,600,http://www.zoho.com/reports/
-Looker,BIV,BIV,,,http://www.looker.com/
-AndMore,BIV,BIV,,,http://www.getapp.com/compare/m/91545+90800
-Animetrix,BIV,BIV,,,http://anametrix.com/
-DataWrapper,BIV,BIV,,,https://www.datawrapper.de/
-PS OpenBI,BIV,"Single Page",Any,Free,https://github.com/publicsoftware/OpenBI
+Zoho,BIV,,Cloud,600,http://www.zoho.com/reports/
+Looker,BIV,,,,http://www.looker.com/
+AndMore,BIV,,,,http://www.getapp.com/compare/m/91545+90800
+Animetrix,BIV,,,,http://anametrix.com/
+DataWrapper,BIV,,,,https://www.datawrapper.de/
+PS OpenBI,BIV,Single Page,Any,Free,https://github.com/publicsoftware/OpenBI
+WebPivotTable,PivotTable,,,Free,http://webpivottable.com/demo
