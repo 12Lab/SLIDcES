@@ -1,16 +1,4 @@
-Category,Type,Link
-Tests,Line,/GDCA_Html/TestLine.html
-Tests,Pareto,/GDCA_Html/TestPareto.html
-Tests,ScatterHist,/GDCA_Html/TestScatterHist.html
-Tests,Bar,/GDCA_Html/TestBar.html
-Tests,AllTests,/GDCA_Html/TestAll.html
-Tests,Scatter,/GDCA_Html/TestScatter.html
-Tests,Choropleth,/GDCA_Html/TestChoropleth.html
-Tests,Bubble,/GDCA_Html/TestBubble.html
-Samples,Auto Leases,/GDCA_Html/Leases2014Jul.html
-Samples,Auto Leases,/GDCA_Html/Leases2014Aug.html
-Samples,Auto Leases,/GDCA_Html/AllLeases.html
-Samples,US Venture Capital Landscape 2011,/GDCA_Html/USVentureCapital.html
-Editor,Prototype,Edit.html
-Project,Notes,/GDCA_Html/VisAnalTable.html
-AllInclusive,All,/GDCA_Html/AllEverything.html
+Title,Category,Type,Link
+SLIDcES,Assess,Library,http://the12lab.com/SLIDcES.html
+B4a-Bridge-Relay,Product,"App, Android",http://the12lab.com/b4a-bridge-relay-by-12lab/
+MIR-Blue,Product,"App, Android",http://themr23.wordpress.com/2013/09/07/mir-blue/
