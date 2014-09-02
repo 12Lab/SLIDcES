@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "48",
+    minor:   "49",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -373,16 +373,19 @@ gda.slide = function( _slide ) {
     return _aSlide;
 };
 
-gda.applySlideFilters = function() {
+gda.applySlideFilters = function(filters) {
+    console.log("aSF: " + JSON.stringify(filters));
     if (gda.cf) {
-        if (gda._slide().filters) {
-            var filters = gda._slide().filters;
+    console.log("aSF: have gdf");
+    if (!arguments.length) filters = gda._slide().filters;
+        console.log("aSF: now " + JSON.stringify(filters));
+        if (filters) {
             _.each(filters, function(f,key) {
-                if (f.length>0) {
+                //if (f.length>0)
+                 {
                     var _aSel = _.findWhere(gda.selCharts, {"Title": key});
                     if (_aSel) {
                         _aSel.chart.filterAll();
-                        //_aSel.chart.replaceFilter(f);
                         _.each(f, function(value) {
                             _aSel.chart.filter(value);
                         });
@@ -391,7 +394,6 @@ gda.applySlideFilters = function() {
                         var _aChart = _.findWhere(gda.charts, {"Title": key});
                         if (_aChart) {
                             _aChart.chart.filterAll();
-                            //_aChart.chart.replaceFilter(f);
                             _.each(f, function(value) {
                                 _aChart.chart.filter(value);
                             });
@@ -514,6 +516,10 @@ gda.addEditsToChart = function(_aChart) {
 							gda.addTextEntry(dTd, key, value,
 									function(newVal, fieldName) {
 										//console.log("field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
+                                        if (typeof(newVal)==="string") {
+                                            if (newVal === "false") newVal = false;     // otherwise "false" is 'true'
+                                            else if (newVal === "true") newVal = true;  // for consistency
+                                        }
 										_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
 
 										// reformat slide/json to store charts as named objects, rather than array, simplifies this kind of update
@@ -646,14 +652,16 @@ gda.showFilters = function() {
         _.each(gda.charts, function(aChart,i) {
             var c = aChart.chart;
             if (c.filter) { //c.hasFilter()) { // }
-                var dTxtT = gda.addTextNode(dEl,aChart.Title + " : " + JSON.stringify(aChart.cnameArray) + " : " + c.filters()); // and what is c.filters() in comparison
+                var fv = c.filters();
+                var dTxtT = gda.addTextNode(dEl,aChart.Title + " : " + JSON.stringify(aChart.cnameArray) + " : " + fv); // and what is c.filters() in comparison
                 var dElBr = gda.addElement(dEl,"br");
             }
         });
         _.each(gda.selCharts, function(aChart,i) {
             var c = aChart.chart;
             if (c.filter) { //c.hasFilter()) { // }
-                var dTxtT = gda.addTextNode(dEl,aChart.Title + " : " + JSON.stringify(aChart.cnameArray) + " : " + c.filters()); // and what is c.filters() in comparison
+                var fv = c.filters();
+                var dTxtT = gda.addTextNode(dEl,aChart.Title + " : " + JSON.stringify(aChart.cnameArray) + " : " + fv); // and what is c.filters() in comparison
                 var dElBr = gda.addElement(dEl,"br");
             }
         });
@@ -664,7 +672,8 @@ gda.showFilter = function(c,f) {
     var dEl;// = document.getElementById('MySelectors');
     if (dEl) {
         if (c.hasFilter()) {
-        var dTxtT = gda.addTextNode(dEl,c.gdca_chart.Title + " : " + c.filters());
+        var fv = c.filters();
+        var dTxtT = gda.addTextNode(dEl,c.gdca_chart.Title + " : " + fv);
         var dElBr = gda.addElement(dEl,"br");
         }
         else {
@@ -673,7 +682,8 @@ gda.showFilter = function(c,f) {
         }
     }
     if (c.gdca_chart) {
-        gda._slide().filters[c.gdca_chart.Title] = c.filters();
+        var fv = c.filters();
+        gda._slide().filters[c.gdca_chart.Title] = fv;
         if (c.gdca_chart.filterEl) {
             c.gdca_chart.filterEl.innerHTML = "";
 			var txt = gda._slide().filters[c.gdca_chart.Title];
@@ -699,7 +709,7 @@ gda.regenerateTable = function(bShowTable) {
 
     var diff = _.difference(gda._slide().columns,gda.myCols.csetupHiddenTableCols);
     gda.dateDimension = gda.cf.dimension(function (d) {
-                return d[gda.myCols.csetupSortTableCols[0]];//d.dd; // just first one, for now
+                return d[gda.myCols.csetupSortTableCols[0]]; // just first one, for now
             });
     var iTable = gda.createTable(gda.cf, gda.dateDimension, diff, sChartGroup, gda._slide().bShowLinksInTable, JSON.parse(JSON.stringify(gda.myCols))  );// myCols changes, need to retain state
     gda.newTableDisplay(s8,iTable);
@@ -1009,6 +1019,7 @@ if (false) {
 gda.slides = function() {
     
     gda.slideRegistry.clear();
+    console.log("gda.slides: ready ===============================1");
     return {
         clear: function() {
             gda.slideRegistry.clear();
@@ -1048,7 +1059,8 @@ gda.slides = function() {
         //  if (dElN) { gda._anchorNav = dElN; }
         //  if (dElS) { gda._anchorSlide = dElS; }
         //},
-        run: function(slidespath,dElN,dElS) {
+        run: function(slidespath,dElN,dElS,optFilters) {
+            console.log("optFilters: ",JSON.stringify(optFilters));
             //sChartGroup = sChartGroupRoot + gda.runGrpNumber;   // temp hack to try mult runs
             //console.log("sCG " + sChartGroup + ", " + gda.runGrpNumber);
             //gda.runGrpNumber++;
@@ -1061,6 +1073,13 @@ gda.slides = function() {
 //    gda.view.append();
             //gda.slides.show();
              gda.slidesLoadImmediate(slidespath);    // add slidepath immediate load
+             if (optFilters) {
+                console.log("optFilters");
+                //gda.applySlideFilters (optFilters);
+                if (typeof(optFilters)==="string")
+                    optFilters = JSON.parse(optFilters);
+                gda.deferredHash = optFilters;
+             }
         },
         edit: function(dElC,dElN,dElS) {   // control
             gda._allowEdit = true;
@@ -1166,6 +1185,7 @@ gda.slides = function() {
         }
     };
     gda.slides.clear(); // initialize upon first use
+    console.log("gda.slides: ready ===============================2");
 }();
 
 //////////////
@@ -1388,10 +1408,10 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
 
     if (columns && columns.length>0) {
         _.each(gda.availCharts, function(chartType) {
-            gda.newChart(cf, "Choice", columns, sChtGroup, chartType,{});
-                            //        {"nBins":"10",
-                            //         "wChart":"200",
-                            //         "hChart":"150"});  // gda overrides
+            gda.newChart(cf, "Choice", columns, sChtGroup, chartType,
+                                      {"nBins":"10",
+                                       "wChart":"300",
+                                       "hChart":"200"});  // gda overrides
         });
         // need some way to choose from these. Could be dependent on how they are presented.
         // such as a column, or grid; integrate the radio button into the display, flagged
@@ -1695,7 +1715,6 @@ gda.newBubbleChart = function(iChart, cf) {
 gda.newTimelineChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
 
-    // would also like to add: d.month = d3.time.month(d.dd); 
     // should factor out dDims to allow date specification, poss in dataSource
 
     if (chtObj.cnameArray.length>1) {
@@ -1752,6 +1771,9 @@ gda.newParetoChart = function(iChart, cf) {
 
 gda.newRowChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
+    gda.addOverride(chtObj,"ignoreZeroValue",false);
+    gda.addOverride(chtObj,"ignoreValuesBelow",1);
+    gda.addOverride(chtObj,"ignoreKey","");
     var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
     chtObj.dDims.push(xDimension);
     var dXGrp = xDimension.group();//.top(5);// parameterize, allow adjusting n
@@ -2086,8 +2108,22 @@ gda.newTimelineDisplay = function(iChart, dEl) {
     if (!dDims[0].isDate)
     {
         if (isNaN(xmin)) xmin = 0;
+    } else
+    {
+        if (xmin === undefined) xmin = new Date();
     }
     var xmax = dDims[0].top   (1)[0][v0];
+    if (!dDims[0].isDate)
+    {
+        if (isNaN(xmax)) xmax = 0;
+    } else
+    {
+        if (xmax === undefined) {
+            var Now = new Date();
+            xmax = new Date(Now.getFullYear()+1,0,1);  //next year
+        }
+    }
+
     var xu = dc.units.ordinal();
     var xe = null;  // default
     var xs = d3.scale.ordinal();
@@ -2095,7 +2131,10 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         xe = d3.time.month;
         if (chtObj.overrides["timefield"]) {
             var p = "month";//chtObj.overrides["reportingresolution"];
-            var tInc = gda["T"+p+"IncMsecs"];   // time increment to assure max!=min
+            var tInc = gda["T"+p+"IncMsecs"];   // time increment to assure max!=min, and max is past all data (.month only covers to first day of month by default)
+                                                // this is to mask a brushing deficiency? brushing limit compare should use .month, but it appears to compare d.date to xmax.month (indirectly), instead of d.date.month
+                                                // should a keyAccessor be supplied instead?
+                                                // .round is used, so ...
             var d = xmax;//new Date(xmax);
             var t = d.getTime();
             t = t + tInc;
@@ -2131,6 +2170,9 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
         .width(chtObj.wChart)
         .height(chtObj.hChart)
+        .dimension(dDims[0])
+        .group(chtObj.dGrps[0]);
+    ftX
         .centerBar(true)
         .gap(30)
         .x(xs)//.nice())
@@ -2140,8 +2182,18 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         //.valueAccessor(function(d){
                         //return d.value;
                     //})
-        .dimension(dDims[0])
-        .group(chtObj.dGrps[0]);
+        //.keyAccessor(function(d) {
+        //    var m = d.key;
+        //    m.setMilliseconds(0);
+        //    m.setSeconds(0);
+        //    m.setMinutes(0);
+        //    m.setHours(0);
+        //    m.setDate(0); // setDays
+        //    //.get(as)Month();   // this pays a speed penalty. Prefer to just bump up the max by 1 unit.
+        //                        // harder to generalize resolution too
+        //    return m;  // build from chosen override, hardwired for test
+        //})
+        ;
     //if (dDims[0].isDate)
     {
      //   var dR = (xmax-xmin)/1000/60/60/24;
@@ -2548,9 +2600,9 @@ gda.newRowDisplay = function(iChart, dEl) {
     ftX.gdca_chart = chtObj;
     ftX
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+        .ignoreZeroValue(chtObj.overrides["ignoreZeroValue"], chtObj.overrides["ignoreValuesBelow"], chtObj.overrides["ignoreKey"] ) //true,2,"") 
         .width(chtObj.wChart)    // same as scatterChart
         .height(chtObj.hChart)        // not nearly as high
-        //.elasticY(true)
         //.x(d3.scale.ordinal().domain(dom))//[xmin,xmax]))//[xmin,xmax]))    // was linear
         //.cap(3)
         .elasticX(true)
@@ -3101,6 +3153,14 @@ gda.restoreStateDeferred = function(error, oArray) {
     {
     console.log("allDataLoaded in " + oArray[0]);
     gda.restoreStateFromObject(oArray[0]);
+    if (gda.deferredHash !== undefined && gda.deferredHash !== null) {
+        // or perhaps in restoreStateFromObject?
+        var lH = gda.deferredHash;
+        console.log("deferred Hash " + lH);
+        console.log("deferred Hash " + JSON.stringify(lH));
+        gda.deferredHash = null;
+        window.location.hash = lH;
+    }
     }
 };
 gda.restoreStateFromObject = function(o) {
