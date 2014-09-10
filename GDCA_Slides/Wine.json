@@ -1,0 +1,10 @@
+{"version": "0.099", "minor": "49.3", "branch": "gdca-dev", "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv", "slides" : [{"title":"Wine","dataprovider":"/CSV_Samples/","datafile":"wine.csv","bLoaded":true,"bListOfMany":false,"bLocalFile":true,"bAggregate":false,"_idCounter":356,"columns":["Cultivar","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12","V13","V14","_counter","_qty"],"keymap":{"Cultivar":"Cultivar","V2":"V2","V3":"V3","V4":"V4","V5":"V5","V6":"V6","V7":"V7","V8":"V8","V9":"V9","V10":"V10","V11":"V11","V12":"V12","V13":"V13","V14":"V14","_counter":"_counter","_qty":"_qty"},"filters":{"Cultivar":[],"Blank136":[]},"myCols":{"csetupDimsCols":["Cultivar"],"csetupHiddenTableCols":["_qty","_counter"],"csetupSortTableCols":["Cultivar"]},"charts":[
+{"Title":"V 2x3","myCols":{"csetupChartCols":["V2","V3"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"V 4x5","myCols":{"csetupChartCols":["V4","V5"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"V 6x7","myCols":{"csetupChartCols":["V6","V7"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"V 8x9","myCols":{"csetupChartCols":["V8","V9"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"V 10x11","myCols":{"csetupChartCols":["V10","V11"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"V 12x13","myCols":{"csetupChartCols":["V12","V13"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"V 13x14","myCols":{"csetupChartCols":["V13","V14"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"V 13x8","myCols":{"csetupChartCols":["V13","V8"]},"type":"Scatter","sChartGroup":"one"}
+],"bUseTable":true,"bShowTable":false,"bAllowOverrideChanges":false,"bAccessOverrides":false,"bShowTableColumnSelectors":false,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-09-09T02:35:21.000Z"}] }

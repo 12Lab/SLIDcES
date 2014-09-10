@@ -10,9 +10,8 @@
 <title>Ready</title>
 </head>
 <body>
+From <a href="http://little-book-of-r-for-multivariate-analysis.readthedocs.org/en/latest/src/multivariateanalysis.html">http://little-book-of-r-for-multivariate-analysis.readthedocs.org/en/latest/src/multivariateanalysis.html</a>
 <div id="Nav">
-</div>
-<div id="Edit">
 </div>
 <div id="Slide">
 </div>
@@ -36,7 +35,7 @@
 gda.dataFilter = function(data) {
     console.log("EP dataFilter");
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
-        if (data[0].year) {
+        if (data[0]["N-Cream"]) {
             _.each(data, function(d) {
             });
         }
@@ -44,10 +43,10 @@ gda.dataFilter = function(data) {
     return data;
 }
 
-var sDefaultFile = "/CSV_Samples/carsReorderedCols.csv";    // enter a csv file path here to auto-load
+var sDefaultFile = "/GDCA_Slides/WineAndCheese.json";    // enter a csv file path here to auto-load
 
 var ss = gda.slides;
-ss.edit(document.getElementById('Edit'), document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
+ss.run(sDefaultFile, document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
 
 </script>
 </body>

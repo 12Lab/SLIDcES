@@ -12,8 +12,6 @@
 <body>
 <div id="Nav">
 </div>
-<div id="Edit">
-</div>
 <div id="Slide">
 </div>
 
@@ -36,18 +34,22 @@
 gda.dataFilter = function(data) {
     console.log("EP dataFilter");
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
-        if (data[0].year) {
+        if (data[0]["N-Cream"]) {
             _.each(data, function(d) {
+                d["N-Cream"] = +d["N-Cream"]
+                d["M-Cream"] = +d["M-Cream"]
+                d["Panellist"] = +d["Panellist"]
+                d["Product number"] = +d["Product number"]
             });
         }
     }
     return data;
 }
 
-var sDefaultFile = "/CSV_Samples/carsReorderedCols.csv";    // enter a csv file path here to auto-load
+var sDefaultFile = "/GDCA_Slides/Cheese.json";    // enter a csv file path here to auto-load
 
 var ss = gda.slides;
-ss.edit(document.getElementById('Edit'), document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
+ss.run(sDefaultFile, document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
 
 </script>
 </body>

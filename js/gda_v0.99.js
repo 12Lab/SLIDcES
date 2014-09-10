@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "49",
+    minor:   "49.3",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -22,7 +22,7 @@ var gda = {
     TyearIncMsecs    : 1000*60*60*24*365, // 1 year
 
 
-    _allowEdit : true, //true,  // for charts
+    _allowEdit : false, //true,  // for charts. need to set when slide is 'selected', from bAllowOverrides, etc.
     _anchorEdit : null,     // document element, where Slide Edit controls are placed
     _anchorNav : null,      // document element, where Slide Navigation controls are placed
     _anchorSlide : null,    // document element, where the Slide is placed
@@ -178,7 +178,10 @@ gda.utils.fieldExists = function(f) {
         return true;
     };
 gda.utils.labelFunction = function (d) {
+            if (typeof(d)==="string") {
             return d.key.trim() === "" ? "(blank)" : d.key;
+            }
+            else return d.key;
         };
 gda.utils.titleFunction = function (d,v,i) {
             if (gda.utils.fieldExists(d.key) && gda.utils.fieldExists(d.value) && d.key.trim) {
@@ -1560,6 +1563,10 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
     var dElCenter = gda.addElement(dEl1, "center");
         var dFilterEl = gda.addElementWithId(dElCenter,"div",dEl.id+dc.utils.uniqueId());
 		dFilterEl.setAttribute("class","filtered")
+    if (cname === "Urgency" && gda.fieldExists(urgencyColors)) {
+        ftChart.colors(urgencyColors);
+    }
+    // else if 
     chtObj.filterEl = dFilterEl;
     return ftChart;
 }
@@ -1900,8 +1907,8 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
                 //console.log("gda aDC: _id " + doChartEl.id + " i " + iChart );
 
     var bAddedChart = gda.newDisplayDispatch(iChart, chtObj.chartType, doChartEl);
-    if (bAddedChart) {
-        if (gda._allowEdit && gda.bAccessOverrides && callback && chtObj.bChooseable === true)
+    if (bAddedChart) { // && gda.bAccessOverrides . need to set _allowEdit from bAccessOverrides
+        if (gda._allowEdit && callback && chtObj.bChooseable === true)
             gda.addRadioB(doChartEl, chtObj.chartType, gda.chart(chtObj).__dc_flag__, chtObj.chartType, chtObj.chartType, false, callback);
             gda.addElementWithId(doChartEl,"span",doChartEl.id+"controls");
             //gda.addRadioB(doChartEl, chtObj.chartType, gda.chart(chtObj).__dc_flag__, "Remove", chtObj.chartType, false, function() {// remove chart });
@@ -2613,6 +2620,9 @@ gda.newRowDisplay = function(iChart, dEl) {
 //    .xAxisLabel(chtObj.cnameArray[0])
         .group(chtObj.dGrps[0]);
     ftX .xAxis().ticks(6);
+    if (chtObj.Title === "Status" && gda.fieldExists(statusColors)) {
+        ftX.colors(statusColors);
+    }
 
         return true;
     }
@@ -2640,7 +2650,8 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
         .dimension(dDims[0]) //states) 
         .group(chtObj.dGrps[0]); //stateRaisedSum); 
 
-	var p = gda.utils.fieldExists( chtObj.overrides.GeoJSON) ? chtObj.overrides.GeoJSON : "";	// might want to use '.privproperties.' instead
+	var p = gda.utils.fieldExists( chtObj.overrides.GeoJSON) ? chtObj.overrides.GeoJSON : null;	// might want to use '.privproperties.' instead
+    if (p) {
     d3.json(p,
 			//"../JSON_Samples/geo_us-states.json",
 		   	function( statesJson) {
@@ -2667,6 +2678,7 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
 				}
     });
     return true;
+    }
     }
     return false;
 }
