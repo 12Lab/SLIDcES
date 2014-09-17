@@ -1,0 +1,8 @@
+{"version": "0.099", "minor": "50.2", "branch": "gdca-dev", "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv", "slides" :
+ [{"title":"Blank","dataprovider":"/JSON_Samples/","datafile":"yelp_test_set_business.json",
+"bLoaded":true,"bListOfMany":false,"bLocalFile":true,"bAggregate":false,"_idCounter":3616,
+"columns":["city","review_count","name","neighborhoods","type","business_id","full_address","state","longitude","stars","latitude","open","categories","_counter","_qty"],
+"keymap":{"_counter":"_counter","_qty":"_qty","city":"city","review_count":"review_count","name":"name","neighborhoods":"neighborhoods","type":"type","business_id":"business_id","full_address":"full_address","state":"state","longitude":"longitude","stars":"stars","latitude":"latitude","open":"open","categories":"categories"},"filters":{},"myCols":{"csetupDimsCols":["stars"],"csetupHiddenTableCols":[],"csetupSortTableCols":[]},"charts":[
+{"Title":"Average Rating (x-axis), Average Number of Reviews (y-axis), Number of Business'(Size)","myCols":{"csetupChartCols":["stars","review_count","_qty"]},"type":"Bubble","sChartGroup":"one"},
+{"Title":"Blank69","myCols":{"csetupChartCols":["stars"]},"type":"Hist","sChartGroup":"one"}
+],"bUseTable":true,"bShowTable":true,"bAllowOverrideChanges":false,"bAccessOverrides":true,"bShowTableColumnSelectors":true,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-09-13T17:27:04.000Z"}] }

@@ -1,0 +1,6 @@
+{"version": "0.099", "minor": "50.2", "branch": "gdca-dev", "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv", "slides" :
+ [{"title":"Blank","dataprovider":"/JSON_Samples/","datafile":"yelp_test_set_business.json",
+"bLoaded":false,"bListOfMany":false,"bLocalFile":true,"bAggregate":false,"_idCounter":1206,
+"columns":["city", "review_count", "name", "neighborhoods", "type", "business_id", "full_address", "state", "longitude", "stars", "latitude", "open", "categories","_counter","_qty"],
+"keymap":{"[":"[","_counter":"_counter","_qty":"_qty"},"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":[],"csetupSortTableCols":[]},"charts":[
+],"bUseTable":true,"bShowTable":true,"bAllowOverrideChanges":false,"bAccessOverrides":true,"bShowTableColumnSelectors":true,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-09-13T17:27:04.000Z"}] }
