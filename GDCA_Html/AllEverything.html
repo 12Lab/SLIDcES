@@ -19,6 +19,7 @@
 <script type="text/javascript" src="/js/queue.v1.min.js"></script>
 <script type="text/javascript" src="/js/moment.min.js"></script>
 
+<script type="text/javascript" src="/js/reductio.js"></script>
 <script type="text/javascript" src="/js/crossfilter.js"></script>
 
 <script type="text/javascript" src="/js/dc.js"></script>
@@ -29,6 +30,11 @@
 <script type="text/javascript" src="/js/gda_v0.99.js"></script>
 
 <script>
+
+// need to eliminate some globals first, then can use single script reference (gda_prereqLocal or gda_prereqWeb
+// script src="gda_prereqLocal.js"  /script // angle-brackets removed! eval'd in a comment
+//
+//function gda_ready() {
 
 // these could go into a shared js file, rather than the .html
 gda.dataFilter = function(data) {
