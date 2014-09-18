@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "50.6",
+    minor:   "51",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -366,7 +366,6 @@ gda.slide = function( _slide ) {
                         dElDT.setAttribute("class","row");
                             gda.addElementWithId(dEl,"div","DataTable");
 
-            var dElBr = gda.addElement(dHostEl,"br");
             var dElBr = gda.addElement(dHostEl,"br");
             var dTxtT = gda.addTextNode(dHostEl,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
     };
@@ -1584,13 +1583,13 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
     var dElCenter = gda.addElement(dEl1, "center");
         var dFilterEl = gda.addElementWithId(dElCenter,"div",dEl.id+dc.utils.uniqueId());
 		dFilterEl.setAttribute("class","filtered");
-    if (cname === "Urgency" && gda.fieldExists(urgencyColors)) {
+    if (cname === "Urgency" && gda.utils.fieldExists(urgencyColors)) {
         ftChart.colors(urgencyColors);
     }
-    else if (cname === "Escalation_Origin" && gda.fieldExists(originColors)) {
+    else if (cname === "Escalation_Origin" && gda.utils.fieldExists(originColors)) {
         ftChart.colors(originColors);
     }
-    else if (cname === "Escalation_Status" && gda.fieldExists(statusColors)) {
+    else if (cname === "Escalation_Status" && gda.utils.fieldExists(statusColors)) {
         ftChart.colors(statusColors);
     }
     chtObj.filterEl = dFilterEl;
@@ -1844,16 +1843,43 @@ gda.newChoroplethChart = function(iChart, cf) {
 // and eventually add a reference to the statistics display in the quad 4th.
 gda.newStatsChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
-    if (chtObj.cnameArray.length>0) {
-        var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf,true);
+    var cnameArray = chtObj.cnameArray;
+    if (cnameArray.length>0) {
+        gda.addOverride(chtObj,"format",".2s");
+        gda.addOverride(chtObj,"sigma","3");
+
+        var xDimension = gda.dimensionByCol(cnameArray[0],chtObj.cf,true);
         gda.charts[iChart].dDims.push(xDimension);
 
         //if (gda.isDate(chtObj.cnameArray[0]))
         //    xDimension.isDate = true;
 
     // scatterplot dim/grp
-    chtObj.statsDimension = chtObj.cf.dimension(function(d) { return [+d[chtObj.cnameArray[0]]]; });
-    chtObj.statsGroup = chtObj.statsDimension.group().reduce();
+    if (cnameArray.length>1)    // if 2nd attribute selected, use it for a dimension, for multiple stats sets
+        chtObj.statsDimension = chtObj.cf.dimension(function(d)
+                //{ return cnameArray[1]; });
+                { return +d[cnameArray[1]]; });
+    else
+        chtObj.statsDimension = chtObj.cf.dimension(function(d)
+                { return cnameArray[0]; }); // aggregates filtered population
+                //{ return +d[cnameArray[0]]; });   // by unique value 'keys' (values of cnameArray[0] in d[].
+    chtObj.statsGroup = chtObj.statsDimension.group();//.reduce();
+    var reducer;
+    reducer = reductio()
+                .count(true)
+                .sum(function(d)
+                        { return +d[cnameArray[0]]; })
+                .avg(function(d)
+                        { return +d[cnameArray[0]]; })
+                .std(function(d)
+                        { return +d[cnameArray[0]]; })
+                .max(function(d)
+                        { return +d[cnameArray[0]]; })
+                .min(function(d)
+                        { return +d[cnameArray[0]]; })
+                ;
+    chtObj.reducer = reducer;
+    reducer(chtObj.statsGroup);
     }
 }
 
@@ -2677,7 +2703,7 @@ gda.newRowDisplay = function(iChart, dEl) {
 //    .xAxisLabel(chtObj.cnameArray[0])
         .group(chtObj.dGrps[0]);
     ftX .xAxis().ticks(6);
-    if (chtObj.Title === "Escalation Status" && gda.fieldExists(statusColors)) {
+    if (chtObj.Title === "Escalation Status" && gda.utils.fieldExists(statusColors)) {
         ftX.colors(statusColors);
     }
 
@@ -2880,10 +2906,69 @@ gda.newStatsDisplay = function(iChart, dEl) {
 
     if (chtObj.cnameArray.length>0) {
 
-    var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+    var sDcData = dEl.id+dc.utils.uniqueId();
+    var dEl0 = gda.addElementWithId(dEl,"div",sDcData);
 
-	addStatsdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
-    gda.charts[iChart].dElid = dElP.id;
+        var dTb = gda.addElement(dEl0,"table");
+            var dTr = gda.addElement(dTb,"tr");
+                var dTd = gda.addElement(dTr,"td");
+                    var dStng = gda.addElement(dTd, "strong");
+                    var dTxtT = gda.addTextNode(dStng,chtObj.Title);
+            var dTr = gda.addElement(dTb,"tr");
+                var dTd = gda.addElement(dTr,"td");
+
+                    var dEl1 = gda.addElement(dTd,"div");
+
+                    dEl1.setAttribute("class","dc-"+sDcData+"-stats");
+                    var dTb = gda.addElement(dEl1,"table");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","count-stat");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," count ");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","mean-stat");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," mean ");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","std-stat");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," std ");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","max-stat");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," max ");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","min-stat");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," min ");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","pNsigma-stat");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," +Nsigma ");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," Nsigma=");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","Nsigma-stat");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dSpan = gda.addElement(dTd,"span");
+                                dSpan.setAttribute("class","mNsigma-stat");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dTxtT = gda.addTextNode(dTd," -Nsigma ");
+
+    gda.charts[iChart].dElid = dEl0.id;
     
     var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
     var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
@@ -2914,6 +2999,14 @@ gda.newStatsDisplay = function(iChart, dEl) {
     //statsChart
     //.dimension(chtObj.statsDimension)
     //.group(chtObj.statsGroup);
+
+    dc.dataStats(".dc-"+sDcData+"-stats", chtObj.sChartGroup)
+    .dimension(chtObj.statsDimension)//chtObj.cf)
+    .group(chtObj.statsGroup)//chtObj.cf.groupAll());
+    .formatNumber(d3.format(chtObj.overrides["format"]))//".3s"))
+    .sigma(chtObj.overrides["sigma"])//2);
+
+    // if cnameArray.length>1, [1] is "key", use table display?
 
         return true;
     }
@@ -3071,8 +3164,7 @@ gda.newTableDisplay = function(dEl, iChart) {
     // need to construct the doc ids, and the table.
     var chtObj=gda.tables[iChart];
     var chartType = "tables";
-    var sDcData = dEl.id+dc.utils.uniqueId();//iChart;
-    //console.log("gda nTD: _id " + sDcData + " i " + iChart );
+    var sDcData = dEl.id+dc.utils.uniqueId();
 
     var dEl0 = gda.addElementWithId(dEl,"div",sDcData);
 

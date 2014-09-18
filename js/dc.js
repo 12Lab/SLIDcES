@@ -20,7 +20,7 @@ dc = (function(){
 'use strict';
 
 /**
-#### Version 2.0.0-dev
+#### Version 2.0.0-dev-tableHeaders-rowIgnore-Stats
 
 The entire dc.js library is scoped under **dc** name space. It does not introduce anything else into the global
 name space.
@@ -4222,6 +4222,118 @@ dc.lineChart = function (parent, chartGroup) {
             return l;
         });
     });
+
+    return _chart.anchor(parent, chartGroup);
+};
+
+/**
+## Statistic Widget
+
+Includes: [Base Mixin](#base-mixin)
+
+Statistics is a simple widget designed to display statistics on the data set records selected
+by the current filters. Once created Statistics widget will automatically update the text content of the following elements
+under the parent element.
+
+* ".count-stat"   - count of records for filtered dimension
+* ".mean-stat"    - average value of records for filtered dimension
+* ".std-stat"     - standard deviation of records for filtered dimension
+* ".max-stat"     - max of records for filtered dimension
+* ".min-stat"     - min of records for filtered dimension
+* ".pNsigma-stat" - +3sigma of records for filtered dimension
+* ".mNsigma-stat" - -3sigma of records for filtered dimension
+* ".Nsigma-stat"  - sigma coefficient
+
+Examples:
+
+* [SLIDcES](http://the12lab.com/GDCA_Html/TestStats.html)
+
+#### dc.dataStats(parent[, chartGroup])
+Create a data count widget instance and attach it to the given parent element.
+
+Parameters:
+
+* parent : string - any valid d3 single selector representing typically a dom block element such as a div.
+* chartGroup : string (optional) - name of the chart group this chart instance should be placed in. Once a chart is placed
+   in a certain chart group then any interaction with such instance will only trigger events and redraw within the same
+   chart group.
+
+Return:
+A newly created data count widget instance
+
+#### .dimension([value]) - **mandatory**
+    Set or get dimension attribute of a chart. In dc a dimension can be any valid
+    [crossfilter dimension](https://github.com/square/crossfilter/wiki/API-Reference#wiki-dimension). If the value is given,
+    then it will be used as the new dimension.
+
+    If no value specified then the current dimension will be returned.
+
+#### .group([value, [name]]) - **mandatory**
+    Set or get group attribute of a chart. In dc a group is a
+    [crossfilter group](https://github.com/square/crossfilter/wiki/API-Reference#wiki-group). Usually the group should be
+    created from the particular dimension associated with the same chart. If the value is given, then it will be used as
+    the new group.
+
+#### .sigma([value])
+    Set or get the sigma coefficient used to determine +-(n)sigma from the population
+
+```js
+var ndx = crossfilter(data);
+var all = ndx.groupAll();
+
+dc.dataStats(".dc-data-stats")
+    .dimension(ndx)
+    .group(all);
+```
+
+**/
+dc.dataStats = function(parent, chartGroup) {
+    var _formatNumber = d3.format(".2s");
+    var _chart = dc.baseMixin({});
+    var _sigma = 3;
+
+    _chart._doRender = function() {
+        var tI = _chart.group().top(Infinity);  // if > 1 something is wrong, need table form then.
+        if (tI.length === 1) {
+        var vStats = tI[0].value;
+        _chart.selectAll(".count-stat").text(vStats.count);//17);//_formatNumber(_chart.dimension().size() ));
+        _chart.selectAll(".mean-stat").text(_formatNumber(vStats.avg));//3.2));//_chart.dimension().size() ));
+        _chart.selectAll(".std-stat").text(_formatNumber(vStats.std));//1.7));//_chart.group().value()));
+        _chart.selectAll(".max-stat").text(_formatNumber(vStats.max));//4.1));//_chart.group().value()));
+        _chart.selectAll(".min-stat").text(_formatNumber(vStats.min));//1.1));//_chart.group().value()));
+        _chart.selectAll(".pNsigma-stat").text(_formatNumber(vStats.avg+_sigma*vStats.std));//4.3));//_chart.group().value()));
+        _chart.selectAll(".mNsigma-stat").text(_formatNumber(vStats.avg-_sigma*vStats.std));//2.0));//_chart.group().value()));
+        _chart.selectAll(".Nsigma-stat").text((_sigma));//_chart.group().value()));
+        }
+
+        return _chart;
+    };
+
+    _chart._doRedraw = function(){
+        return _chart._doRender();
+    };
+
+    /**
+    #### .sigma([value])
+    Get or set the sigma coefficient used to determine population +-(n) sigma values
+
+    **/
+    _chart.sigma = function(s) {
+        if (!arguments.length) return _sigma;
+        _sigma = s;
+        return _chart;
+    };
+
+    /**
+    #### .formatNumber([formatter])
+    Get or set a function to format the value for the display. By default `d3.format(".2s");` is used.
+
+    **/
+    _chart.formatNumber = function (_) {
+        if (!arguments.length) return _formatNumber;
+        _formatNumber = _;
+        return _chart;
+    };
 
     return _chart.anchor(parent, chartGroup);
 };
