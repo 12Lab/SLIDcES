@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "51",
+    minor:   "55",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -51,7 +51,10 @@ var gda = {
     tables : [],
     dimensions : [],
     dateDimension : null,
-    bShowTable : false,  // move to slide !  yet, it is nice to be able to show/hide it when desired.
+                                // current slide's state
+    bShowTable : false,         // show a data table ?
+    bShowDataSource : false,    // offset interface to choose a(nother) data file?
+    bShowSlidesSource : false,  // offer interface to view other slide sets?
     bAccessOverrides: false,
     bFirstRowOnly : false,
     nFirstRows : 100,
@@ -129,11 +132,14 @@ gda.newSlideState = function() {
     // table related, refactor into table
     _aSlide.bUseTable = false;          // whether table should be used/allowed on this slide
     _aSlide.bShowTable = false;          // whether table should be shown on this slide
+    _aSlide.bShowDataSource = false;    // maybe these should be implemented as Slide overrides. However no method implemented yet to remove an override
+    _aSlide.bShowSlidesSource = false;  // offer interface to view other slide sets?
+
     _aSlide.bAllowOverrideChanges = false;
     _aSlide.bAccessOverrides = false;
     _aSlide.bShowTableColumnSelectors = true; // whether table column hide selectors should be available to user
     _aSlide.bShowLinksInTable = false;  // move to table definition when added
-
+    _aSlide.bShowPicturesInTable = false;
     return _aSlide;
 };
 
@@ -208,6 +214,7 @@ gda.utils.addDateOptions = function(d,base,tier) {
     insHere.Month = d3.time.month(base);
     insHere.Week = d3.time.week(base);
     insHere.Day = d3.time.day(base);
+    insHere.DoW = base.getDay();
 };
 
 gda.addOverride = function( anObj, key, value ) {
@@ -258,6 +265,8 @@ gda.slide = function( _slide ) {
         gda.myCols.csetupHiddenTableCols = gda._slide().myCols.csetupHiddenTableCols;
         gda.myCols.csetupSortTableCols = gda._slide().myCols.csetupSortTableCols;
         gda.bShowTable = gda._slide().bShowTable;
+        gda.bShowDataSource  = gda._slide().bShowDataSource;
+        gda.bShowSlidesSource = gda._slide().bShowSlidesSource;
 
         gda.clearWorkingState();
         _aSlide.clearDisplay();
@@ -728,7 +737,7 @@ gda.regenerateTable = function(bShowTable) {
     gda.dateDimension = gda.cf.dimension(function (d) {
                 return d[gda.myCols.csetupSortTableCols[0]]; // just first one, for now
             });
-    var iTable = gda.createTable(gda.cf, gda.dateDimension, diff, sChartGroup, gda._slide().bShowLinksInTable, JSON.parse(JSON.stringify(gda.myCols))  );// myCols changes, need to retain state
+    var iTable = gda.createTable(gda.cf, gda.dateDimension, diff, sChartGroup, gda._slide().bShowLinksInTable, gda._slide().bShowPicturesInTable, JSON.parse(JSON.stringify(gda.myCols))  );// myCols changes, need to retain state
     gda.newTableDisplay(s8,iTable);
 	console.log("renderALL gda.regenerateTable");
     dc.renderAll(sChartGroup);
@@ -824,6 +833,12 @@ gda.showTable = function() {
                     gda._slide().bShowLinksInTable, 
                     function () {
                         gda._slide().bShowLinksInTable = this.checked;
+                        gda.showTable();
+                        } );
+            gda.addCheckB(s3, "showPictures", "Display Pictures", 'objmember',
+                    gda._slide().bShowPicturesInTable, 
+                    function () {
+                        gda._slide().bShowPicturesInTable = this.checked;
                         gda.showTable();
                         } );
         }
@@ -939,12 +954,6 @@ gda.Controls = function() {
     return {
         addEditGUI: function() {
             var dHostEl = gda._anchorEdit;
-
-            //gda.addButton(dHostEl,"saveState", "Save Slides", gda.saveState);
-
-            // display a Browse control to allow selection of file/location.
-            //gda.addSlideOpen(dHostEl, "openSlides");
-            //var dEl = gda.addElementWithId(dHostEl,"span","slideFilenameDisplay");
 
             var dEl = gda.addElement(dHostEl,"br");
 
@@ -1139,15 +1148,14 @@ gda.slides = function() {
         ///////////////////////////////////////////////////////////////////
         // 
         ///////////////////////////////////////////////////////////////////
-        createContent: function() {
-            if (gda._anchorEdit) {
-            var dHostEl = gda._anchorEdit;
-
-            //var dElS = gda.addElementWithId(dHostEl,"div","slideSet");
-
-            var dEl = gda.addElement(dHostEl,"h3");
+        createContentDataSource: function(dHostEl) {
+            var dTb = gda.addElement(dHostEl,"table");  // trouble
+                var dTr = gda.addElement(dTb,"tr");
+                    var dTd = gda.addElement(dTr,"td");
+                        var dEl = gda.addElement(dTd,"h3");  //dHostEl
                 var dTxtT = gda.addTextNode(dEl,"Data Source");
-            var dTb = gda.addElement(dHostEl,"table");
+                    var dTd = gda.addElement(dTr,"td");     // added
+            var dTb = gda.addElement(dTd,"table");          // dHostEl
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         var dCEl = gda.addElementWithId(dTd,"div","dataProviderType");
@@ -1199,7 +1207,6 @@ gda.slides = function() {
                         var dEl = gda.addElementWithId(dTd,"span","dataFilenameDisplay");
                 }
             }
-        }
     };
     gda.slides.clear(); // initialize upon first use
     console.log("gda.slides: ready ===============================2");
@@ -1277,11 +1284,26 @@ gda.view = function() {
             if (docEl) {
                 docEl.innerHTML = "";
 
+                if (gda._anchorEdit || gda.bShowSlidesSource) {
+                    var dTb = gda.addElement(docEl,"table");
+                        var dTr = gda.addElement(dTb,"tr");
+                            var dTd = gda.addElement(dTr,"td");
+                                var dEl = gda.addElement(dTd,"h3");
+                                    var dTxtT = gda.addTextNode(dEl,"Slides Source");
+                            var dTd = gda.addElement(dTr,"td");
+
                 // temp; slide set open moved here to allow use in Run mode
-                gda.addSlideOpen(docEl, "openSlides");
-                var dEl = gda.addElementWithId(docEl,"span","slideFilenameDisplay");
+                                gda.addSlideOpen(dTd, "openSlides");
+                                var dEl = gda.addElementWithId(dTd,"span","slideFilenameDisplay");
                 if (gda._anchorEdit)
-                    gda.addButton(docEl,"saveState", "Save Slides", gda.saveState);
+                                    gda.addButton(dTd,"saveState", "Save Slides", gda.saveState);
+                }
+
+                // if run mode, but requested, show this next to the SlideSet chooser
+                if (!gda._anchorEdit && gda.bShowDataSource) {
+                    var dElD = gda.addElementWithId(docEl,"div","DataSource");
+                    gda.slides.createContentDataSource(dElD);
+                }
                   
                 var sl = gda.slides.list();
                 if (sl.length>1) {
@@ -1364,7 +1386,7 @@ gda.view = function() {
             if (gda._anchorEdit) {
                 gda._anchorEdit.innerHTML = "";  // call operators
                 gda.Controls.addEditGUI();
-                gda.slides.createContent();
+                gda.slides.createContentDataSource(gda._anchorEdit);
             }
             if (gda._anchorNav) {
                 gda._anchorNav.innerHTML = "";
@@ -1590,6 +1612,9 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
         ftChart.colors(originColors);
     }
     else if (cname === "Escalation_Status" && gda.utils.fieldExists(statusColors)) {
+        ftChart.colors(statusColors);
+    }
+    else if (cname === "Escalation_Max_Status" && gda.utils.fieldExists(statusColors)) {
         ftChart.colors(statusColors);
     }
     chtObj.filterEl = dFilterEl;
@@ -2706,6 +2731,9 @@ gda.newRowDisplay = function(iChart, dEl) {
     if (chtObj.Title === "Escalation Status" && gda.utils.fieldExists(statusColors)) {
         ftX.colors(statusColors);
     }
+    else if (chtObj.Title === "Max Status" && gda.utils.fieldExists(statusColors)) {
+        ftX.colors(statusColors);
+    }
 
         return true;
     }
@@ -3005,6 +3033,7 @@ gda.newStatsDisplay = function(iChart, dEl) {
     .group(chtObj.statsGroup)//chtObj.cf.groupAll());
     .formatNumber(d3.format(chtObj.overrides["format"]))//".3s"))
     .sigma(chtObj.overrides["sigma"])//2);
+    ;
 
     // if cnameArray.length>1, [1] is "key", use table display?
 
@@ -3206,7 +3235,7 @@ gda.newTableDisplay = function(dEl, iChart) {
     .columns(chtObj.colAccessor)
     // sorts by available date first unless 2+ columns are chosen, then uses the last chosen, within the date grouper
     //.sortBy(function (d) { return (chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ?+d[chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]]:d.dd; })
-    .sortBy(function (d) { return (gda.myCols.csetupSortTableCols && gda.myCols.csetupSortTableCols.length>1) ?+d[gda.myCols.csetupSortTableCols[0]]:d.dd; })
+    .sortBy(function (d) { return (gda.myCols.csetupSortTableCols && gda.myCols.csetupSortTableCols.length>0) ?+d[gda.myCols.csetupSortTableCols[0]]:d.dd; })
     .order(d3.descending);
   //  .sortValues(function(a,b) {
   //      return b - a;
@@ -3220,7 +3249,7 @@ gda.newTableDisplay = function(dEl, iChart) {
 
 // create a table object						note myCols is temporary. sorted by date unless myCols>=2 and uses [1].
                                                 // remove sDCData Table,Count later
-gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, selCols) {
+gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, bShowPicturesInTable, selCols) {
     var chtObj = new Object();
     chtObj.cnameArray = columns;        // one per 'series' in the chart, often just 1 or 2.
                                     // establishes the dimensionality or series size of the chart
@@ -3237,12 +3266,14 @@ gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, s
     console.log("cT: # " + iTable + " cols " + columns);
 
     chtObj.colAccessor = [];
-    if (bShowLinksInTable) { // only use if requested, overhead
+    if (bShowLinksInTable || bShowPicturesInTable) { // only use if requested, overhead
     _.each(columns, function(name) {    // really only need for columns that might contain a link
         chtObj.colAccessor.push(
         [name,
         function(d) {
-            if (isHttp(d[name]))
+            if (bShowPicturesInTable && isPhoto(d[name]))
+                return createPhoto(d[name]);
+            else if (bShowLinksInTable && isHttp(d[name]))
             return createLink(d[name]);
             else
             return d[name];
@@ -3256,11 +3287,11 @@ gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, s
 
     return iTable;
 
-function isHttp(d) {
-    return (typeof(d)==="string" && (d.indexOf("mailto:")===0 || d.indexOf("http:")===0 || d.indexOf("https:")===0 || d.indexOf("file:")===0 || d.indexOf(".html")>0 ));
-}
 function createLink(d) {
     return '<a href=\"' + d + '\" target=\"_blank\">' + d + "</a>";
+}
+function createPhoto(d) {
+    return '<img src=\"' + d + '\" alt=\"[ 404 ]\">';
 }
 }
 
@@ -3276,6 +3307,14 @@ gda.new_crossfilter = function() {
 
 
 //===================== HTML support functions
+function isPhoto(d) {
+    return (typeof(d)==="string" && 
+           // (d.indexOf("http:")===0 || d.indexOf("https:")===0 || d.indexOf("file:")===0) && 
+           ((d.indexOf(".jpg")>0 ) || (d.indexOf(".png")>0  ) || (d.indexOf(".bmp")>0)  ));
+}
+function isHttp(d) {
+    return (typeof(d)==="string" && (d.indexOf("mailto:")===0 || d.indexOf("http:")===0 || d.indexOf("https:")===0 || d.indexOf("file:")===0 || d.indexOf(".html")>0 ));
+}
 
 // note this needs further correction/improvement as the 'sChartGroup' is referring to a global; it should be a 'gda.chartGroup(sChtGroup)' lookup.
 
@@ -3615,9 +3654,9 @@ gda.isSlideFileTypeSupported = function(filepath) {
         return false;
     }
     var filetype = filepath.substring(filetypeI+1).toLowerCase();
-    switch (filetype) {
-        //case "txt":   // was used with a server that did not initially support json
-        case "json":
+    switch (true) {
+        //case /txt/.test(filetype):   // was used with a server that did not initially support json
+        case /json/.test(filetype):
             break;  // continue
         default:
             return false;
@@ -3633,11 +3672,11 @@ gda.isDataFileTypeSupported = function(filepath) {
     }
     }
     var filetype = filepath.substring(filetypeI+1).toLowerCase();
-    switch (filetype) {
+    switch (true) {
 //        case "txt":
-        case "csv":
-        case "json":
-        case "xml":
+        case /csv/.test(filetype):
+        case /json/.test(filetype):
+        case /xml/.test(filetype):
             break;  // continue
         default:
             return false;
@@ -3661,7 +3700,8 @@ gda.fileLoadImmediate = function() {
 				}
 				console.log("selFile " + filepath );
 				var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
-				filepath = filepath + "?q="+Math.random();	// override caching by randomly changing the request path
+                if (!isHttp(filepath))
+				    filepath = filepath + "?q="+Math.random();	// override caching by randomly changing the request path
 				console.log("selFile " + filepath + " type " + filetype);
 				switch (filetype) {
 				case "json":
