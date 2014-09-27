@@ -2986,7 +2986,7 @@ dc.bubbleMixin = function (_chart) {
 
     _chart.BUBBLE_NODE_CLASS = "node";
     _chart.BUBBLE_CLASS = "bubble";
-    _chart.MIN_RADIUS = 10;
+    _chart.MIN_RADIUS = 10; // 10
 
     _chart = dc.colorMixin(_chart);
 
@@ -4293,17 +4293,17 @@ dc.dataStats = function(parent, chartGroup) {
     var _sigma = 3;
 
     _chart._doRender = function() {
-        var tI = _chart.group().top(Infinity);  // if > 1 something is wrong, need table form then.
-        if (tI.length === 1) {
+        var tI = _chart.group().top(Infinity);
+        if (tI.length === 1) {  // if > 1, need table form then, stats per group key.
         var vStats = tI[0].value;
-        _chart.selectAll(".count-stat").text(vStats.count);//17);//_formatNumber(_chart.dimension().size() ));
-        _chart.selectAll(".mean-stat").text(_formatNumber(vStats.avg));//3.2));//_chart.dimension().size() ));
-        _chart.selectAll(".std-stat").text(_formatNumber(vStats.std));//1.7));//_chart.group().value()));
-        _chart.selectAll(".max-stat").text(_formatNumber(vStats.max));//4.1));//_chart.group().value()));
-        _chart.selectAll(".min-stat").text(_formatNumber(vStats.min));//1.1));//_chart.group().value()));
-        _chart.selectAll(".pNsigma-stat").text(_formatNumber(vStats.avg+_sigma*vStats.std));//4.3));//_chart.group().value()));
-        _chart.selectAll(".mNsigma-stat").text(_formatNumber(vStats.avg-_sigma*vStats.std));//2.0));//_chart.group().value()));
-        _chart.selectAll(".Nsigma-stat").text((_sigma));//_chart.group().value()));
+        _chart.selectAll(".count-stat").text(vStats.count);
+        _chart.selectAll(".mean-stat").text(_formatNumber(vStats.avg));
+        _chart.selectAll(".std-stat").text(_formatNumber(vStats.std));
+        _chart.selectAll(".max-stat").text(_formatNumber(vStats.max));
+        _chart.selectAll(".min-stat").text(_formatNumber(vStats.min));
+        _chart.selectAll(".pNsigma-stat").text(_formatNumber(vStats.avg+_sigma*vStats.std));
+        _chart.selectAll(".mNsigma-stat").text(_formatNumber(vStats.avg-_sigma*vStats.std));
+        _chart.selectAll(".Nsigma-stat").text((_sigma));
         }
 
         return _chart;
