@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "57",
+    minor:   "58",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -3893,6 +3893,7 @@ function trimColName(cname) {
         cname = cname.replace(/\n/g,"_");    // replace newline
         cname = cname.replace(/ /g,"_");    // replace spaces
         cname = cname.replace(/:/g,"_");    // replace colons
+        cname = cname.replace(/,/g,"_");    // replace commas
         cname = cname.replace(/\//g,"_");    // replace slash
         cname = cname.replace(/\(/g,"");    // remove parens
         cname = cname.replace(/\)/g,"");    // remove parens
