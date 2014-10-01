@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "58",
+    minor:   "59",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -51,6 +51,7 @@ var gda = {
     tables : [],
     dimensions : [],
     dateDimension : null,
+    bDashOnly : false,
                                 // current slide's state
     bShowTable : false,         // show a data table ?
     bShowDataSource : false,    // offset interface to choose a(nother) data file?
@@ -1019,6 +1020,7 @@ if (false) {
 
             var dElS = gda.addElementWithId(dHostEl,"div","slideSet");
 
+            if (gda._slide()) {
             if (gda._slide().bUseTable) {
             gda.addCheckB(dHostEl, "showTable", "Show Table", 'objmember', //temp, use Nav anchor to "show on Slide"
                     gda.bShowTable, 
@@ -1037,6 +1039,7 @@ if (false) {
                         gda._slide().bAccessOverrides = gda.bAccessOverrides;
                         gda.view.redraw();
                     });
+            }
             }
 
             // Control location where table controls will be added
@@ -1102,12 +1105,18 @@ gda.slides = function() {
 //if (gda.slides.list().length === 0)
 //    gda.view.append();
             //gda.slides.show();
-             gda.slidesLoadImmediate(slidespath);    // add slidepath immediate load
+             gda.bDashOnly = false;
              if (optFilters) {
                 console.log("optFilters");
                 //gda.applySlideFilters (optFilters);
                 if (typeof(optFilters)==="string")
                     optFilters = JSON.parse(optFilters);
+                if (gda.utils.fieldExists(optFilters.bDashOnly))
+                    gda.bDashOnly = true;
+             }
+             gda.slidesLoadImmediate(slidespath, gda.bDashOnly);    // add slidepath immediate load
+             if (optFilters) {
+                console.log("optFilters, gda.dH");
                 gda.deferredHash = optFilters;
              }
         },
@@ -1327,7 +1336,7 @@ gda.view = function() {
                             if (i=== -1) i=9;
                         }
                         var bLabel = s.title.substring(0,i);//9);//""+sNo;
-                        console.log("sNo " + sNo + " bLabel " + bLabel);
+                        //console.log("sNo " + sNo + " bLabel " + bLabel);
                         //bLabel = bLabel +": "+s.name();
                         sl[sNo-1].myId = sNo-1;   // workaround
                         gda.addButton(docEl, "showSlide"+(sNo-1), bLabel,//sl[sNo-1].display;
@@ -1470,7 +1479,9 @@ gda.displayCharts = function() {
     if (gda.cf) {
     gda.charts = [];    // workaround
         _.each(gda._slide().charts, function(aChart) {
+            if (!gda.bDashOnly || (gda.utils.fieldExists(aChart.bDashInclude) && aChart.bDashInclude)) {
             gda.newChart(gda.cf, aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type, aChart.overrides);
+            }
         });
     }
 }
@@ -3458,6 +3469,40 @@ gda.saveState = function (d,i) {
         doc.close();
     }
 
+// 10/1/2014 Dashboard 'inclusion'.
+// The below method could restore only the "bDashInclude" components into the view.
+// Issue: 'filters' selection 'requires' a PieChart selector presently, when just the crossfilter.filter('filters') is needed. So giving the 'same' view of a chart requires the context. Have to separate the PieChart (or other Chart) filter selection from the chart(s) themselves.
+// This would give a consistent view anywhere included.
+// alternatively, the requester could provide the 'restore set'.
+// The latter would allow the other viewer to choose.
+// This is experimental. The 3rd way to do this is to just have the
+// requester construct the desired view.
+// Yet another option, store all charts in file each, and use multipart namespace for fields (dataob.field,
+// or an indirection (a.b.c = dataob.field, and use a.b.c in a chart); then just include desired charts.
+gda.restoreDashOnlyDeferred = function(error, oArray) {
+    console.log("restoreDashOnlyDeferred e(" +
+           (error ?
+                (error.message ? 
+                    error.message
+                    :error.statusText)
+                :"no error")+")");
+    if (error || !oArray || oArray.length<1)  {
+    }
+    else
+    {
+    console.log("rDOD allDataLoaded in " + oArray[0]);
+    gda.restoreStateFromObject(oArray[0], true);
+    if (gda.deferredHash !== undefined && gda.deferredHash !== null) {
+        // or perhaps in restoreStateFromObject?
+        var lH = gda.deferredHash;
+        console.log("deferred Hash " + lH);
+        console.log("deferred Hash " + JSON.stringify(lH));
+        gda.deferredHash = null;
+        window.location.hash = lH;
+    }
+    }
+};
+
 gda.restoreStateDeferred = function(error, oArray) {
     console.log("restoreStateDeferred e(" +
            (error ?
@@ -3469,8 +3514,8 @@ gda.restoreStateDeferred = function(error, oArray) {
     }
     else
     {
-    console.log("allDataLoaded in " + oArray[0]);
-    gda.restoreStateFromObject(oArray[0]);
+    console.log("rSD allDataLoaded in " + oArray[0]);
+    gda.restoreStateFromObject(oArray[0], false);
     if (gda.deferredHash !== undefined && gda.deferredHash !== null) {
         // or perhaps in restoreStateFromObject?
         var lH = gda.deferredHash;
@@ -3481,9 +3526,11 @@ gda.restoreStateDeferred = function(error, oArray) {
     }
     }
 };
-gda.restoreStateFromObject = function(o) {
+gda.restoreStateFromObject = function(o, bDashOnly) {
+    console.log("rSFO: bDO " + bDashOnly);
     if (o && o.slideRefs) {
         _.each(o.slideRefs, function(aSlideRef) {  
+            if (!bDashOnly || (gda.utils.fieldExists(aSlideRef.bDashInclude) && aSlideRef.bDashInclude)) {
             var filepath = aSlideRef.dataprovider;
             if (!gda.utils.fieldExists(aSlideRef.bLocalFile)|| aSlideRef.bLocalFile)
             {
@@ -3493,26 +3540,33 @@ gda.restoreStateFromObject = function(o) {
             {
                 //filepath = filepath + aSlideRef.datafile;
             }
-            gda.slideFileLoad(filepath);
+            gda.slideFileLoad(filepath, bDashOnly ? gda.restoreDashOnlyDeferred : gda.restoreStateDeferred);
+            }
         });
     }
     if (o && o.slides) {
+        var bAny = false;
         _.each(o.slides, function(aSlide) {    // just (key) if parseRows is used.
             //o.slide.bLoaded = false;
             // update o.slide to have the slide state defaults, where not set.
             var restoredSlide = jQuery.extend(true, gda.newSlideState(), aSlide);   // add any missing fields.
-            gda.slides.append(gda.slide(restoredSlide));  // decorate 
+            if (!bDashOnly || (gda.utils.fieldExists(restoredSlide.bDashInclude) && restoredSlide.bDashInclude)) {
+                bAny = true;
+                gda.slides.append(gda.slide(restoredSlide));  // decorate 
+            }
         });
-        gda.view.show();
+        if (bAny)
+            gda.view.show();
     }
 
 };
 gda.restoreState = function(text) {
+    console.log("rS:");
     if (text) {
     gda.clearAllSlides();  // but currently adds a new blank one, so
     gda.slideRegistry.clear();
     var o = tryParseJSON(text);
-    gda.restoreStateFromObject(o);
+    gda.restoreStateFromObject(o, false);
     }
 }
 function tryParseJSON (jsonString){
@@ -3691,16 +3745,18 @@ gda.dataSourceInternal = function(data) {
     return data;
 }
 
-gda.slidesLoadImmediate = function(slidespath) {
+gda.slidesLoadImmediate = function(slidespath, bDashOnly) {
+    console.log("sLI:");
     gda._slidefile = slidespath;    // store path
-    return gda.slideFileLoad(slidespath);
+    return gda.slideFileLoad(slidespath, bDashOnly ? gda.restoreDashOnlyDeferred : gda.restoreStateDeferred);
 };
 
-gda.slideFileLoad = function (slidespath) {
+gda.slideFileLoad = function (slidespath, callback) {
+    console.log("sFL:");
     if (slidespath.length>0) {
             var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
             qF.defer(d3.json,slidespath);
-            qF.awaitAll(gda.restoreStateDeferred);
+            qF.awaitAll(callback); //gda.restoreStateDeferred);
             return true;
     }
     return false;
