@@ -1688,8 +1688,6 @@ gda.newHistChart = function(iChart, cf) {
     gda.addOverride(chtObj,"legend",false);
 
     var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
-
-    var xhDimension = chtObj.cf.dimension(function(d) {
     var xmin = xDimension.bottom(1)[0][chtObj.cnameArray[0]];
     if (!xDimension.isDate)
     {
@@ -1703,11 +1701,15 @@ gda.newHistChart = function(iChart, cf) {
         if (pbins<xbins)
             xbins = pbins;
         chtObj.nBins = xbins;
+        console.log("Hist nBins = " + chtObj.nBins);
         bExact = true;
     }
+
+    var xhDimension = chtObj.cf.dimension(function(d) {
     var v = (isNaN(+d[chtObj.cnameArray[0]]))?0.0:+d[chtObj.cnameArray[0]];
     return v;
      });
+    gda.addOverride(chtObj,"nBins",chtObj.nBins);
     chtObj.dDims.push(xhDimension);
     var dHistXGrp = xhDimension.group().reduceCount();
     chtObj.dGrps.push(dHistXGrp);

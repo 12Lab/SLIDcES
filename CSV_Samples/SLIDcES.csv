@@ -1,5 +1,6 @@
 Category,Type,Link
 Tests,Line,/GDCA_Html/TestLine.html
+Tests,Hist,/GDCA_Html/TestHist.html
 Tests,Pareto,/GDCA_Html/TestPareto.html
 Tests,ScatterHist,/GDCA_Html/TestScatterHist.html
 Tests,Bar,/GDCA_Html/TestBar.html
