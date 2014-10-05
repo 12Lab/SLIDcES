@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "59",
+    minor:   "60",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -1729,6 +1729,7 @@ gda.isDate = function (cname) {
 // start with one dimension, then expand to several (paired/triples/etc bars, or stacked).
 gda.newLineChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
+    gda.addOverride(chtObj,"interpolate",false);
     if (chtObj.cnameArray.length>1) {
         gda.addOverride(chtObj,"nFixed",null);	// field, but don't use.
                                 
@@ -1932,9 +1933,9 @@ gda.newStatsChart = function(iChart, cf) {
     }
 }
 
-// break this up into a hist/barchart function
-// and the scatterplot function
-// and eventually add a reference to the statistics display in the quad 4th.
+// optional regression
+// https://groups.google.com/forum/#!topic/dc-js-user-group/HaQMegKa_U0
+// http://forio.com/contour/gallery.html#/chart/scatter/scatter-trendline
 gda.newScatterChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     gda.addOverride(chtObj,"legend",false);
@@ -2075,7 +2076,9 @@ gda.newLineDisplay = function(iChart, dEl) {
             cname = cname + ((cname.length>0) ? "," : "") + sCname;
         });
 
-        var dElP = dEl;//gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+        //reverted? 10/3/2014. why?
+        //var dElP = dEl;//gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+        var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
         //console.log("gda nLD: _id " + dElP.id + " i " + iChart );
         
 		addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
@@ -2122,6 +2125,9 @@ gda.newLineDisplay = function(iChart, dEl) {
             .elasticX(false)    // so it can be focused by another chart. Should be conditional on another chart attached?
             .elasticY(true)
             .brushOn(false);
+        if (chtObj.overrides["interpolate"])
+            ftX
+                .interpolate(chtObj.overrides["interpolate"]);
         if (dDims[0].isDate)
         //ftX
         //  .round(d3.time.month.round);
