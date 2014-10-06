@@ -1,0 +1,26 @@
+{
+"1":{"Name":"KeyFob A","FriendlyDeviceType":"KeyFob","DeviceType":"19","DeviceID":"1","Location":"A",
+    "DeviceValues":{"1":{"index":"1","name":"ARMMODE","value":"0"}}},
+
+"2":{"Name":"KeyFob B","FriendlyDeviceType":"KeyFob","DeviceType":"19","DeviceID":"2","Location":"B",
+    "DeviceValues":{"1":{"index":"1","name":"ARMMODE","value":"0"}}},
+
+"3":{"Name":"Garage Door","FriendlyDeviceType":"ContactSwitch","DeviceType":"12","DeviceID":"3","Location":"Garage Overhead  Door",
+    "DeviceValues":{"1":{"index":"1","name":"STATE","value":"false"},"2":{"index":"2","name":"LOW BATTERY","value":"false"},"3":{"index":"3","name":"TAMPER","value":"false"}}},
+
+"4":{"Name":"MudRoom Strip","FriendlyDeviceType":"SmartACSwitch","DeviceType":"22","DeviceID":"4","Location":"Battery Charger",
+    "DeviceValues":{
+        "1":{"index":"1","name":"SWITCH BINARY","value":"true"},
+        "2":{"index":"2","name":"AC_FREQUENCYMULTIPLIER","value":"0x0001"},
+        "3":{"index":"3","name":"AC_FREQUENCYDIVISOR","value":"0x0001"},
+        "4":{"index":"4","name":"AC_POWERMULTIPLIER","value":"0x0080"},
+        "5":{"index":"5","name":"AC_POWERDIVISOR","value":"0x03e8"},
+        "6":{"index":"6","name":"AC_VOLTAGEMULTIPLIER","value":"0x0008"},
+        "7":{"index":"7","name":"AC_VOLTAGEDIVISOR","value":"0x03e8"},
+        "8":{"index":"8","name":"AC_CURRENTMULTIPLIER","value":"0x0001"},
+        "9":{"index":"9","name":"AC_CURRENTDIVISOR","value":"0x03e8"},
+        "10":{"index":"10","name":"AC_FREQUENCY","value":"0x003c"},
+        "11":{"index":"11","name":"ACTIVE_POWER","value":"0x0186"},
+        "12":{"index":"12","name":"RMS_VOLTAGE","value":"0x3c67"},
+        "13":{"index":"13","name":"RMS_CURRENT","value":"0x02c9"}}}
+}

@@ -12,8 +12,6 @@
 <body>
 <div id="Nav">
 </div>
-<div id="Edit">
-</div>
 <div id="Slide">
 </div>
 
@@ -77,10 +75,10 @@ gda.dataFilter = function(data) {
                                 acVrms = acVrms*acVm/acVd;
                                 var acCrms = parseInt(newEntries["RMS_CURRENT"],16);
                                 acCrms = acCrms*acCm/acCd;
-                                finalEntries["AC_Frequency"] = acF;
-                                finalEntries["AC_Power"] = acP;
-                                finalEntries["AC_VoltageRMS"] = acVrms;
-                                finalEntries["AC_CurrentRMS"] = acCrms;
+                                finalEntries["AC_Frequency"] = +acF;
+                                finalEntries["AC_Power"] = +acP;
+                                finalEntries["AC_VoltageRMS"] = +acVrms;
+                                finalEntries["AC_CurrentRMS"] = +acCrms;
                                 newEntries = finalEntries;
                                 break;
                         }
@@ -94,11 +92,12 @@ gda.dataFilter = function(data) {
     return newData;
 }
 
-var sDefaultFile = "/CSV_Samples/carsReorderedCols.csv";    // enter a csv file path here to auto-load
+var sDefaultSlideFile = "/GDCA_Slides/AlmondPlus.json";    // enter a csv file path here to auto-load
 
 var ss = gda.slides;
 gda.bSparseColumns = true;
-ss.edit(document.getElementById('Edit'), document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
+gda.bPollTimer = true;
+ss.run(sDefaultSlideFile,document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
 
 </script>
 </body>
