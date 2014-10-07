@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "61",
+    minor:   "63",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -61,6 +61,7 @@ var gda = {
     nFirstRows : 100,
     bSparseColumns : false, // workaround, until DataSource
     bPollTimer : false,
+    bPollAggregate : false,
     bPolledAndViewDrawn : false,
     nPollTimerMS : 15000,
 
@@ -785,9 +786,9 @@ gda.regenerateTotalReset = function() {
             var dElBr = gda.addElement(dEl,"br");
             var dTxtT = gda.addTextNode(dEl,"CF(size)=" + gda.cf.size());
             var dElBr = gda.addElement(dEl,"br");
-            var dTxtT = gda.addTextNode(dEl,"CF(bitMask)=" + gda.cf.sizem().toString(2));
+            var dTxtT = gda.addTextNode(dEl,"CF(N,bitMask)=" + gda.cf.sizem().toString(2).length + "," + gda.cf.sizem().toString(2) );
             var dElBr = gda.addElement(dEl,"br");
-            var dTxtT = gda.addTextNode(dEl,"CF(maxSize)=" + gda.cf.sizeM());
+            var dTxtT = gda.addTextNode(dEl,"CF(maxN)=" + gda.cf.sizeM());
         }
     }
 }
@@ -802,7 +803,7 @@ gda.dataComplete = function() {
     sl[gda._currentSlide].bLoaded = true;   // should be in the datasource
     console.log("gda.dataComplete columns " + gda._slide().columns);
 
-    if (!gda.bPollTimer || !gda.bPolledAndViewDrawn)
+    if (!gda.bPollTimer || !gda.bPolledAndViewDrawn)// || !gda.bPollAggregate)
     {
         gda.view.show();
         gda.bPolledAndViewDrawn = true;
@@ -892,6 +893,12 @@ gda.showTable = function() {
                         //gda.dataprovider = null;   // override to force reload  added .38
                         //gda.fileLoadImmediate();
                         //gda.showTable();
+                        } );
+            var dEl = gda.addElement(s3,"br");
+            gda.addCheckB(s3, "PollAggregate", "Aggregate DataSource", 'objmember',
+                    gda.bPollAggregate, 
+                    function () {
+                        gda.bPollAggregate = this.checked;
                         } );
         if (gda._anchorEdit) {  // only show this item if editing
             var dEl = gda.addElement(s3,"br");
@@ -1146,6 +1153,7 @@ gda.slides = function() {
 //if (gda.slides.list().length === 0)
 //    gda.view.append();
             //gda.slides.show();
+             //gda.slidesLoadImmediate(slidespath);    // add slidepath immediate load. Here (was) for optFilters support
              gda.bDashOnly = false;
              if (optFilters) {
                 console.log("optFilters");
@@ -1495,6 +1503,7 @@ gda.clearWorkingState = function() {
     gda.nFirstRows = 100;
     gda.bSparseColumns = false; // workaround, until DataSource
     gda.bPollTimer = false;
+    gda.bPollAggregate = false;
     gda.bPolledAndViewDrawn = false;
     gda.nPollTimerMS = 15000;
 };
@@ -1840,18 +1849,21 @@ gda.newBubbleChart = function(iChart, cf) {
         chtObj.dDims.push(xDimension);
 	var dXGrp = xDimension.group().reduce(
                 function (p, v) {
-                    p.amountRaised += +v[chtObj.cnameArray[1]];//"Raised"];
-                    p.deals += +v[chtObj.cnameArray[2]];//"Deals"];
+                    p[chtObj.cnameArray[1]] += +v[chtObj.cnameArray[1]];//"Raised"];
+                    p[chtObj.cnameArray[2]] += +v[chtObj.cnameArray[2]];//"Deals"];
                     return p;
                 },
-                function (p, v) {
-                    p.amountRaised -= +v[chtObj.cnameArray[1]];//"Raised"];
-                    if (p.amountRaised < 0.001) p.amountRaised = 0; // do some clean up
-                    p.deals -= +v[chtObj.cnameArray[2]];//"Deals"];
+                function (p, v) {//p.amountRaised , .deals
+                    p[chtObj.cnameArray[1]] -= +v[chtObj.cnameArray[1]];//"Raised"];
+                    //if (p.amountRaised < 0.001) p.amountRaised = 0; // do some clean up
+                    p[chtObj.cnameArray[2]] -= +v[chtObj.cnameArray[2]];//"Deals"];
                     return p;
                 },
                 function () {
-                    return {amountRaised: 0, deals: 0}
+                    var tA = {};
+                    tA[chtObj.cnameArray[2]]  = 0;
+                    tA[chtObj.cnameArray[1]]  = 0;
+                    return tA;//{amountRaised: 0, deals: 0};
                 }
         );
 	
@@ -2271,13 +2283,15 @@ gda.newBubbleDisplay = function(iChart, dEl) {
         .group(chtObj.dGrps[0])
 	.colors(d3.scale.category10())
 	.keyAccessor(function (p) {
-	    return p.value["amountRaised"];
+	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];
 	})
 	.valueAccessor(function (p) {
-	    return p.value["deals"];
+	    return p.value[chtObj.cnameArray[2]];// "deals"];
 	})
 	.radiusValueAccessor(function (p) {
-	    return p.value["amountRaised"];
+        if (chtObj.cnameArray.length>2)
+	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];
+	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];
 	})
 	.x(d3.scale.linear().domain([0, 5000]))
 	.r(d3.scale.linear().domain([0, 4000]))
@@ -2294,16 +2308,17 @@ gda.newBubbleDisplay = function(iChart, dEl) {
 	.title(function (p) {
 	    return p.key
 		    + "\n"
-		    + "Amount Raised: " + gda.numberFormat(p.value["amountRaised"]) + "M\n"
-		    + "Number of Deals: " + gda.numberFormat(p.value["deals"]);
+		    //+ "Amount Raised: " + gda.numberFormat(p.value["amountRaised"]) + "M\n"
+		    + "Total " + chtObj.cnameArray[1] + ": " + gda.numberFormat(p.value[chtObj.cnameArray[1] ]) + "\n" //"M\n"    units...
+		    + "Total " + chtObj.cnameArray[2] + ": " + gda.numberFormat(p.value[chtObj.cnameArray[2]]);//"deals"]);
 	});
     ftX
 	.yAxis().tickFormat(function (s) {
-	    return s + " deals";
+	    return s;//+ " deals";
 	});
     ftX
 	.xAxis().tickFormat(function (s) {
-	    return s + "M";
+	    return s;// + "M";   units
 	});
         if (chtObj.overrides["legend"])
             ftX
@@ -3289,7 +3304,7 @@ gda.scatterDomains = function(chtObj){
     var xLabelFormat = chtObj.numberFormat;
     if (dDims[0].isDate) {
         xLabelFormat = gda.dateFormat;
-        scatterChart
+        chtObj.chart
             .xAxis().ticks(d3.time.months,6);
     }
     //chtObj.xs = xs;
@@ -3774,7 +3789,11 @@ gda.dataNativeReady = function(dR) {
     console.log("dataNativeReady "+dR);
     console.log("dataNativeReady "+JSON.stringify(dR));
 
-    if ((gda.bPollTimer || gda._slide().bAggregate === true) && gda.cf) {
+    if (((gda.bPollTimer) || // && gda.bPollAggregate) ||
+        gda._slide().bAggregate === true) && gda.cf) {
+        if (!gda.bPollAggregate)
+            gda.cf.remove();    // but to filters, so might need to
+                                // copy filters, remove, restore
     }
     else
         gda.new_crossfilter();
@@ -4084,7 +4103,7 @@ function allDataLoaded(error, testArray) {
 
             // just acts on first record, so no assignment needed
             // however, this sets the available columns
-            if (!gda.bPollTimer)
+            if (!gda.bPollTimer)// || !gda.bPollAggregate)
                 gda.dataFilterKeymapTransform(dR);
 
             testArray[i] = dR;
@@ -4092,7 +4111,10 @@ function allDataLoaded(error, testArray) {
 
         console.log("allDataLoaded Lin " + testArray.length );
 
-        if ((gda.bPollTimer || gda._slide().bAggregate === true) && gda.cf) {
+        if (((gda.bPollTimer) || // && gda.bPollAggregate) ||
+             gda._slide().bAggregate === true) && gda.cf) {
+                if (!gda.bPollAggregate)
+                    gda.cf.remove();    // but to filters, so might need to...
         }
         else
             gda.new_crossfilter();
