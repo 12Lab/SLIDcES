@@ -7,6 +7,7 @@ Tests,Bar,/GDCA_Html/TestBar.html
 Tests,AllTests,/GDCA_Html/TestAll.html
 Tests,Scatter,/GDCA_Html/TestScatter.html
 Tests,Stats,/GDCA_Html/TestStats.html
+Tests,BoxPlot,/GDCA_Html/TestBox.html
 Tests,Choropleth,/GDCA_Html/TestChoropleth.html
 Tests,Bubble,/GDCA_Html/TestBubble.html
 Samples,Auto Leases,/GDCA_Html/Leases2014Jul.html

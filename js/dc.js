@@ -2358,7 +2358,8 @@ dc.coordinateGridMixin = function (_chart) {
             // xAxisMax is extended by the resolution (=p). But the brushing extent isn't.
             var bIsDate = Object.prototype.toString.call(extent[1]) === '[object Date]';
             var e1 = bIsDate ? extent[1].getTime() : extent[1];
-            var xMax = bIsDate ? _chart.xAxisMax().getTime() : _chart.xAxisMax();
+            var bMaxIsDate = Object.prototype.toString.call(_chart.xAxisMax()) === '[object Date]';
+            var xMax = bMaxIsDate ? _chart.xAxisMax().getTime() : _chart.xAxisMax();
             var bHasResolution = undefined !== _chart.xUnits().resolution;
             // could stand some improvement for HasResolution case ?
             var rangedFilter = dc.filters.RangedFilter(extent[0], extent[1], xMax === e1 || (bHasResolution && xMax === (_chart.xUnits().resolution + e1))); // now inclusive of xAxisMax
@@ -7157,6 +7158,9 @@ d3.box = function() {
       var outlier = g.selectAll("circle.outlier")
           .data(outlierIndices, Number);
 
+      // future: group touching outliers. circle size sets the granularity.
+      // future: use filled circles to show modes, using same grouping criteria.
+      // requires: expose "r", but in Y units, add "circle.modes"
       outlier.enter().insert("circle", "text")
           .attr("class", "outlier")
           .attr("r", 5)

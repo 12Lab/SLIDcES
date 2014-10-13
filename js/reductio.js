@@ -375,13 +375,6 @@ function reductio() {
 			}
 		}
 
-		// Maintain the values array.
-		if(valueList || median || min || max) {
-			reduceAdd = reductio_value_list.add(valueList, reduceAdd);
-			reduceRemove = reductio_value_list.remove(valueList, reduceRemove);
-			reduceInitial = reductio_value_list.initial(reduceInitial);
-		}
-
 		if(median) {
 			reduceAdd = reductio_median.add(reduceAdd);
 			reduceRemove = reductio_median.remove(reduceRemove);
@@ -430,6 +423,14 @@ function reductio() {
 				reduceRemove = reductio_std.remove(reduceRemove);
 				reduceInitial = reductio_std.initial(reduceInitial);
 			}
+		}
+
+		// Maintain the values array.
+        // Must be last in this list of additions.
+		if(valueList || median || min || max) {
+			reduceAdd = reductio_value_list.add(valueList, reduceAdd);
+			reduceRemove = reductio_value_list.remove(valueList, reduceRemove);
+			reduceInitial = reductio_value_list.initial(reduceInitial);
 		}
 	}
 
@@ -690,10 +691,14 @@ var reductio_value_list = {
 		var i;
 		var bisect = crossfilter.bisect.by(function(d) { return d; }).left;
 		return function (p, v) {
-			if(prior) prior(p, v);
 			// Not sure if this is more efficient than sorting.
-			i = bisect(p.valueList, a(v), 0, p.valueList.length);
-			p.valueList.splice(i, 0, a(v));
+            if (!isNaN(a(v))) {
+                i = bisect(p.valueList, a(v), 0, p.valueList.length);
+                p.valueList.splice(i, 0, a(v));
+
+                // avoid counting NaN's, and assume prior is count
+                if(prior) prior(p, v);  // not really prior, as above has already executed
+            }
 			return p;
 		};
 	},
@@ -701,10 +706,14 @@ var reductio_value_list = {
 		var i;
 		var bisect = crossfilter.bisect.by(function(d) { return d; }).left;
 		return function (p, v) {
-			if(prior) prior(p, v);
-			i = bisect(p.valueList, a(v), 0, p.valueList.length);
-			// Value already exists or something has gone terribly wrong.
-			p.valueList.splice(i, 1);
+            if (!isNaN(a(v))) {
+                i = bisect(p.valueList, a(v), 0, p.valueList.length);
+                // Value already exists or something has gone terribly wrong.
+                p.valueList.splice(i, 1);
+
+                // avoid counting NaN's, and assume prior is count
+                if(prior) prior(p, v);
+            }
 			return p;
 		};
 	},

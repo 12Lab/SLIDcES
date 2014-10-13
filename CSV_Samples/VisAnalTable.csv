@@ -34,3 +34,5 @@ Meteor,Framework,,,,,http://meteor.com
 Chosen,Library,UI Controls,,,,http://plugins.jquery.com/chosen/
 slideViewerPro,Library,UI Controls,,,,http://www.gcmingati.net/wordpress/wp-content/lab/jquery/svwt/
 droppable,Library,UI Controls,,,,http://jqueryui.com/droppable/
+Angular NVD3,Library,UI Controls,,,,http://krispo.github.io/angular-nvd3/
+PubNub,Library+Web,Communication,,,Free+,http://www.pubnub.com/

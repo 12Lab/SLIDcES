@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "63",
+    minor:   "66",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -63,10 +63,10 @@ var gda = {
     bPollTimer : false,
     bPollAggregate : false,
     bPolledAndViewDrawn : false,
-    nPollTimerMS : 15000,
+    nPollTimerMS : 5000,
 
     // registered simple or aggregated charts
-    availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "Bubble", "ScatterHist", "Choropleth", "Stats"], // "YHist" //  
+    availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "Bubble", "ScatterHist", "Choropleth", "Box", "Stats"], // "YHist" //  
     //availCharts : ["Bar","Bubble"],
     numFormats : [".2f", "%Y%m%d", ".0f" ],
     defFormat : 0,
@@ -76,6 +76,7 @@ var gda = {
 gda.numberFormat = d3.format(gda.numFormats[gda.defFormat]);
 gda.dateFormat = d3.time.format(gda.numFormats[1]);  // hmm not great
 gda.daysFormat = d3.format(gda.numFormats[2]); 
+gda.counterFormat = d3.format("08d");
 
 
     //gda.datasource(gda.newDataSourceState());
@@ -347,13 +348,14 @@ gda.slide = function( _slide ) {
 
             var dEl = gda.addElement(dHostEl,"div");
             dEl.setAttribute("class","row");
+                    var dEld = gda.addElementWithId(dEl,"div","TotalReset");
+
+            var dEl = gda.addElement(dHostEl,"div");
+                dEl.setAttribute("class","row");
                 var dEld = gda.addElementWithId(dEl,"div","MyCharts");
             var dEl = gda.addElement(dHostEl,"div");
             dEl.setAttribute("class","row");
                 var dEld = gda.addElementWithId(dEl,"div","MySelectors");
-            var dEl = gda.addElement(dHostEl,"div");
-            dEl.setAttribute("class","row");
-                var dEld = gda.addElementWithId(dEl,"div","TotalReset");
 
             // just adds the document elements for the tables
             // could make dependent on bShowTable
@@ -371,6 +373,15 @@ gda.slide = function( _slide ) {
 
             var dElBr = gda.addElement(dHostEl,"br");
             var dTxtT = gda.addTextNode(dHostEl,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
+
+        if (gda && gda.cf) {
+        var dElBr = gda.addElement(dHostEl,"br");
+        var dTxtT = gda.addTextNode(dHostEl,"CF(size)=" + gda.cf.size());
+        var dElBr = gda.addElement(dHostEl,"br");
+        var dTxtT = gda.addTextNode(dHostEl,"CF(N,bitMask)=" + gda.cf.sizem().toString(2).length + "," + gda.cf.sizem().toString(2) );
+        var dElBr = gda.addElement(dHostEl,"br");
+        var dTxtT = gda.addTextNode(dHostEl,"CF(maxN)=" + gda.cf.sizeM());
+        }
     };
 
     _aSlide.addDisplayChart = function(sChtGroup) {     // temp workaround, just adds the most recently added chart
@@ -727,7 +738,15 @@ gda.showFilter = function(c,f) {
         }
     }
     if (c.gdca_chart) {
+        // should use default filters handler and addFilterHandler
         var fv = c.filters();
+        if (fv.length === 0) {
+            // remove empty filters. empty arrays cause some issues when slide is set up
+            if (gda._slide().filters[c.gdca_chart.Title])
+                delete gda._slide().filters[c.gdca_chart.Title];
+            c.gdca_chart.filterEl.innerHTML = "";
+        }
+        else {
         gda._slide().filters[c.gdca_chart.Title] = fv;
         if (c.gdca_chart.filterEl) {
             c.gdca_chart.filterEl.innerHTML = "";
@@ -741,6 +760,7 @@ gda.showFilter = function(c,f) {
 			}
         }
     }
+}
 }
 
 gda.regenerateTableAndDim = function(bShowTable) {
@@ -774,21 +794,15 @@ gda.regenerateTable = function(bShowTable) {
 }
 
 gda.regenerateTotalReset = function() {
+    if (gda.cf) {
     var dEl = document.getElementById('TotalReset');
     if (dEl) {
         dEl.innerHTML = "";
-        if (gda.cf) {
-            var sDcData = dEl.id+dc.utils.uniqueId();
+            //var sDcData = dEl.id+dc.utils.uniqueId();
                     var dEla = gda.addElement(dEl,"a");
                         dEla.setAttribute("href","javascript:gda.tablesReset("+0+",sChartGroup);");
-                        var dTxtT = gda.addTextNode(dEla,"Reset All");
-            
-            var dElBr = gda.addElement(dEl,"br");
-            var dTxtT = gda.addTextNode(dEl,"CF(size)=" + gda.cf.size());
-            var dElBr = gda.addElement(dEl,"br");
-            var dTxtT = gda.addTextNode(dEl,"CF(N,bitMask)=" + gda.cf.sizem().toString(2).length + "," + gda.cf.sizem().toString(2) );
-            var dElBr = gda.addElement(dEl,"br");
-            var dTxtT = gda.addTextNode(dEl,"CF(maxN)=" + gda.cf.sizeM());
+            var dStr = gda.addElement(dEla,"h3");
+                var dTxtT = gda.addTextNode(dStr,"Reset All");
         }
     }
 }
@@ -812,12 +826,12 @@ gda.dataComplete = function() {
         _.each(gda.charts, function(chtObj) {
             if (chtObj.sChartGroup === sChartGroup && 
                 chtObj.chartType === "Scatter") {
-                gda.scatterDomains(chtObj); // update
+                gda.scatterDomains(chtObj,false); // update
                 //chtObj.chart.render();
             }
         });
+        // workaround above for Scatterplot, not updating with this?
         dc.redrawAll(sChartGroup);  // missed File Table
-        // workaround for Scatterplot, not updating with this?
     }
 }
 
@@ -884,6 +898,7 @@ gda.showTable = function() {
             gda.addCheckB(s3, "PollTimer", "Poll DataSource", 'objmember',
                     gda.bPollTimer, 
                     function () {
+                        console.log("PT: " + this.checked);
                         gda.bPollTimer = this.checked;
                         if (gda.bPollTimer) {
                             //gda.manageInputSource.pollTimerStart();
@@ -1753,6 +1768,61 @@ function newBaseChart(cf, cnameArray, sChtGroup, chartType) {
     return i;
 }
 
+gda.newBoxChart = function(iChart, cf) {
+    var chtObj=gda.charts[iChart];
+    gda.addOverride(chtObj,"boxPadding",0.8);
+    gda.addOverride(chtObj,"outerPadding",0.5);
+    gda.addOverride(chtObj,"boxWidth",false);
+    gda.addOverride(chtObj,"legend",false);
+    gda.addOverride(chtObj,"elasticX",true);
+    gda.addOverride(chtObj,"elasticY",true);
+
+    var xDimension = chtObj.cnameArray.length === 2 ?
+        chtObj.cf.dimension(function(d) {
+            var v = chtObj.cnameArray[0] + d[chtObj.cnameArray[1]];  // prefix + selector
+            return v;
+        }) :
+        chtObj.cf.dimension(function(d) {
+            var v = chtObj.cnameArray[0];
+            return v;
+        }) ;
+    chtObj.dDims.push(xDimension);
+
+    var dBoxXGrp = chtObj.cnameArray.length === 2 ?
+        xDimension.group().reduce(
+            function(p,v) {
+              if (v[chtObj.cnameArray[0] + v[chtObj.cnameArray[1]]])
+                  p.push(+v[chtObj.cnameArray[0] + v[chtObj.cnameArray[1]]]);
+              return p;
+            },
+            function(p,v) {
+              if (v[chtObj.cnameArray[0] + v[chtObj.cnameArray[1]]])
+              p.splice(p.indexOf(v[chtObj.cnameArray[0]+ v[chtObj.cnameArray[1]]]),1);
+              return p;
+            },
+            function() {
+              return [];
+            }
+        ) :
+        xDimension.group().reduce(
+            function(p,v) {
+              if (v[chtObj.cnameArray[0]])
+              p.push(+v[chtObj.cnameArray[0]]);
+              return p;
+            },
+            function(p,v) {
+              if (v[chtObj.cnameArray[0]])
+              p.splice(p.indexOf(v[chtObj.cnameArray[0]]),1);
+              return p;
+            },
+            function() {
+              return [];
+            }
+        );
+    
+    chtObj.dGrps.push(dBoxXGrp);
+}
+
 gda.newHistChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     if (!chtObj.nBins) chtObj.nBins = chtObj.wChart/20; // magic number
@@ -1982,14 +2052,20 @@ gda.newStatsChart = function(iChart, cf) {
         //    xDimension.isDate = true;
 
     // scatterplot dim/grp
-    if (cnameArray.length>1)    // if 2nd attribute selected, use it for a dimension, for multiple stats sets
-        chtObj.statsDimension = chtObj.cf.dimension(function(d)
-                //{ return cnameArray[1]; });
+    if (cnameArray.length>1) {    // if 2nd attribute selected, use it for a dimension, for multiple stats sets
+        chtObj.statsDimension = 
+                //gda.dimensionByCol(cnameArray[1],chtObj.cf,true);
+                chtObj.cf.dimension(function(d)
+                ////{ return cnameArray[1]; });
                 { return +d[cnameArray[1]]; });
-    else
-        chtObj.statsDimension = chtObj.cf.dimension(function(d)
+    }
+    else {
+        chtObj.statsDimension = 
+                //gda.dimensionByCol(cnameArray[0],chtObj.cf,true);
+                chtObj.cf.dimension(function(d)
                 { return cnameArray[0]; }); // aggregates filtered population
-                //{ return +d[cnameArray[0]]; });   // by unique value 'keys' (values of cnameArray[0] in d[].
+                ////{ return +d[cnameArray[0]]; });   // by unique value 'keys' (values of cnameArray[0] in d[].
+    }
     chtObj.statsGroup = chtObj.statsDimension.group();//.reduce();
     var reducer;
     reducer = reductio()
@@ -2016,8 +2092,8 @@ gda.newStatsChart = function(iChart, cf) {
 gda.newScatterChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     gda.addOverride(chtObj,"legend",false);
-    gda.addOverride(chtObj,"elasticX",false);
-    gda.addOverride(chtObj,"elasticY",false);
+    gda.addOverride(chtObj,"elasticX",true);
+    gda.addOverride(chtObj,"elasticY",true);
     gda.addOverride(chtObj,"brushOn",true);
     gda.addOverride(chtObj,"mouseZoomable",true);
     if (chtObj.cnameArray.length>1) {
@@ -2030,7 +2106,10 @@ gda.newScatterChart = function(iChart, cf) {
             xDimension.isDate = true;
 
     // scatterplot dim/grp
-    chtObj.scatterDimension = chtObj.cf.dimension(function(d) { return [+d[chtObj.cnameArray[0]], +d[chtObj.cnameArray[1]]]; });
+    chtObj.scatterDimension = chtObj.cf.dimension(function(d) {
+       if (!isNaN(+d[chtObj.cnameArray[0]]) && !isNaN(+d[chtObj.cnameArray[1]]))
+           return [+d[chtObj.cnameArray[0]], +d[chtObj.cnameArray[1]]];
+    });
     chtObj.scatterGroup = chtObj.scatterDimension.group().reduceSum(function(d) { return +d[chtObj.cnameArray[1]]; });
     }
 }
@@ -2081,7 +2160,7 @@ gda.newScatterHistChart = function(iChart, cf) {
 
 // view element creators
 // adds new dc scatterPlot, twin hists,  under dElIdBase div
-gda.addDisplayCharts = function(docEl,sChtGroup, callback) { //, dElIdBase) {
+gda.addDisplayCharts = function(docEl,sChtGroup, callback) {
     var bSomeAdded = false;
     _.each(gda.charts, function(chtObj,i) {
         if (chtObj.sChartGroup === sChtGroup) {
@@ -2118,14 +2197,13 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
                     chtObj.titleEl = dTitleEl;
 		//			var dTxtT = gda.addTextNode(chtObj.titleEl,chtObj.Title);
                 var dFilterEl = gda.addElementWithId(dTd,"div",docEl.id+dc.utils.uniqueId());
-				//var dElCenter = gda.addElement(dFilterEl, "center");
                 chtObj.filterEl = dFilterEl;
 				//dFilterEl.setAttribute("class","filtered")
                 var doChartEl = gda.addElementWithId(dTd,"div",docEl.id+dc.utils.uniqueId()); // might need to use chart title instead of uniqueId, to support 'closing' the edit.
-                //console.log("gda aDC: _id " + doChartEl.id + " i " + iChart );
 
     var bAddedChart = gda.newDisplayDispatch(iChart, chtObj.chartType, doChartEl);
     if (bAddedChart) {
+        gda.addElementWithId(doChartEl,"span",doChartEl.id+"title");
         if (gda.allowEdit() && callback && chtObj.bChooseable === true)
             gda.addRadioB(doChartEl, chtObj.chartType, gda.chart(chtObj).__dc_flag__, chtObj.chartType, chtObj.chartType, false, callback);
             gda.addElementWithId(doChartEl,"span",doChartEl.id+"controls");
@@ -2210,7 +2288,6 @@ gda.newLineDisplay = function(iChart, dEl) {
         //  .round(d3.time.month.round);
         //  .xAxisLabel(chtObj.cnameArray[0])
         //ftX .xAxis().ticks(d3.time.months,1);
-            //.title("")
         if (!dDims[0].isDate) {
         ftX
             .xAxisLabel(chtObj.numberFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+chtObj.numberFormat(xmax))
@@ -2841,10 +2918,6 @@ gda.newRowDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    //console.log("gda nBD: _id " + dElP.id + " i " + iChart );
-    
-	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
-    //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
     //console.log("add row for Row @ " + chtObj.dElid);
@@ -2876,6 +2949,7 @@ gda.newRowDisplay = function(iChart, dEl) {
             ftX
                 .legend(dc.legend());
 
+	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         return true;
     }
     return false;
@@ -2934,6 +3008,51 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
                 .legend(dc.legend());
     return true;
     }
+    }
+    return false;
+}
+
+gda.newBoxDisplay = function(iChart, dEl) {
+    var chtObj=gda.charts[iChart];
+    var dDims = chtObj.dDims;
+    if (dDims.length>0) {
+        var cnameArray = chtObj.cnameArray;                         // prob never used
+    var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+    addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
+    gda.charts[iChart].dElid = dElP.id;
+
+    // https://stat.mq.edu.au/Stats_docs/research_papers/2004/Can_the_Box_Plot_be_Improved.pdf  quartile bars, etc.
+    // http://www.jstatsoft.org/v28/c01/paper   bean plot. Perhaps a pea pod, with peas for the clusters?
+    // or just add 'mode' peas, with "r" set to weighted Y, and cluster/reduce when touching/overlapping
+    // for outliers, too. 'mode' peas filled and weighted "r", outliers peas as-is, except for weighted radius.
+    var ftBoxX = dc.boxPlot("#"+chtObj.dElid,chtObj.sChartGroup);
+    chtObj.chart = ftBoxX;        // for now. hold ref
+    ftBoxX.gdca_chart = chtObj;
+    ftBoxX
+//        .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+        .width(chtObj.wChart)    // same as scatterChart
+        .height(chtObj.hChart)        // not nearly as high
+        .margins({top: 10, right: 50, bottom: 30, left: 60})
+        .elasticX(chtObj.overrides["elasticX"])
+        .elasticY(chtObj.overrides["elasticY"])
+        .dimension(dDims[0])
+        .boxPadding(chtObj.overrides["boxPadding"])
+        .outerPadding(chtObj.overrides["outerPadding"])
+//    .xAxisLabel(chtObj.numberFormat(xmin)+" => "+ chtObj.cnameArray[0] +" (binned) <= "+chtObj.numberFormat(xmax))
+        .group(chtObj.dGrps[0]);
+    if (chtObj.overrides["boxWidth"] !== false)
+    ftBoxX
+        .boxWidth(chtObj.overrides["boxWidth"]);
+
+//        if (dDims[0].isDate)
+//            ftBoxX .xAxis().ticks(d3.time.months,6);   // months should be a setting
+//        else
+//            ftBoxX .xAxis().ticks(4);
+  //      if (chtObj.overrides["legend"])
+  //          ftBoxX
+  //              .legend(dc.legend());
+
+        return true;
     }
     return false;
 }
@@ -3150,27 +3269,6 @@ gda.newStatsDisplay = function(iChart, dEl) {
     
     var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
     var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
-    if (!dDims[0].isDate)
-    {
-        if (isNaN(xmin))
-            xmin = 0;
-        if (isNaN(xmax))
-            xmax = 0;
-    }
-    var exFac = 0.01;    // expansion factor, relax ends so min/max points have some relief
-    var xdomain = [xmin,xmax];
-
-    var xs = d3.scale.linear();
-    var xu = dc.units.integers();
-    if (dDims[0].isDate) {
-        xs = d3.time.scale().domain(xdomain);
-        xu = d3.time.days;
-    }
-    else
-    {
-        xdomain = expandDomain(xdomain,exFac);
-        xs.domain(xdomain);
-    }
 
     //chtObj.chart = statsChart;
     //statsChart.gdca_chart = chtObj;
@@ -3220,21 +3318,17 @@ gda.newScatterDisplay = function(iChart, dEl) {
     chtObj.chart = scatterChart;
     scatterChart.gdca_chart = chtObj;
 
-    gda.scatterDomains(chtObj);
+    gda.scatterDomains(chtObj,true);
 
     scatterChart
+        .width(chtObj.wChart)
+        .height(chtObj.hChart)
+        .dimension(chtObj.scatterDimension)
+        .group(chtObj.scatterGroup)
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
-        .elasticX(chtObj.overrides["elasticX"])
-        .elasticY(chtObj.overrides["elasticY"])
-    .width(chtObj.wChart)
-    .height(chtObj.hChart)
-    //.mouseZoomable(true)        // . not working in display in Y?
+        .elasticX(true)//chtObj.overrides["elasticX"])
+        .elasticY(true)//chtObj.overrides["elasticY"])
     .mouseZoomable(chtObj.overrides["mouseZoomable"])
-//    .x(xs)
-//    .xUnits(xu)
-//    .y(d3.scale.linear().domain(ydomain))//.nice()) // to use nice, need to adjust histograms
-    .dimension(chtObj.scatterDimension)
-    .group(chtObj.scatterGroup)
     .brushOn(chtObj.overrides["brushOn"])
     //.brushOn(true) // if set to false, chart can be 'zoomed', but looks like it needs elasticY then to update Y axis ticks properly. mouseZoomable.
     //.rangeChart(pnlPerDaybarChartBrush)
@@ -3245,21 +3339,6 @@ gda.newScatterDisplay = function(iChart, dEl) {
     //.valueAccessor(function(d) {
     //    return d[chtObj.cnameArray[1]];
     //})
-//    .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
-//    var xLabelFormat = chtObj.numberFormat;
-//    if (dDims[0].isDate) {
-//        xLabelFormat = gda.dateFormat;
-//        scatterChart
-//            .xAxis().ticks(d3.time.months,6);
-//    }
-//    else {
-//        scatterChart
-//            .xAxis().ticks(6);
-//    }
-//    scatterChart
-//        .xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax));
-    //.label(function (p) { return p.key; }) //for bubbles, etc.
-    //.xAxis().ticks(4).tickFormat(function (v) { return chtObj.numberFormat(v);})
         if (chtObj.overrides["legend"])
             scatterChart
                 .legend(dc.legend());
@@ -3269,7 +3348,7 @@ gda.newScatterDisplay = function(iChart, dEl) {
     return false;
 };
 
-gda.scatterDomains = function(chtObj){
+gda.scatterDomains = function(chtObj, bInitial){
     var dDims = chtObj.dDims;
     var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
     if (!dDims[0].isDate)
@@ -3278,51 +3357,90 @@ gda.scatterDomains = function(chtObj){
             xmin = 0;
     }
     var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
+    console.log("scatterD: xmin,xmax " + xmin + "," + xmax);
     var ymin = dDims[1].bottom(1)[0][chtObj.cnameArray[1]];
-    if (isNaN(ymin))
-        ymin = 0;
+    //var iF = 0;
+    //while(isNaN(ymin) && iF<dDims[1].bottom(Infinity).length) { // not efficient!
+    //    iF++;
+    //    ymin = dDims[1].bottom(iF+1)[iF][chtObj.cnameArray[1]];
+    //}
     var ymax = dDims[1].top   (1)[0][chtObj.cnameArray[1]];
+    console.log("scatterD: b ymin,ymax " + ymin + "," + ymax);
+    if (isNaN(ymin)) {
+        ymin = ymax - 0.1*ymax;//0;
+        ymax = ymax + 0.1*ymax;//0;
+    }
+    else if (ymin === ymax) {
+        ymin = ymin*0.9;
+        ymax = ymax*1.1;
+    }
+    console.log("scatterD: a ymin,ymax " + ymin + "," + ymax);
     var exFac = 0.03;   // expansion factor, relax ends so min/max points have some relief
                         // 10/4/2014 from 1 to 3%, make min/max points more visible against axis (partially cropped)
     var xdomain = [xmin,xmax];
     var ydomain = [ymin,ymax];
 
-    var xs = d3.scale.linear();
-    var xu = dc.units.integers();
-    //var xs = d3.scale.ordinal();
-    //var xu = dc.units.ordinal();
-    if (dDims[0].isDate) {
-        xs = d3.time.scale().domain(xdomain);
-        xu = d3.time.days;
+    var xs;
+    var xu;
+    var ys;
+    if (bInitial) {
+        xs = d3.scale.linear();     //var xs = d3.scale.ordinal();
+        xu = dc.units.integers;//();   //var xu = dc.units.ordinal();
+        ys = d3.scale.linear().domain(ydomain);
+        if (dDims[0].isDate) {
+            xs = d3.time.scale().domain(xdomain);
+            xu = d3.time.days;
+        }
     }
-    else
-    {
+    else {
+        xs = chtObj.chart.x();
+        xu = chtObj.chart.xUnits();
+        ys = chtObj.chart.y();
+    }
+    if (!dDims[0].isDate) {
         xdomain = expandDomain(xdomain,exFac);
         ydomain = expandDomain(ydomain,exFac);
         xs.domain(xdomain); // was d3.scale.linear().domain(xdomain))//.nice())
+        ys.domain(ydomain);
     }
     var xLabelFormat = chtObj.numberFormat;
     if (dDims[0].isDate) {
         xLabelFormat = gda.dateFormat;
-        chtObj.chart
-            .xAxis().ticks(d3.time.months,6);
     }
-    //chtObj.xs = xs;
-    //chtObj.xu = xu;
+    if (bInitial) {
+        if (dDims[0].isDate) {
+            chtObj.chart
+                .xAxis().ticks(d3.time.months,6);
+        }
+        chtObj.chart
+            .x(xs)
+            .xUnits(xu)
+            .y(ys)//.y(d3.scale.linear().domain(ydomain)) //.nice()) // to use nice, need to adjust histograms
+            .xAxisLabel(xmin+" => "+ chtObj.cnameArray[0] +" <= "+xmax)
+            //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
+            .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
+    }
+    else
+    {
     chtObj.chart
         .x(xs)
-        .xUnits(xu)
-        .y(d3.scale.linear().domain(ydomain)) //.nice()) // to use nice, need to adjust histograms
-        .xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
+        .y(ys)
+        //.y(d3.scale.linear().domain(ydomain)) //.nice()) // to use nice, need to adjust histograms
+        .xAxisLabel(xmin+" => "+ chtObj.cnameArray[0] +" <= "+xmax)
+        //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
         .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
+    chtObj.chart.redraw();
+    }
 };
 
 function expandDomain(adomain, exCoef) {
     if (adomain.length===2) {
         var r = adomain[1]-adomain[0];
         var exV = r * exCoef;
+        //console.log("expDom b r " + r + " exV " + exV + " ad[0],[1] " + adomain[0] + "," + adomain[1]);
         adomain[0] = +adomain[0] - exV;
         adomain[1] = +adomain[1] + exV;
+        //console.log("expDom a r " + r + " exV " + exV + " ad[0],[1] " + adomain[0] + "," + adomain[1]);
     }
     return adomain;
 }; 
@@ -3479,12 +3597,6 @@ function createPhoto(d) {
 gda.new_crossfilter = function() {
     console.log("new_crossfilter ***************");
     gda.cf = crossfilter();     // for now, just replacing any previous
-    //gda.cf.remove();    // empty the crossfilter  ?
-    //if (gda.cf.size() > 0) {
-//        dc.filterAll();
-//        gda.cf.remove();
-//        dc.renderAll();
-    //}
 };
 
 
@@ -3562,7 +3674,7 @@ function executeFunctionByName(functionName, context /*, args */) {
 
 // File Handling
 
-gda.saveState = function (d,i) {
+gda.saveState = function (d,i) { // or ? https://code.google.com/p/google-gson/
 
         console.log("saveState: d,i " + d + "," + i);
         var txt = gda.slideRegistry.asText();
@@ -3879,7 +3991,8 @@ gda.dataSourceInternal = function(data) {
     console.log("dataSourceInternal");
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
         _.each(data, function(d) {
-            d._counter = gda._slide().uniqueId();    // should come from data source
+            d._counter = gda.counterFormat(gda._slide().uniqueId());    // should come from data source
+            console.log("dSI: counter " + d._counter);
             d._qty = 1;
         });
     }
