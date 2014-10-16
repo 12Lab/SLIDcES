@@ -1,10 +1,20 @@
 {"version": "0.099", "minor": "37", "branch": "gdca-dev",
  "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
-"slides" : [{"title":"Box Test","dataprovider":"/CSV_Samples/","datafile":"00000021.csv","bLoaded":false,"bListOfMany":false,"bAggregate":false,"_idCounter":266,"columns":["counter","B1","B2","Bsel","A1","A2","Blow","Bavg","Bhi","KWhFull","KWhNow","AHRhds","_counter","_qty"],"keymap":{"counter":"counter","B1":"B1","B2":"B2","Bsel":"Bsel","A1":"A1","A2":"A2","Blow":"Blow","Bavg":"Bavg","Bhi":"Bhi","KWhFull":"KWhFull","KWhNow":"KWhNow","AHRhds":"AHRhds","_counter":"_counter","_qty":"_qty"},"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":[],"csetupSortTableCols":[]},"charts":[
+"slides" : [
+{"title":"Box Test","dataprovider":"/CSV_Samples/","datafile":"00000021.csv","bLoaded":false,"bListOfMany":false,"bAggregate":false,"_idCounter":266,"columns":["counter","B1","B2","Bsel","A1","A2","Blow","Bavg","Bhi","KWhFull","KWhNow","AHRhds","_counter","_qty"],"keymap":{"counter":"counter","B1":"B1","B2":"B2","Bsel":"Bsel","A1":"A1","A2":"A2","Blow":"Blow","Bavg":"Bavg","Bhi":"Bhi","KWhFull":"KWhFull","KWhNow":"KWhNow","AHRhds":"AHRhds","_counter":"_counter","_qty":"_qty"},"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":[],"csetupSortTableCols":[]},"charts":[
 {"Title":"Battery Voltage vs Current","myCols":{"csetupChartCols":["A2","B1"]},"type":"Scatter","sChartGroup":"one"},
 {"Title":"Battery B1, Voltage vs Current","myCols":{"csetupChartCols":["B1"]},"type":"Box","sChartGroup":"one","overrides":{"wChart":"200"}},
 {"Title":"Battery B2, Voltage vs Current","myCols":{"csetupChartCols":["B2"]},"type":"Box","sChartGroup":"one","overrides":{"wChart":"200"}},
 {"Title":"Battery Voltage vs Current","myCols":{"csetupChartCols":["A2","B2"]},"type":"Scatter","sChartGroup":"one"},
 {"Title":"Battery, Voltage vs Current","myCols":{"csetupChartCols":["B","Bsel"]},"type":"Box","sChartGroup":"one","overrides":{"wChart":"300"}},
 {"Title":"Battery Voltage Statistics, format .2f, 3sigma","myCols":{"csetupChartCols":["B1"]},"type":"Stats","sChartGroup":"one","overrides":{"format":".2f","sigma":"3"}}
-],"bUseTable":false,"bShowTable":false,"bShowTableColumnSelectors":true,"bAllowOverrideChanges":true,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-04-07T04:30:06.000Z"}] }
+],"bUseTable":false,"bShowTable":false,"bShowTableColumnSelectors":true,"bAllowOverrideChanges":true,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-04-07T04:30:06.000Z"},
+{"title":"Box Test","dataprovider":"/CSV_Samples/","datafile":"10000021.csv","bLoaded":false,"bListOfMany":false,"bAggregate":false,"_idCounter":266,"columns":["counter","B1","B2","Bsel","A1","A2","Blow","Bavg","Bhi","KWhFull","KWhNow","AHRhds","_counter","_qty"],"keymap":{"counter":"counter","B1":"B1","B2":"B2","Bsel":"Bsel","A1":"A1","A2":"A2","Blow":"Blow","Bavg":"Bavg","Bhi":"Bhi","KWhFull":"KWhFull","KWhNow":"KWhNow","AHRhds":"AHRhds","_counter":"_counter","_qty":"_qty"},"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":[],"csetupSortTableCols":[]},"charts":[
+{"Title":"Battery Voltage vs Current","myCols":{"csetupChartCols":["A2","B1"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"Battery B1, Voltage vs Current","myCols":{"csetupChartCols":["B1"]},"type":"Box","sChartGroup":"one","overrides":{"wChart":"200"}},
+{"Title":"Battery B2, Voltage vs Current","myCols":{"csetupChartCols":["B2"]},"type":"Box","sChartGroup":"one","overrides":{"wChart":"200"}},
+{"Title":"Battery Voltage vs Current","myCols":{"csetupChartCols":["A2","B2"]},"type":"Scatter","sChartGroup":"one"},
+{"Title":"Battery, Voltage vs Current","myCols":{"csetupChartCols":["B","Bsel"]},"type":"Box","sChartGroup":"one","overrides":{"wChart":"300"}},
+{"Title":"Battery Voltage Statistics, format .2f, 3sigma","myCols":{"csetupChartCols":["B1"]},"type":"Stats","sChartGroup":"one","overrides":{"format":".2f","sigma":"3"}}
+],"bUseTable":false,"bShowTable":false,"bShowTableColumnSelectors":true,"bAllowOverrideChanges":true,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-04-07T04:30:06.000Z"}
+] }

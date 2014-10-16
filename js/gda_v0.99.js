@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "66",
+    minor:   "67",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -176,7 +176,6 @@ gda.chart = function( _chart ) {    // used to decorate a chart definition for o
         // redraw anything?
         if (aChart.titleEl) {
             aChart.titleEl.innerHTML = chtObj.Title;//"";	8/17/2014
-        //    var dTxtT = gda.addTextNode(aChart.titleEl,chtObj.Title);
         }
     };
 
@@ -995,6 +994,10 @@ gda.slideRegistry = function() {
         asText: function() {
             var sl = gda.slides.list();
             var t = JSON.stringify(sl);
+            t = t.replace(/},{/g,"},\r\n{");
+            t = t.replace(/\[{/g,"\[\r\n{");
+            t = t.replace(/}]/g,"}\r\n]");
+            t = t.replace(/\",\"/g,'\", \"');
             return t;
         },
         anchorName: function () {
@@ -2009,9 +2012,11 @@ gda.newRowChart = function(iChart, cf) {
     gda.addOverride(chtObj,"ignoreZeroValue",false);
     gda.addOverride(chtObj,"ignoreValuesBelow",1);
     gda.addOverride(chtObj,"ignoreKey","");
+    gda.addOverride(chtObj,"top",false);
     var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
     chtObj.dDims.push(xDimension);
-    var dXGrp = xDimension.group();//.top(5);// parameterize, allow adjusting n
+    var dXGrp;
+    dXGrp = xDimension.group();
     chtObj.dGrps.push(dXGrp);
 }
 
@@ -2092,7 +2097,7 @@ gda.newStatsChart = function(iChart, cf) {
 gda.newScatterChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     gda.addOverride(chtObj,"legend",false);
-    gda.addOverride(chtObj,"elasticX",true);
+    gda.addOverride(chtObj,"elasticX",true); // not sure of this until fully tested
     gda.addOverride(chtObj,"elasticY",true);
     gda.addOverride(chtObj,"brushOn",true);
     gda.addOverride(chtObj,"mouseZoomable",true);
@@ -2945,6 +2950,9 @@ gda.newRowDisplay = function(iChart, dEl) {
     else if (chtObj.Title === "Max Status" && gda.utils.fieldExists(statusColors)) {
         ftX.colors(statusColors);
     }
+        if ( chtObj.overrides["top"] )
+            ftX
+                .cap(chtObj.overrides["top"]);// parameterize, allow adjusting n
         if (chtObj.overrides["legend"])
             ftX
                 .legend(dc.legend());
@@ -3035,6 +3043,7 @@ gda.newBoxDisplay = function(iChart, dEl) {
         .margins({top: 10, right: 50, bottom: 30, left: 60})
         .elasticX(chtObj.overrides["elasticX"])
         .elasticY(chtObj.overrides["elasticY"])
+        .yAxisPadding('1%') // default is 12 y units !
         .dimension(dDims[0])
         .boxPadding(chtObj.overrides["boxPadding"])
         .outerPadding(chtObj.overrides["outerPadding"])
@@ -3326,8 +3335,8 @@ gda.newScatterDisplay = function(iChart, dEl) {
         .dimension(chtObj.scatterDimension)
         .group(chtObj.scatterGroup)
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
-        .elasticX(true)//chtObj.overrides["elasticX"])
-        .elasticY(true)//chtObj.overrides["elasticY"])
+        .elasticX(chtObj.overrides["elasticX"])   // not sure of this until fully tested
+        .elasticY(chtObj.overrides["elasticY"])
     .mouseZoomable(chtObj.overrides["mouseZoomable"])
     .brushOn(chtObj.overrides["brushOn"])
     //.brushOn(true) // if set to false, chart can be 'zoomed', but looks like it needs elasticY then to update Y axis ticks properly. mouseZoomable.
@@ -3991,7 +4000,8 @@ gda.dataSourceInternal = function(data) {
     console.log("dataSourceInternal");
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
         _.each(data, function(d) {
-            d._counter = gda.counterFormat(gda._slide().uniqueId());    // should come from data source
+//            d._counter = gda._slide().uniqueId();    // should come from data source
+            d._counter = gda.counterFormat(gda._slide().uniqueId());
             console.log("dSI: counter " + d._counter);
             d._qty = 1;
         });
@@ -4144,6 +4154,16 @@ function xmlDataLoaded(error, xml) {
 
 function dataArrayReady(error, dataArray) {    // [ [{},{}] , ... ]
     console.log("bListOfMany " + gda._slide().bListOfMany);
+    console.log("restoreStateDeferred e(" +
+           (error ?
+                (error.message ? 
+                    error.message
+                    :error.statusText)
+                :"no error")+")");
+    if (error || !dataArray || dataArray.length<1)  {
+    }
+    else
+    {
     console.log("dataArrayReady e(" + error+") Lin ", dataArray.length);
     console.log("dataArrayReady "+JSON.stringify(dataArray) );
 
@@ -4180,6 +4200,7 @@ function dataArrayReady(error, dataArray) {    // [ [{},{}] , ... ]
     }
     //dc.redrawAll(sChartGroup);//sChartGroupList);  ? not til later.
     qA.awaitAll(allDataLoaded);  // read them all, then continue
+    }
 }
 
 function allDataLoaded(error, testArray) {

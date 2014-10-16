@@ -25,7 +25,7 @@ Zoho,BIV,,Cloud,,600,http://www.zoho.com/reports/
 Looker,BIV,,,,,http://www.looker.com/
 AndMore,BIV,,,,,http://www.getapp.com/compare/m/91545+90800
 Animetrix,BIV,,,,,http://anametrix.com/
-DataWrapper,BIV,,,,,https://www.datawrapper.de/
+DataWrapper,Library,,Any,,Free,https://www.datawrapper.de/
 PS OpenBI,BIV,Single Page,Any,,Free,https://github.com/publicsoftware/OpenBI
 WebPivotTable,PivotTable,,,,Free,http://webpivottable.com/demo
 JOOQ,Library,SQL for Java,,"JOOQ, ASL 2.0",,http://www.jooq.org/
@@ -36,3 +36,4 @@ slideViewerPro,Library,UI Controls,,,,http://www.gcmingati.net/wordpress/wp-cont
 droppable,Library,UI Controls,,,,http://jqueryui.com/droppable/
 Angular NVD3,Library,UI Controls,,,,http://krispo.github.io/angular-nvd3/
 PubNub,Library+Web,Communication,,,Free+,http://www.pubnub.com/
+Infragistics ASP.net,Library,,,,2000,http://www.infragistics.com/products/aspnet
