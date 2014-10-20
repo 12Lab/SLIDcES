@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "67",
+    minor:   "70",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -85,19 +85,42 @@ gda.newDataSourceState = function() {
     var _aDatasource = {};
     _aDatasource.dataprovider = "";
     _aDatasource.datafile = "";
-    _aDatasource.bLoaded = false;
+    _aDatasource.bLoaded = false;   // belongs in an 'runtime' map for the source.
     _aDatasource.bListOfMany = false;
     _aDatasource.bLocalFile = true;
     _aDatasource.bAggregate = false;
 
     return _aDatasource;
 }
+
+gda.dataSources = {};
+gda.dataSources.restore = function(dataSourceMap) {
+    _.each(dataSourceMap, function(aDataSource) {  
+        console.log("rs: dataSource " + aDataSource.dataprovider + aDataSource.datafile);
+    });
+}
+
 gda.datasource = function( _datasource ) {
     var _aDatasource = _datasource ? _datasource : {};
     // expand as needed
 
     return _aDatasource;
 }
+
+// adds a counter and sets default quantity
+gda.dataSourceInternal = function(data) {
+    console.log("dataSourceInternal");
+    if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
+        _.each(data, function(d) {
+//            d._counter = gda._slide().uniqueId();    // should come from data source
+            d._counter = gda.counterFormat(gda._slide().uniqueId());
+            console.log("dSI: counter " + d._counter);
+            d._qty = 1;
+        });
+    }
+    return data;
+}
+
 
 gda.allowEdit = function() {
     return gda._allowEdit || gda.bAccessOverrides;
@@ -903,10 +926,6 @@ gda.showTable = function() {
                             //gda.manageInputSource.pollTimerStart();
                             gda.manageInputSource.pollTimerTick();  // calling this kicks one now and schedules the next
                         }
-                        //gda.datafile = null;   // override to force reload
-                        //gda.dataprovider = null;   // override to force reload  added .38
-                        //gda.fileLoadImmediate();
-                        //gda.showTable();
                         } );
             var dEl = gda.addElement(s3,"br");
             gda.addCheckB(s3, "PollAggregate", "Aggregate DataSource", 'objmember',
@@ -1138,7 +1157,8 @@ gda.slides = function() {
             gda.slides.append();
         },
         fileAdd: function(filepath) {
-            console.log(" fileAdd: is this used? ====== ");
+            alert(" fileAdd: is this used? ====== ");
+    if (0) {
             // split into datafile and provider (folder).
             var i = filepath.lastIndexOf("/");
             if (i<0)
@@ -1157,6 +1177,7 @@ gda.slides = function() {
                     
             }
             gda.fileLoadImmediate();
+            }
         },
         run: function(slidespath,dElN,dElS,optFilters) {
             console.log("optFilters: ",JSON.stringify(optFilters));
@@ -1831,6 +1852,8 @@ gda.newHistChart = function(iChart, cf) {
     if (!chtObj.nBins) chtObj.nBins = chtObj.wChart/20; // magic number
     gda.addOverride(chtObj,"elasticX",false);
     gda.addOverride(chtObj,"legend",false);
+    gda.addOverride(chtObj,"log",false);
+    gda.addOverride(chtObj,"yMin",false);
 
     var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
     var xmin = xDimension.bottom(1)[0][chtObj.cnameArray[0]];
@@ -1995,6 +2018,8 @@ gda.newSeriesChart = function(iChart, cf) {
 gda.newBarChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     gda.addOverride(chtObj,"legend",false);
+    gda.addOverride(chtObj,"log",false);
+    gda.addOverride(chtObj,"yMin",false);
     var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf);
     chtObj.dDims.push(xDimension);
     var dXGrp = xDimension.group();
@@ -2003,6 +2028,8 @@ gda.newBarChart = function(iChart, cf) {
 
 gda.newParetoChart = function(iChart, cf) {
     gda.newBarChart(iChart,cf);
+    var chtObj=gda.charts[iChart];
+    gda.addOverride(chtObj,"top",false);
     // add dim for percentage
 }
 
@@ -2097,10 +2124,12 @@ gda.newStatsChart = function(iChart, cf) {
 gda.newScatterChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     gda.addOverride(chtObj,"legend",false);
-    gda.addOverride(chtObj,"elasticX",true); // not sure of this until fully tested
-    gda.addOverride(chtObj,"elasticY",true);
+    gda.addOverride(chtObj,"elasticX",false);//true); // not sure of this until fully tested
+    gda.addOverride(chtObj,"elasticY",false);//true);
     gda.addOverride(chtObj,"brushOn",true);
     gda.addOverride(chtObj,"mouseZoomable",true);
+    gda.addOverride(chtObj,"log",false);
+    gda.addOverride(chtObj,"yMin",false);
     if (chtObj.cnameArray.length>1) {
         var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf,true);
         var yDimension = gda.dimensionByCol(chtObj.cnameArray[1],chtObj.cf,true);
@@ -2680,7 +2709,18 @@ gda.newBarDisplay = function(iChart, dEl) {
     var botMi = maxL>0 ? (maxL-1)*5 : 0;
 
     //console.log("add bar for Bar @ " + chtObj.dElid);
-    var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup);
+    var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
+        .dimension(dDims[0])
+        .group(chtObj.dGrps[0]);
+    var maxBarHeight;
+    var pixPerUnit;
+    var logMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0; //{1.0;
+    if (chtObj.overrides["log"]) {
+        var ymax = ftX.yAxisMax();
+        maxBarHeight = chtObj.hChart*.80;   // ugh. need to know the height of the text
+        pixPerUnit = maxBarHeight / (Math.log(ymax)-Math.log(logMin));
+        ftX.y(d3.scale.log().domain([logMin, ymax]));
+    }
     ftX
         .margins({top: ftX.margins()["top"],
                 right: ftX.margins()["right"],
@@ -2694,14 +2734,13 @@ gda.newBarDisplay = function(iChart, dEl) {
         .width(chtObj.wChart)    // same as scatterChart
         .height(chtObj.hChart)        // not nearly as high
         //.elasticY(true)
-        .x(d3.scale.ordinal().domain(dom))//[xmin,xmax]))//[xmin,xmax]))    // was linear
+        .x(d3.scale.ordinal().domain(dom))
         .xUnits(dc.units.ordinal)
         .label(gda.utils.labelFunction)
         .title(gda.utils.titleFunction)
         //.elasticX(true)
         // brush is off, as scale needs to be corrected manually
         //.brushOn(false)
-        .dimension(dDims[0])
 //    .yAxisLabel("Samples per Bin")
     .xAxisLabel(chtObj.cnameArray[0])
 //    .xAxisLabel(chtObj.numberFormat(xmin)+" => "+ chtObj.cnameArray[0] +" (binned) <= "+chtObj.numberFormat(xmax))
@@ -2714,8 +2753,20 @@ gda.newBarDisplay = function(iChart, dEl) {
                             return "rotate(-90)";
                         })
                     .style("text-anchor", "end");
+        });
+    if (chtObj.overrides["log"]) {
+        ftX
+        .renderlet(function(chart) {
+            chart.selectAll("g .bar")
+                .attr("y", function(d) {
+                    return (maxBarHeight - 1) - (pixPerUnit*(Math.log(d.y)-Math.log(logMin)));
         })
-        .group(chtObj.dGrps[0]);
+                .attr("height", function(d) {
+                    return pixPerUnit*(Math.log(d.y)-Math.log(logMin));
+                });
+        });
+    }
+
     if (chtObj.overrides["legend"])
         ftX
             .legend(dc.legend());
@@ -2772,7 +2823,28 @@ gda.newParetoDisplay = function(iChart, dEl) {
         );
     }
 
-        gda.pareto.domain(chtObj.dGrps[0]);
+        var composite = dc.compositeChart("#"+chtObj.dElid, chtObj.sChartGroup)     // need id here
+        chtObj.chart = composite;
+        var bc = dc.barChart(composite);
+            if ( chtObj.overrides["top"] )
+                bc
+                    .dimension(chtObj.dDims[0].top(chtObj.overrides["top"]));
+            else
+                bc
+                    .dimension(chtObj.dDims[0]);
+        var lc = dc.lineChart(composite);
+            if ( chtObj.overrides["top"] )
+                lc
+                    .dimension(chtObj.dDims[0].top(chtObj.overrides["top"]));
+            else
+                lc
+                    .dimension(chtObj.dDims[0].top(Infinity));
+
+        if ( chtObj.overrides["top"] )
+            gda.pareto.domain(chtObj.dGrps[0].top(chtObj.overrides["top"]));
+        else
+            gda.pareto.domain(chtObj.dGrps[0].top(Infinity));
+
         var maxLkey = _.max(gda.pareto.getDomain(), function(key) { return key.length; });
         var maxL = maxLkey.length;
         // assume about 5 pixels for font until can extract. Doesn't account for angle
@@ -2780,17 +2852,14 @@ gda.newParetoDisplay = function(iChart, dEl) {
         if (Math.abs(xAxisTickLabelAngle)<20) maxL = 0;  // apply for steeper angles
         var botMi = maxL>0 ? (maxL-1)*5 : 0;
 
-        var composite = dc.compositeChart("#"+chtObj.dElid, chtObj.sChartGroup)     // need id here
         composite
         .margins({top: composite.margins()["top"],
                 right: composite.margins()["right"],
                 bottom: botMi + composite.margins()["bottom"],
                 left: composite.margins()["left"]});
-        chtObj.chart = composite;
 
-        var bc = 
-                     dc.barChart(composite)
-                        .dimension(chtObj.dDims[0])
+            bc
+                
                         .centerBar(true)
                         .barPadding(0.1)    // without this there is bar overlap!
                         //.gap(5)    // no impact?
@@ -2812,11 +2881,10 @@ gda.newParetoDisplay = function(iChart, dEl) {
             .label(gda.utils.labelFunction)
             .title(gda.utils.titleFunction)
             //.renderHorizontalGridLines(true)
-            .compose([ //chtObj.chart,
+            .compose([
                      bc,
-                   dc.lineChart(composite)
-                      //.ordering(gda.pareto.orderValue)
-                      .dimension(chtObj.dDims[0])
+                   lc  //dc.lineChart(composite)
+                      //.dimension(chtObj.dDims[0])
                       .colors('red')
                  //   .label(gda.utils.labelFunction2)
                  //   .title(gda.utils.titleFunction2)
@@ -2875,13 +2943,13 @@ gda.pareto = (function() {
         getDomain: function() {
             return pareto.dom;   // could pluck the key, but the work was already done
         },
-        domain: function(grp) {
+        domain: function(topI) { // grp) {
             var all = gda.cf.groupAll();
 
 
             var sum = 0;
                             // .all() is faster than .top(Infinity)
-            pareto.topI = grp.top(Infinity);    // make selectable
+            pareto.topI = topI;// grp.top(Infinity);    // make selectable
             pareto.dom = [];
             pareto.topI.forEach(function(d) {
                 pareto.dom[pareto.dom.length] = d.key;
@@ -3093,18 +3161,30 @@ gda.newHistDisplay = function(iChart, dEl) {
         gda.charts[iChart].dElid = dElP.id;
     }
 
-
-    //console.log("add bar for Hist @ " + chtObj.dElid);
-    var ftHistX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup); //"#ftHistXEl",chtObj.sChartGroup);
+    var ftHistX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup) //"#ftHistXEl",chtObj.sChartGroup)
+        .dimension(dDims[0])
+        .group(chtObj.dGrps[0]);
     chtObj.chart = ftHistX;        // for now. hold ref
     ftHistX.gdca_chart = chtObj;
+
+    var maxBarHeight;
+    var pixPerUnit;
+    var logMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0;
+    if (chtObj.overrides["log"]) {
+        var ymax = ftHistX.yAxisMax();
+        maxBarHeight = chtObj.hChart*.88;   // ugh. need to know the height of the text
+                                        // how about using the axis height in the renderlet?
+        pixPerUnit = maxBarHeight / (Math.log(ymax)-Math.log(logMin));
+        ftHistX.y(d3.scale.log().domain([logMin, ymax]));
+    }
+
     ftHistX
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
         .width(chtObj.wChart)    // same as scatterChart
         .height(chtObj.hChart)        // not nearly as high
         // ScatterHist needs to un-elasticY?
         .elasticX(chtObj.overrides["elasticX"])
-        .elasticY(true)
+        //.elasticY(true)
         //.x(d3.scale.linear().domain([0,chtObj.nBins]))//.range([xmin,xmax])
         .x(d3.scale.linear().domain([xmin,xmax]))
 // simplify the Hists since fp.precision exists
@@ -3112,13 +3192,24 @@ gda.newHistDisplay = function(iChart, dEl) {
         // brush is off, as scale needs to be corrected manually
         .brushOn(true)
         .centerBar(true)
-        .dimension(dDims[0])
         //.barPadding(0.2)  // these two don't seem to work right in 2.0
         //.gap(10)
 //    .yAxisLabel("Samples per Bin")
-    .xAxisLabel(chtObj.numberFormat(xmin)+" => "+ chtObj.cnameArray[0] +" (binned) <= "+chtObj.numberFormat(xmax))
+    .xAxisLabel(chtObj.numberFormat(xmin)+" => "+ chtObj.cnameArray[0] +" (binned) <= "+chtObj.numberFormat(xmax));
     //.xAxisLabel(xmin+" => "+ chtObj.cnameArray[0] +" (binned) <= "+xmax)
-        .group(chtObj.dGrps[0]);
+
+    if (chtObj.overrides["log"]) {
+        ftHistX
+        .renderlet(function(chart) {
+            chart.selectAll("g .bar")
+                .attr("y", function(d) {
+                    return (maxBarHeight - 1) - (pixPerUnit*(Math.log(d.y)-Math.log(logMin)));
+                })
+                .attr("height", function(d) {
+                    return pixPerUnit*(Math.log(d.y)-Math.log(logMin));
+                });
+        });
+    }
 
         if (dDims[0].isDate)
             ftHistX .xAxis().ticks(d3.time.months,6);   // months should be a setting
@@ -3322,21 +3413,23 @@ gda.newScatterDisplay = function(iChart, dEl) {
 
     // need to 'create' the div
     //console.log("add scatter @ " + dElP.id);
-    var scatterChart = dc.scatterPlot("#"+dElP.id, chtObj.sChartGroup );
-    //var scatterChart = dc.bubbleChart("#"+dElP.id, chtObj.sChartGroup );
+    var scatterChart = dc.scatterPlot("#"+dElP.id, chtObj.sChartGroup )
+        .width(chtObj.wChart)
+        .height(chtObj.hChart)
+        .dimension(chtObj.scatterDimension)
+        .group(chtObj.scatterGroup);
     chtObj.chart = scatterChart;
     scatterChart.gdca_chart = chtObj;
 
     gda.scatterDomains(chtObj,true);
 
     scatterChart
-        .width(chtObj.wChart)
-        .height(chtObj.hChart)
-        .dimension(chtObj.scatterDimension)
-        .group(chtObj.scatterGroup)
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
-        .elasticX(chtObj.overrides["elasticX"])   // not sure of this until fully tested
-        .elasticY(chtObj.overrides["elasticY"])
+        .elasticX(chtObj.overrides["elasticX"]);   // not sure of this until fully tested
+    if (chtObj.overrides["log"] === false)
+    scatterChart
+        .elasticY(chtObj.overrides["elasticY"]);
+    scatterChart
     .mouseZoomable(chtObj.overrides["mouseZoomable"])
     .brushOn(chtObj.overrides["brushOn"])
     //.brushOn(true) // if set to false, chart can be 'zoomed', but looks like it needs elasticY then to update Y axis ticks properly. mouseZoomable.
@@ -3376,8 +3469,8 @@ gda.scatterDomains = function(chtObj, bInitial){
     var ymax = dDims[1].top   (1)[0][chtObj.cnameArray[1]];
     console.log("scatterD: b ymin,ymax " + ymin + "," + ymax);
     if (isNaN(ymin)) {
-        ymin = ymax - 0.1*ymax;//0;
-        ymax = ymax + 0.1*ymax;//0;
+        ymin = 0;// +ymax - 0.1 * +ymax;//0; the dim[].top/bot(1)[] approach has a 'sparse' data weakness.
+        ymax = +ymax + 0.1 * +ymax;//0;
     }
     else if (ymin === ymax) {
         ymin = ymin*0.9;
@@ -3392,10 +3485,20 @@ gda.scatterDomains = function(chtObj, bInitial){
     var xs;
     var xu;
     var ys;
+    var maxBarHeight;
+    var pixPerUnit;
+    var logMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0;
     if (bInitial) {
         xs = d3.scale.linear();     //var xs = d3.scale.ordinal();
         xu = dc.units.integers;//();   //var xu = dc.units.ordinal();
         ys = d3.scale.linear().domain(ydomain);
+        if (chtObj.overrides["log"]) {
+            //var ymax = chtObj.chart.yAxisMax();
+            maxBarHeight = chtObj.hChart*.80;   // ugh. need to know the height of the text
+            pixPerUnit = maxBarHeight / (Math.log(ymax)-Math.log(logMin));
+            //chtObj.chart.y(d3.scale.log().domain([logMin, ymax]));
+            ys = d3.scale.log().domain([logMin, ymax]);
+        }
         if (dDims[0].isDate) {
             xs = d3.time.scale().domain(xdomain);
             xu = d3.time.days;
@@ -3404,12 +3507,14 @@ gda.scatterDomains = function(chtObj, bInitial){
     else {
         xs = chtObj.chart.x();
         xu = chtObj.chart.xUnits();
+        if (!chtObj.overrides["log"])
         ys = chtObj.chart.y();
     }
     if (!dDims[0].isDate) {
         xdomain = expandDomain(xdomain,exFac);
         ydomain = expandDomain(ydomain,exFac);
         xs.domain(xdomain); // was d3.scale.linear().domain(xdomain))//.nice())
+        if (!chtObj.overrides["log"])
         ys.domain(ydomain);
     }
     var xLabelFormat = chtObj.numberFormat;
@@ -3761,7 +3866,17 @@ gda.restoreStateDeferred = function(error, oArray) {
     }
 };
 gda.restoreStateFromObject = function(o, bDashOnly) {
+    // dataprovide
+    // datafile
+    // bListOfMany
+    // bLocalFile
+    // _idCounter
+    // keymap
+
     console.log("rSFO: bDO " + bDashOnly);
+    if (o && o.dataSources) {
+        gda.dataSources.restore(o.dataSources);
+    }
     if (o && o.slideRefs) {
         _.each(o.slideRefs, function(aSlideRef) {  
             if (!bDashOnly || (gda.utils.fieldExists(aSlideRef.bDashInclude) && aSlideRef.bDashInclude)) {
@@ -3993,20 +4108,6 @@ gda.dataKeymapAdd = function(dR) { //columns,dR) {
         });
         dataAdd(dR);
     }
-}
-
-// adds a counter and sets default quantity
-gda.dataSourceInternal = function(data) {
-    console.log("dataSourceInternal");
-    if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
-        _.each(data, function(d) {
-//            d._counter = gda._slide().uniqueId();    // should come from data source
-            d._counter = gda.counterFormat(gda._slide().uniqueId());
-            console.log("dSI: counter " + d._counter);
-            d._qty = 1;
-        });
-    }
-    return data;
 }
 
 gda.slidesLoadImmediate = function(slidespath, bDashOnly) {
