@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "70",
+    minor:   "72",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -33,7 +33,10 @@ var gda = {
                 var sl = gda.slides.list();
                 return sl[gda._currentSlide];
             },
-    cf : null,              // data is aggregated in crossfilter
+
+    cf : {},              // data is aggregated in crossfilter
+    dimensions : {},
+
     myCols : {              // selections, really just the current checkboxes selected in the control section.
         "csetupChartCols" : [],     // which columns are selected for chart creation; no benefit to persistence.
                                     // stored in each chart when configured
@@ -49,7 +52,6 @@ var gda = {
     selCharts : [],
     charts : [],
     tables : [],
-    dimensions : [],
     dateDimension : null,
     bDashOnly : false,
                                 // current slide's state
@@ -85,19 +87,65 @@ gda.newDataSourceState = function() {
     var _aDatasource = {};
     _aDatasource.dataprovider = "";
     _aDatasource.datafile = "";
-    _aDatasource.bLoaded = false;   // belongs in an 'runtime' map for the source.
-    _aDatasource.bListOfMany = false;
     _aDatasource.bLocalFile = true;
+    _aDatasource.bLoaded = false;
+    _aDatasource.bListOfMany = false;
     _aDatasource.bAggregate = false;
+    _aDatasource._idCounter = 0;
+
 
     return _aDatasource;
 }
 
+//gda.dataSource = function( _ds ) {    // used to decorate a ds definition for operations
+//    var _aDS  = _ds ? _ds : {};
+//    _aDS.__dc_flag__ = dc.utils.uniqueId();
+//    _aDS.uniqueId = function() {
+//    };
+//    return _aDS;
+//};
+
 gda.dataSources = {};
+gda.dataSources.map = {};
+gda.dataSources.map.none = gda.newDataSourceState();
+gda.dataSources.uniqueId = function(ds) {
+    return ++(ds._idCounter);
+};
+gda.dataSources.asText = function() {
+    var dss = gda.dataSources.map;
+    var t = JSON.stringify(dss);
+    t = t.replace(/{\"/g,'{\r\n\"');
+    t = t.replace(/\"keymap\"/g,'\r\n\"keymap\"');
+    t = t.replace(/}/g,'\r\n\}');
+    return t;
+};
+
 gda.dataSources.restore = function(dataSourceMap) {
-    _.each(dataSourceMap, function(aDataSource) {  
-        console.log("rs: dataSource " + aDataSource.dataprovider + aDataSource.datafile);
+    if (!gda.utils.fieldExists(gda.dataSources.map))
+        gda.dataSources.map = {};
+
+    _.each(dataSourceMap, function(aDataSource, dsName, dsEntry) {
+        var dsRestored = jQuery.extend(true, gda.newDataSourceState(), aDataSource);   // add any missing fields.
+        console.log("rs: dsN " + dsName );
+        console.log("rs: dataSource " + dsRestored.dataprovider + dsRestored.datafile);
+
+        gda.dataSources.restoreOne(dsName, dsRestored);
+
+        // don't load until referenced?
     });
+}
+
+gda.dataSources.uniqueIndex = 0;
+
+gda.dataSources.restoreOne = function(dsName, dsRecord) {
+    if (dsName === "blank") dsName = dsName + (++gda.dataSources.uniqueIndex);
+    if (gda.utils.fieldExists(gda.dataSources.map[dsName])) {   // do nothing if already present.
+        return dsName;
+    }
+    else {
+        gda.dataSources.map[dsName] = JSON.parse(JSON.stringify( dsRecord )); // cleanup/copy
+        return dsName;
+    }
 }
 
 gda.datasource = function( _datasource ) {
@@ -111,9 +159,10 @@ gda.datasource = function( _datasource ) {
 gda.dataSourceInternal = function(data) {
     console.log("dataSourceInternal");
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
+        var ds = gda.dataSources.map[gda._slide().dataSource];
         _.each(data, function(d) {
 //            d._counter = gda._slide().uniqueId();    // should come from data source
-            d._counter = gda.counterFormat(gda._slide().uniqueId());
+            d._counter = gda.counterFormat(gda.dataSources.uniqueId(ds));
             console.log("dSI: counter " + d._counter);
             d._qty = 1;
         });
@@ -136,17 +185,18 @@ gda.newSlideState = function() {
     _aSlide.title = "Blank";
 
     // data source related, refactor into a data source
-    _aSlide.dataprovider = "";
-    _aSlide.datafile = "";
-    _aSlide.bLoaded = false;
-    _aSlide.bListOfMany = false;
-    _aSlide.bLocalFile = true;
-    _aSlide.bAggregate = false;
-    _aSlide._idCounter = 0;
+    //_aSlide.dataprovider = "";
+    //_aSlide.datafile = "";
+    //_aSlide.bLoaded = false;
+    //_aSlide.bListOfMany = false;
+    //_aSlide.bLocalFile = true;
+    //_aSlide.bAggregate = false;
+    //_aSlide._idCounter = 0;
+    _aSlide.dataSource = "none";
 
     // data source as applied on this slide
     _aSlide.columns = [];   // columns available, from previously loaded data
-    _aSlide.keymap = {};
+    //_aSlide.keymap = {};
     _aSlide.filters = {};
 
     // Dimension 'selector charts' chosen, by 'column'.
@@ -277,7 +327,7 @@ gda.slide = function( _slide ) {
 
     _aSlide.clear = function() {
         gda._slide().columns = [];
-        gda._slide().keymap = {};
+        //gda._slide().keymap = {};
         gda._slide().filters = {};
         gda.clearWorkingState();
     };
@@ -397,12 +447,17 @@ gda.slide = function( _slide ) {
             var dTxtT = gda.addTextNode(dHostEl,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
 
         if (gda && gda.cf) {
+            var dS = gda._slide().dataSource;
+            if (dS.length>0 && gda.utils.fieldExists(gda.cf[dS])) {
         var dElBr = gda.addElement(dHostEl,"br");
-        var dTxtT = gda.addTextNode(dHostEl,"CF(size)=" + gda.cf.size());
+            var dTxtT = gda.addTextNode(dHostEl,"CF(" + dS + ")");
         var dElBr = gda.addElement(dHostEl,"br");
-        var dTxtT = gda.addTextNode(dHostEl,"CF(N,bitMask)=" + gda.cf.sizem().toString(2).length + "," + gda.cf.sizem().toString(2) );
+            var dTxtT = gda.addTextNode(dHostEl,"CF(size)=" + gda.cf[dS].size());
         var dElBr = gda.addElement(dHostEl,"br");
-        var dTxtT = gda.addTextNode(dHostEl,"CF(maxN)=" + gda.cf.sizeM());
+            var dTxtT = gda.addTextNode(dHostEl,"CF(N,bitMask)=" + gda.cf[dS].sizem().toString(2).length + "," + gda.cf[dS].sizem().toString(2) );
+            var dElBr = gda.addElement(dHostEl,"br");
+            var dTxtT = gda.addTextNode(dHostEl,"CF(maxN)=" + gda.cf[dS].sizeM());
+        }
         }
     };
 
@@ -426,7 +481,8 @@ gda.slide = function( _slide ) {
 
 gda.applySlideFilters = function(filters) {
     console.log("aSF: " + JSON.stringify(filters));
-    if (gda.cf) {
+    var dS = gda._slide().dataSource;
+    if (gda.cf[dS]) {
     console.log("aSF: have gdf");
     if (!arguments.length) filters = gda._slide().filters;
         console.log("aSF: now " + JSON.stringify(filters));
@@ -459,10 +515,11 @@ gda.applySlideFilters = function(filters) {
 }
 
 gda.showAvailable = function() {
-if (gda.cf) { //gda.myCols.csetupChartCols.length>0) {//}
+    var dS = gda._slide().dataSource;
+if (gda.cf[dS]) { //gda.myCols.csetupChartCols.length>0) {//}
     var s1 = document.getElementById('AvailChoices');
     if (s1) {
-        gda.chooseFromAvailCharts(s1,gda.cf,gda.myCols.csetupChartCols, gda.addSelectedChart);//, sChartGroup );
+        gda.chooseFromAvailCharts(s1,gda.cf[dS],gda.myCols.csetupChartCols, gda.addSelectedChart);//, sChartGroup );
     }
     }
 }
@@ -786,13 +843,14 @@ gda.showFilter = function(c,f) {
 }
 
 gda.regenerateTableAndDim = function(bShowTable) {
-    if (bShowTable && gda.cf && gda.myCols.csetupSortTableCols.length>0) {
+    var dS = gda._slide().dataSource;
+    if (bShowTable && gda.cf[dS] && gda.myCols.csetupSortTableCols.length>0) {
         if (gda.dateDimension) {
             console.log("rTaD remove");
             gda.dateDimension.remove();
         }
         console.log("rTaD create dim");
-        gda.dateDimension = gda.cf.dimension(function (d) {
+        gda.dateDimension = gda.cf[dS].dimension(function (d) {
             return d[gda.myCols.csetupSortTableCols[0]]; // just first one, for now
         });
     }
@@ -805,10 +863,11 @@ gda.regenerateTable = function(bShowTable) {
     s8.innerHTML = "";
 
     // requires a dimension for now
-    if (bShowTable && gda.cf && gda.myCols.csetupSortTableCols.length>0) {
+    var dS = gda._slide().dataSource;
+    if (bShowTable && gda.cf[dS] && gda.myCols.csetupSortTableCols.length>0) {
 
     var diff = _.difference(gda._slide().columns,gda.myCols.csetupHiddenTableCols);
-    var iTable = gda.createTable(gda.cf, gda.dateDimension, diff, sChartGroup, gda._slide().bShowLinksInTable, gda._slide().bShowPicturesInTable, JSON.parse(JSON.stringify(gda.myCols))  );// myCols changes, need to retain state
+    var iTable = gda.createTable(gda.cf[dS], gda.dateDimension, diff, sChartGroup, gda._slide().bShowLinksInTable, gda._slide().bShowPicturesInTable, JSON.parse(JSON.stringify(gda.myCols))  );// myCols changes, need to retain state
     gda.newTableDisplay(s8,iTable);
 	//console.log("renderALL gda.regenerateTable");
     //dc.renderAll(sChartGroup);    10/6/2014 removed, added .render to table.
@@ -816,7 +875,8 @@ gda.regenerateTable = function(bShowTable) {
 }
 
 gda.regenerateTotalReset = function() {
-    if (gda.cf) {
+    var dS = gda._slide().dataSource;
+    if (gda.cf[dS]) {
     var dEl = document.getElementById('TotalReset');
     if (dEl) {
         dEl.innerHTML = "";
@@ -836,7 +896,8 @@ gda.regenerateCharts = function() {
 gda.dataComplete = function() {
     var sl = gda.slides.list();
 
-    sl[gda._currentSlide].bLoaded = true;   // should be in the datasource
+    var ds = gda.dataSources.map[gda._slide().dataSource];
+    ds.bLoaded = true;
     console.log("gda.dataComplete columns " + gda._slide().columns);
 
     if (!gda.bPollTimer || !gda.bPolledAndViewDrawn)// || !gda.bPollAggregate)
@@ -887,9 +948,10 @@ gda.showTable = function() {
                 gda.bFirstRowsOnly, 
                 function () {
                     gda.bFirstRowsOnly = this.checked;
-                    //gda._slide().bLoaded = false;
-                    gda.datafile = null;   // override to force reload
-                    gda.dataprovider = null;   // override to force reload  added .38
+                        var ds = gda.dataSources.map[gda._slide().dataSource];
+                        ds.bLoaded = false;
+                    //gda.datafile = null;   // override to force reload
+                    //gda.dataprovider = null;   // override to force reload  added .38
                     gda.fileLoadImmediate();
                     gda.showTable();
                     } );
@@ -993,23 +1055,6 @@ gda.slideRegistry = function() {
     }
 
     return {
-//      load: function(filename) {  // old, eliminate
-//          _file = filename;
-//          d3.csv(_file, function(data) {
-//              console.log("d3.csv loaded: "+JSON.stringify(data));
-//              // set key,values to our state
-//              _.each(data, function(value, key) {    // just (key) if parseRows is used.
-//                  if (key === "slides") {
-//                      _.each(value, function(aSlide, slideKey) {    // just (key) if parseRows is used.
-//                          gda.slides.append(gda.slide.restore(aSlide));
-//                      });
-//                  }
-//                  else {
-//                      gda.slides[key] = value;
-//                  }
-//              });
-//          });
-//      },
         asText: function() {
             var sl = gda.slides.list();
             var t = JSON.stringify(sl);
@@ -1156,30 +1201,8 @@ gda.slides = function() {
             gda.slideRegistry.clear();
             gda.slides.append();
         },
-        fileAdd: function(filepath) {
-            alert(" fileAdd: is this used? ====== ");
-    if (0) {
-            // split into datafile and provider (folder).
-            var i = filepath.lastIndexOf("/");
-            if (i<0)
-                i = filepath.lastIndexOf("\\"); // allow either form
-            if (i>0 && i<filepath.length-1) {
-                var filename = filepath.substring(i+1);
-                var folderpath = filepath.substring(0,i+1); // retain separator
-                gda._slide().datafile = filename;   // retain for Slide setup, may already be set
-                gda._slide().dataprovider = folderpath;   // retain for Slide setup, may already be set  fixed was .provider .38
-            } else { 
-                if (gda.utils.fieldExists(gda._slide().bLocalFile) && !gda._slide().bLocalFile)
-                    gda._slide().dataprovider = filepath;
-                else
-                    gda._slide().datafile = filepath;   // assume local (last) folder and just a filename
-                
-                    
-            }
-            gda.fileLoadImmediate();
-            }
-        },
         run: function(slidespath,dElN,dElS,optFilters) {
+            if (optFilters)
             console.log("optFilters: ",JSON.stringify(optFilters));
             //sChartGroup = sChartGroupRoot + gda.runGrpNumber;   // temp hack to try mult runs
             //console.log("sCG " + sChartGroup + ", " + gda.runGrpNumber);
@@ -1260,23 +1283,27 @@ gda.slides = function() {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         var dCEl = gda.addElementWithId(dTd,"div","dataProviderType");
-                        gda.addRadioB(dCEl, "SLFile", "SLFile", "Local File", 'objmemberSource', gda._slide().bLocalFile, 
+                        var ds = gda.dataSources.map[gda._slide().dataSource];
+                        gda.addRadioB(dCEl, "SLFile", "SLFile", "Local File", 'objmemberSource', ds.bLocalFile, 
                                 function () {
                                     console.log("as Local");
-                                    gda._slide().bLocalFile = true;
+                                    var ds = gda.dataSources.map[gda._slide().dataSource];
+                                    ds.bLocalFile = true;
                                     gda.view.redraw();
                             })
-                            .addRadioB(dCEl, "SHttp", "SHttp", "Http Source", 'objmemberSource', !gda._slide().bLocalFile, 
+                            .addRadioB(dCEl, "SHttp", "SHttp", "Http Source", 'objmemberSource', !ds.bLocalFile, 
                                 function () {
                                     console.log("as Http");
-                                    gda._slide().bLocalFile = false;
+                                    var ds = gda.dataSources.map[gda._slide().dataSource];
+                                    ds.bLocalFile = false;
                                     gda.view.redraw();
                             });
 
                 //var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         var doChartEl = gda.addElementWithId(dTd,"div","dataProviderEntry");
-                if (gda.utils.fieldExists(gda._slide().bLocalFile) && !gda._slide().bLocalFile) {
+                var ds = gda.dataSources.map[gda._slide().dataSource];
+                if (gda.utils.fieldExists(ds.bLocalFile) && !ds.bLocalFile) {
                     var dTd = gda.addElement(dTr,"td");
                         var dTxtT = gda.addTextNode(dTd,"https://mysafeinfo.com/content/datasets");
                 }
@@ -1284,24 +1311,28 @@ gda.slides = function() {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         var dCEl = gda.addElementWithId(dTd,"div","dataFileQty");
-                        gda.addRadioB(dCEl, "One", "One", "Single CSV File", 'objmember', !gda._slide().bListOfMany, 
+                        var ds = gda.dataSources.map[gda._slide().dataSource];
+                        gda.addRadioB(dCEl, "One", "One", "Single CSV File", 'objmember', !ds.bListOfMany, 
                                 function () {
                                     console.log("newOne");
-                                    gda._slide().bListOfMany = false;
+                                    var ds = gda.dataSources.map[gda._slide().dataSource];
+                                    ds.bListOfMany = false;
                             })
-                            .addRadioB(dCEl, "Many", "Many", "CSV File of File List", 'objmember', gda._slide().bListOfMany, 
+                            .addRadioB(dCEl, "Many", "Many", "CSV File of File List", 'objmember', ds.bListOfMany, 
                                 function () {
                                     console.log("newMany");
-                                    gda._slide().bListOfMany = true;
+                                    var ds = gda.dataSources.map[gda._slide().dataSource];
+                                    ds.bListOfMany = true;
                             });
 
                     var dTd = gda.addElement(dTr,"td");
                         gda.addCheckB(dTd, "aggregate", "Aggregate Data", 'objmember', false, 
                                 function () {
                                     console.log("Aggregate? " + this.checked);
-                                    gda._slide().bAggregate = this.checked;
+                                    var ds = gda.dataSources.map[gda._slide().dataSource];
+                                    ds.bAggregate = this.checked;
                         });
-                if (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) {
+                if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         gda.addUploader(dTd, "uploader");
@@ -1460,9 +1491,11 @@ gda.view = function() {
 
             var dElDPE = document.getElementById("dataProviderEntry");
             dElDPE.innerHTML = "";
-            gda.addTextEntry(dElDPE, (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) ? "Folder" : "Provider", gda._slide().dataprovider,
+            var ds = gda.dataSources.map[gda._slide().dataSource];
+            gda.addTextEntry(dElDPE, (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) ? "Folder" : "Provider", gda._slide().dataprovider,
                     function(newVal) {
-                        if (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) {
+                        var ds = gda.dataSources.map[gda._slide().dataSource];
+                        if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) {
                         if (!(endsWith(newVal,"/") || endsWith(newVal,"\\")))
                             newVal = newVal + "\\";  // preserve form?
                         }
@@ -1519,10 +1552,13 @@ function endsWith(str, suffix) {
 
 
 gda.clearWorkingState = function() {
-    _.each(gda.dimensions, function(dimset) {
+    console.log("clearWorkingState:");
+    // should this be clearing the gda.cf[dS] ? Not according to a caller
+    var dS = gda._slide().dataSource;
+    _.each(gda.dimensions[dS], function(dimset) {
         dimset.dDim.dispose();   // [name,dim]
     });
-    gda.dimensions = [];        // working dimensions for selectors etc.
+    gda.dimensions[dS] = [];        // working dimensions for selectors etc.
     gda.selCols = [];           // working selection of columns for selectors, temp
     gda.selCharts = [];
     gda.selectors = [];        // definition of the selector
@@ -1587,26 +1623,29 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
 }
 
 gda.displayCharts = function() {
-    if (gda.cf) {
+    var dS = gda._slide().dataSource;
+    if (gda.cf[dS]) {
     gda.charts = [];    // workaround
         _.each(gda._slide().charts, function(aChart) {
             if (!gda.bDashOnly || (gda.utils.fieldExists(aChart.bDashInclude) && aChart.bDashInclude)) {
-            gda.newChart(gda.cf, aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type, aChart.overrides);
+            gda.newChart(gda.cf[dS], aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type, aChart.overrides);
             }
         });
     }
 }
 
 gda.addLastChart = function() {
-    if (gda.cf) {
+    var dS = gda._slide().dataSource;
+    if (gda.cf[dS]) {
         var aChart = gda._slide().charts[gda._slide().charts.length-1];
-        gda.newChart(gda.cf, aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type);
+        gda.newChart(gda.cf[dS], aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type);
     }
 }
 
 gda.dimensionByCol = function(cname,cf,bFilterNonNumbers, nFixed) {
     var res;
-    var aDimObj = _.findWhere(gda.dimensions, {dName: cname, dFilter: bFilterNonNumbers, dFixed: nFixed});
+    var dS = gda._slide().dataSource;
+    var aDimObj = _.findWhere(gda.dimensions[dS], {dName: cname, dFilter: bFilterNonNumbers, dFixed: nFixed});
     if (!aDimObj && cf) {
         res = cf.dimension(function (d) {
             //return d[cname];
@@ -1616,8 +1655,8 @@ gda.dimensionByCol = function(cname,cf,bFilterNonNumbers, nFixed) {
 	    }
             return bFilterNonNumbers ? ( (isNaN(v))?0.0:v ) : v;
             });
-        gda.dimensions.push({dName: cname, dFilter: bFilterNonNumbers, dFixed: nFixed, dDim: res});
-        console.log("dBC: " + JSON.stringify(gda.dimensions));
+        gda.dimensions[dS].push({dName: cname, dFilter: bFilterNonNumbers, dFixed: nFixed, dDim: res});
+        console.log("dBC: " + JSON.stringify(gda.dimensions[dS]));
     }
     else if (aDimObj) {
         res = aDimObj.dDim;
@@ -1629,7 +1668,10 @@ gda.dimensionByCol = function(cname,cf,bFilterNonNumbers, nFixed) {
 // separate model and view (creation of the objects from the view container)
 gda.newSelector = function(cname, sChtGroup, chartType) {
     console.log("gda nS: add " + chartType + " " + cname);
-    var dDim = gda.dimensionByCol(cname,gda.cf);
+    var dS = gda._slide().dataSource;
+    // might want to separate this dimension from the selector, so the
+    // UI is optional to the designer
+    var dDim = gda.dimensionByCol(cname,gda.cf[dS]);
     if (dDim) {
     var dGrp = dDim.group();
     var selObj = new Object();
@@ -2944,7 +2986,8 @@ gda.pareto = (function() {
             return pareto.dom;   // could pluck the key, but the work was already done
         },
         domain: function(topI) { // grp) {
-            var all = gda.cf.groupAll();
+            var dS = gda._slide().dataSource;   // no likey. should pass in the cf
+            var all = gda.cf[dS].groupAll();
 
 
             var sum = 0;
@@ -3710,7 +3753,9 @@ function createPhoto(d) {
 
 gda.new_crossfilter = function() {
     console.log("new_crossfilter ***************");
-    gda.cf = crossfilter();     // for now, just replacing any previous
+    var dS = gda._slide().dataSource;
+    if (!gda.utils.fieldExists(gda.cf[dS]))
+        gda.cf[dS] = crossfilter();     // for now, just replacing any previous
 };
 
 
@@ -3791,7 +3836,8 @@ function executeFunctionByName(functionName, context /*, args */) {
 gda.saveState = function (d,i) { // or ? https://code.google.com/p/google-gson/
 
         console.log("saveState: d,i " + d + "," + i);
-        var txt = gda.slideRegistry.asText();
+        var slidesAsTxt = gda.slideRegistry.asText();
+        var dataSourcesAsTxt = gda.dataSources.asText();
         var win;
         var doc;
         win = window.open("", "WINDOWID");
@@ -3802,8 +3848,9 @@ gda.saveState = function (d,i) { // or ? https://code.google.com/p/google-gson/
         doc.write('"minor": "' + gda.minor + '",\n\n');
         doc.write('"branch": "' + gda.branch + '",\n\n');
         doc.write('"help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",\n\n');
-        doc.write('"slides" : ' + txt);
-        doc.write("\n\n}");
+        doc.write('"dataSources" : ' + dataSourcesAsTxt + ',\n');
+        doc.write('"slides" : ' + slidesAsTxt + '\n');
+        doc.write("}");
       //doc.write("<pre>//Manually Save: Right-Click, View Source, File/SaveAs name.csv\n\nLine1,Field2,Field3\nLine2,Field2,Field3\n</pre>");
         doc.close();
     }
@@ -3866,6 +3913,7 @@ gda.restoreStateDeferred = function(error, oArray) {
     }
 };
 gda.restoreStateFromObject = function(o, bDashOnly) {
+    // type: specify the type of the file/source. If not present, assume csv. set when initially selecting
     // dataprovide
     // datafile
     // bListOfMany
@@ -3881,13 +3929,10 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
         _.each(o.slideRefs, function(aSlideRef) {  
             if (!bDashOnly || (gda.utils.fieldExists(aSlideRef.bDashInclude) && aSlideRef.bDashInclude)) {
             var filepath = aSlideRef.dataprovider;
+            // change the slide references to be a dataSource, so they can be served up any way possible (file, http).
             if (!gda.utils.fieldExists(aSlideRef.bLocalFile)|| aSlideRef.bLocalFile)
             {
                     filepath = filepath + aSlideRef.datafile;
-            }
-            else
-            {
-                //filepath = filepath + aSlideRef.datafile;
             }
             gda.slideFileLoad(filepath, bDashOnly ? gda.restoreDashOnlyDeferred : gda.restoreStateDeferred);
             }
@@ -3896,9 +3941,34 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
     if (o && o.slides) {
         var bAny = false;
         _.each(o.slides, function(aSlide) {    // just (key) if parseRows is used.
-            //o.slide.bLoaded = false;
             // update o.slide to have the slide state defaults, where not set.
             var restoredSlide = jQuery.extend(true, gda.newSlideState(), aSlide);   // add any missing fields.
+
+            // upconvert to 0.99.72's cf = {}, dimensions = {}, dataSource
+            if (gda.utils.fieldExists(restoredSlide.dataprovider)) {
+                var dsNew = gda.newDataSourceState();
+                gda.utils.moveField("dataprovider", restoredSlide,dsNew);
+                gda.utils.moveField("datafile",     restoredSlide,dsNew);
+                gda.utils.moveField("bLoaded",      restoredSlide,dsNew);
+                gda.utils.moveField("bListOfMany",  restoredSlide,dsNew);
+                gda.utils.moveField("bLocalFile",   restoredSlide,dsNew);
+                gda.utils.moveField("bAggregate",   restoredSlide,dsNew);
+                gda.utils.moveField("_idCounter",   restoredSlide,dsNew);
+                gda.utils.moveField("keymap",       restoredSlide,dsNew);
+
+                var dsName = "blank";
+                if (dsNew.datafile.length>0) {
+                    var i = dsNew.datafile.indexOf(".");
+                    if (i>0) dsName = dsNew.datafile.substring(0,i);
+                    else    dsName = dsNew.datafile;
+                }
+                //else blank.
+
+                var dsNameUnique = gda.dataSources.restoreOne(dsName, dsNew);
+                if (dsNameUnique)
+                    restoredSlide.dataSource = dsNameUnique;
+            }
+
             if (!bDashOnly || (gda.utils.fieldExists(restoredSlide.bDashInclude) && restoredSlide.bDashInclude)) {
                 bAny = true;
                 gda.slides.append(gda.slide(restoredSlide));  // decorate 
@@ -3909,6 +3979,14 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
     }
 
 };
+
+gda.utils.moveField = function(field,recOld,dsNew) {
+    if (gda.utils.fieldExists(recOld[field])) {
+        dsNew[field] = recOld[field];
+        delete recOld[field];
+    }
+};
+
 gda.restoreState = function(text) {
     console.log("rS:");
     if (text) {
@@ -4025,25 +4103,28 @@ gda.dataNativeReady = function(dR) {
     console.log("dataNativeReady "+dR);
     console.log("dataNativeReady "+JSON.stringify(dR));
 
-    if (((gda.bPollTimer) || // && gda.bPollAggregate) ||
-        gda._slide().bAggregate === true) && gda.cf) {
+    var dS = gda._slide().dataSource;
+    var ds = gda.dataSources.map[dS];
+    if ((gda.bPollTimer || // && gda.bPollAggregate) ||
+        ds.bAggregate === true) && gda.cf[dS]) {
         if (!gda.bPollAggregate)
-            gda.cf.remove();    // but to filters, so might need to
+            gda.cf[dS].remove();    // but to filters, so might need to
                                 // copy filters, remove, restore
     }
     else
         gda.new_crossfilter();
 
-    if (gda._slide().bAggregate === true) {
+    if (ds.bAggregate === true) {
         console.log("bAggregate, retain columns ",gda._slide().columns);
     }
     else {
         gda._slide().columns = [];  // start fresh
-        gda._slide().keymap = {};   // start fresh
+        //gda._slide().keymap = {};   // start fresh. This may need more work after dataSource refactor
         gda._slide().filters = {};
     }
 
-    if (gda._slide().bListOfMany)
+    var ds = gda.dataSources.map[gda._slide().dataSource];
+    if (ds.bListOfMany)
         dataArrayReady(null, [dR]);
     else {
         dR = gda.dataSourceInternal(dR);    // uses gda._slide()....counter
@@ -4060,14 +4141,17 @@ gda.dataNativeReady = function(dR) {
 
 gda.dataFilterKeymapTransform = function(dR) {
     if (dR && dR.length>0) {
-        var keymap = gda._slide().keymap;   // optimize?
+        var ds = gda.dataSources.map[gda._slide().dataSource];
+        var keymap = JSON.parse(JSON.stringify( ds.keymap ));    // duplicate
+        var bUpdateKeymap = (keymap.length === 0 || ds.bAggregate);
         var columns = gda._slide().columns;
         if (gda.bSparseColumns) // need to check every row's keys
             _.each(dR, function(dRN) {
                 _.each(dRN, function(value, key) {    // just (key) if parseRows is used.
                     var keyold = key;
                     key = trimColName(key);
-                    keymap[keyold] = key;
+                    if (keyold !== key)
+                        keymap[keyold] = key;   // holds mapping for non-compliant keys
                     if (!_.contains(columns, key))
                         columns.push(key);
                 });
@@ -4076,11 +4160,15 @@ gda.dataFilterKeymapTransform = function(dR) {
             _.each(dR[0], function(value, key) {    // just (key) if parseRows is used.
                 var keyold = key;
                 key = trimColName(key);
-                keymap[keyold] = key;
+                if (keyold !== key)
+                    keymap[keyold] = key;   // holds mapping for non-compliant keys
                 if (!_.contains(columns, key))
                     columns.push(key);
             });
-        gda._slide().keymap  = keymap;
+        if (bUpdateKeymap) {
+            console.log("dFKmT: " + JSON.stringify(keymap));
+            ds.keymap  = keymap;
+        }
         gda._slide().columns = columns;
         console.log("dataFilterKeymapTranform columns " + gda._slide().columns);
     }
@@ -4095,13 +4183,11 @@ gda.dataKeymapAdd = function(dR) { //columns,dR) {
         console.log("dataKeymapAdd");
         //console.log("dataKeymapAdd b4 " + dR);
         //console.log("dataKeymapAdd b4 " + JSON.stringify(dR));
+        var ds = gda.dataSources.map[gda._slide().dataSource];
         dR = _.map(dR, function(value, key) {
             var b = {};
-            // return
             _.map(value, function(v, k) {
-                //k = trimColName(k);
-                //return k+":"+v;
-                var k1 = gda._slide().keymap[k] || k;
+                var k1 = ds.keymap[k] || k;
                 b[k1] = v;
             });
             return b;
@@ -4117,7 +4203,7 @@ gda.slidesLoadImmediate = function(slidespath, bDashOnly) {
 };
 
 gda.slideFileLoad = function (slidespath, callback) {
-    console.log("sFL:");
+    console.log("sFL: " + slidespath);
     if (slidespath.length>0) {
             var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
             qF.defer(d3.json,slidespath);
@@ -4167,12 +4253,13 @@ gda.isDataFileTypeSupported = function(filepath) {
 
 // returns true if it did a deferred load
 gda.fileLoadImmediate = function() {
-    var filepath = gda._slide().dataprovider;
-    if (!gda.utils.fieldExists(gda._slide().bLocalFile) || gda._slide().bLocalFile) filepath = filepath + gda._slide().datafile;
-    if (gda.datafile !== filepath) {    // only if not already loaded.
+    if (gda.utils.fieldExists(gda._slide().dataSource)) {
+        var ds = gda.dataSources.map[gda._slide().dataSource];
+        var filepath = ds.dataprovider;
+        if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) filepath = filepath + ds.datafile;
+        if (gda.datafile !== filepath || !ds.bLoaded) {    // only if not already loaded.
         gda.datafile = filepath;        // most recent loaded. Only one is available at a time, changed per slide.
-        gda._slide().bLoaded = false;
-        if (gda._slide().bLoaded !== true) {
+            ds.bLoaded = false;
 			if (filepath.trim().length>0) {
 				var filetype = gda.isDataFileTypeSupported(filepath);
 				if (!filetype) {
@@ -4227,15 +4314,16 @@ gda.manageInputSource  = function() {
         poll: function() {
             console.log("mIS poll:   ========================    ");
             var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
+            var ds = gda.dataSources.map[gda._slide().dataSource];
             switch (tfiletype) {
             case "unk":
             case "json":
                     qF.defer(d3.json,tfilepath);
-                    qF.awaitAll((gda._slide().bListOfMany)?dataArrayReady:allDataLoaded);
+                    qF.awaitAll((ds.bListOfMany)?dataArrayReady:allDataLoaded);
                     break;
             case "csv":
                     qF.defer(d3.csv,tfilepath);
-                    qF.awaitAll((gda._slide().bListOfMany)?dataArrayReady:allDataLoaded);
+                    qF.awaitAll((ds.bListOfMany)?dataArrayReady:allDataLoaded);
                     break;
             case "xml":
                     qF.defer(d3.xml,tfilepath);
@@ -4254,7 +4342,8 @@ function xmlDataLoaded(error, xml) {
 };
 
 function dataArrayReady(error, dataArray) {    // [ [{},{}] , ... ]
-    console.log("bListOfMany " + gda._slide().bListOfMany);
+    var ds = gda.dataSources.map[gda._slide().dataSource];
+    console.log("bListOfMany " + ds.bListOfMany);
     console.log("restoreStateDeferred e(" +
            (error ?
                 (error.message ? 
@@ -4346,10 +4435,12 @@ function allDataLoaded(error, testArray) {
 
         console.log("allDataLoaded Lin " + testArray.length );
 
-        if (((gda.bPollTimer) || // && gda.bPollAggregate) ||
-             gda._slide().bAggregate === true) && gda.cf) {
+        var dS = gda._slide().dataSource;
+        var ds = gda.dataSources.map[dS];
+        if ((gda.bPollTimer || // && gda.bPollAggregate) ||
+             ds.bAggregate === true) && gda.cf[dS]) {
                 if (!gda.bPollAggregate)
-                    gda.cf.remove();    // but to filters, so might need to...
+                    gda.cf[dS].remove();    // but to filters, so might need to...
         }
         else
             gda.new_crossfilter();
@@ -4369,10 +4460,11 @@ function allDataLoaded(error, testArray) {
 }
 
 function dataAdd(data) {
-    gda.cf.add(data);
+    var dS = gda._slide().dataSource;
+    gda.cf[dS].add(data);
     //console.log("dataAdd data " + data);
     //console.log("dataAdd data " + JSON.stringify(data));
-    console.log("dataAdd cf now at "+ gda.cf.size());
+    console.log("dataAdd cf now at "+ gda.cf[dS].size());
 }
 
 // placeholder for user override
