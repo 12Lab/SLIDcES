@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "72",
+    minor:   "74",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -92,6 +92,7 @@ gda.newDataSourceState = function() {
     _aDatasource.bListOfMany = false;
     _aDatasource.bAggregate = false;
     _aDatasource._idCounter = 0;
+    _aDatasource.keymap = {};
 
 
     return _aDatasource;
@@ -163,7 +164,7 @@ gda.dataSourceInternal = function(data) {
         _.each(data, function(d) {
 //            d._counter = gda._slide().uniqueId();    // should come from data source
             d._counter = gda.counterFormat(gda.dataSources.uniqueId(ds));
-            console.log("dSI: counter " + d._counter);
+            //console.log("dSI: counter " + d._counter);
             d._qty = 1;
         });
     }
@@ -184,19 +185,10 @@ gda.newSlideState = function() {
     var _aSlide = {};
     _aSlide.title = "Blank";
 
-    // data source related, refactor into a data source
-    //_aSlide.dataprovider = "";
-    //_aSlide.datafile = "";
-    //_aSlide.bLoaded = false;
-    //_aSlide.bListOfMany = false;
-    //_aSlide.bLocalFile = true;
-    //_aSlide.bAggregate = false;
-    //_aSlide._idCounter = 0;
     _aSlide.dataSource = "none";
 
     // data source as applied on this slide
     _aSlide.columns = [];   // columns available, from previously loaded data
-    //_aSlide.keymap = {};
     _aSlide.filters = {};
 
     // Dimension 'selector charts' chosen, by 'column'.
@@ -327,7 +319,6 @@ gda.slide = function( _slide ) {
 
     _aSlide.clear = function() {
         gda._slide().columns = [];
-        //gda._slide().keymap = {};
         gda._slide().filters = {};
         gda.clearWorkingState();
     };
@@ -1390,7 +1381,7 @@ gda.view = function() {
             console.log("view.append");
             gda.slides.append();
             gda._currentSlide = gda.slideRegistry.list().length-1;
-            gda.view.redraw();  // this should only redraw the slide list
+            gda.view.redraw();  // this should only redraw the slide list but is doing 'more'
         },
         show: function() {
             console.log("view.show");
@@ -1492,22 +1483,23 @@ gda.view = function() {
             var dElDPE = document.getElementById("dataProviderEntry");
             dElDPE.innerHTML = "";
             var ds = gda.dataSources.map[gda._slide().dataSource];
-            gda.addTextEntry(dElDPE, (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) ? "Folder" : "Provider", gda._slide().dataprovider,
+            gda.addTextEntry(dElDPE, (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) ? "Folder" : "Provider", ds.dataprovider,
                     function(newVal) {
                         var ds = gda.dataSources.map[gda._slide().dataSource];
                         if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) {
                         if (!(endsWith(newVal,"/") || endsWith(newVal,"\\")))
                             newVal = newVal + "\\";  // preserve form?
                         }
-                        gda._slide().dataprovider = newVal;
+                        ds.dataprovider = newVal;
                     });
             }
             var dElFDE = document.getElementById("dataFilenameDisplay");
             if (dElFDE) {
             dElFDE.innerHTML = "";
-            var dTxtT = gda.addTextNode(dElFDE,gda._slide().datafile);
-            if (gda._slide().dataLastModifiedDate)
-                var dTxtT = gda.addTextNode(dElFDE," ("+gda._slide().dataLastModifiedDate+")");
+            var ds = gda.dataSources.map[gda._slide().dataSource];
+            var dTxtT = gda.addTextNode(dElFDE,ds.datafile);
+            if (ds.dataLastModifiedDate)
+                var dTxtT = gda.addTextNode(dElFDE," ("+ds.dataLastModifiedDate+")");
             }
 
             var dElFDE = document.getElementById("slideFilenameDisplay");
@@ -2109,9 +2101,6 @@ gda.newChoroplethChart = function(iChart, cf) {
     }
 }
 
-// break this up into a hist/barchart function
-// and the scatterplot function
-// and eventually add a reference to the statistics display in the quad 4th.
 gda.newStatsChart = function(iChart, cf) {
     var chtObj=gda.charts[iChart];
     var cnameArray = chtObj.cnameArray;
@@ -2172,6 +2161,7 @@ gda.newScatterChart = function(iChart, cf) {
     gda.addOverride(chtObj,"mouseZoomable",true);
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
+    gda.addOverride(chtObj,"yMax",false);
     if (chtObj.cnameArray.length>1) {
         var xDimension = gda.dimensionByCol(chtObj.cnameArray[0],chtObj.cf,true);
         var yDimension = gda.dimensionByCol(chtObj.cnameArray[1],chtObj.cf,true);
@@ -3520,27 +3510,33 @@ gda.scatterDomains = function(chtObj, bInitial){
         ymax = ymax*1.1;
     }
     console.log("scatterD: a ymin,ymax " + ymin + "," + ymax);
+
+    // any overrides
+    var yMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0;
+    if (!chtObj.overrides["log"] && !chtObj.overrides["yMin"] ) yMin = ymin;
+
+    var yMax = chtObj.overrides["yMax"] ? +chtObj.overrides["yMax"] : ymax;
+    if (!chtObj.overrides["log"] && !chtObj.overrides["yMax"] ) yMax = ymax;
+
     var exFac = 0.03;   // expansion factor, relax ends so min/max points have some relief
                         // 10/4/2014 from 1 to 3%, make min/max points more visible against axis (partially cropped)
     var xdomain = [xmin,xmax];
-    var ydomain = [ymin,ymax];
+    var ydomain = [yMin,yMax];//ymin,ymax];
 
     var xs;
     var xu;
     var ys;
     var maxBarHeight;
     var pixPerUnit;
-    var logMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0;
     if (bInitial) {
         xs = d3.scale.linear();     //var xs = d3.scale.ordinal();
         xu = dc.units.integers;//();   //var xu = dc.units.ordinal();
         ys = d3.scale.linear().domain(ydomain);
         if (chtObj.overrides["log"]) {
-            //var ymax = chtObj.chart.yAxisMax();
             maxBarHeight = chtObj.hChart*.80;   // ugh. need to know the height of the text
-            pixPerUnit = maxBarHeight / (Math.log(ymax)-Math.log(logMin));
-            //chtObj.chart.y(d3.scale.log().domain([logMin, ymax]));
-            ys = d3.scale.log().domain([logMin, ymax]);
+            pixPerUnit = maxBarHeight / (Math.log(yMax)-Math.log(yMin));
+            //chtObj.chart.y(d3.scale.log().domain([yMin, yMax]));
+            ys = d3.scale.log().domain([yMin, yMax]);
         }
         if (dDims[0].isDate) {
             xs = d3.time.scale().domain(xdomain);
@@ -3847,9 +3843,12 @@ gda.saveState = function (d,i) { // or ? https://code.google.com/p/google-gson/
         doc.write('"version": "' + gda.version + '",\n\n');
         doc.write('"minor": "' + gda.minor + '",\n\n');
         doc.write('"branch": "' + gda.branch + '",\n\n');
-        doc.write('"help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",\n\n');
-        doc.write('"dataSources" : ' + dataSourcesAsTxt + ',\n');
-        doc.write('"slides" : ' + slidesAsTxt + '\n');
+        doc.write('"help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv"\n');
+        if (dataSourcesAsTxt)
+            doc.write('",\ndataSources" : ' + dataSourcesAsTxt);
+        if (slidesAsTxt)
+            doc.write('",\nslides" : ' + slidesAsTxt + '\n');
+        doc.write('",\n\nWarning": "Nothing to Save"\n');
         doc.write("}");
       //doc.write("<pre>//Manually Save: Right-Click, View Source, File/SaveAs name.csv\n\nLine1,Field2,Field3\nLine2,Field2,Field3\n</pre>");
         doc.close();
@@ -4041,8 +4040,27 @@ function fileReaderMethod(uiObject,callback) {
         return false;
     }
     if (gda && gda._slide) {
-        gda._slide().datafile = file.name;
-        gda._slide().dataLastModifiedDate = file.lastModifiedDate;
+        var dsNew = gda.newDataSourceState();
+        dsNew.dataLastModifiedDate = file.lastModifiedDate;
+        dsNew.datafile = file.name;
+        dsNew.dataprovider = "/";
+        //dsNew.bLocalFile = true;
+        //dsNew.bLoaded = false;
+        //dsNew.bListOfMany = false;
+        //dsNew.bAggregate = false;
+        //dsNew._idCounter = 0;
+        //dsNew.keymap = {};
+
+        var dsName = "blank";
+        if (dsNew.datafile.length>0) {
+            var i = dsNew.datafile.indexOf(".");
+            if (i>0) dsName = dsNew.datafile.substring(0,i);
+            else    dsName = dsNew.datafile;    // punt
+        }
+
+        var dsNameUnique = gda.dataSources.restoreOne(dsName, dsNew);   // cleanup
+        if (dsNameUnique)
+            gda._slide().dataSource = dsNameUnique;
     }
     reader.readAsText(file);
   };
@@ -4079,11 +4097,11 @@ function slideReaderMethod(uiObject,callback) {
 // For a standard single CSV, use the subsequent code block
 var iUid = 0;
 gda.dataReady = function(data) { //    from Input button handler
-    console.log("dataReady data "+data);
+    console.log("dataReady data "+ data && data.length>0 ?data.substring(0,40):"<none?>");
     var dR = [];
     // special case for JSON 'set' as string, convert to array
     if (data[0] === "{") {
-        console.log("dataNativeReady JSON");
+        console.log("dataReady JSON");
         var o = JSON.parse(data);
         if (o) {
         dR = _.values(o);
@@ -4100,8 +4118,8 @@ gda.dataNativeReady = function(dR) {
     if (gda.bFirstRowsOnly && dR.length>gda.nFirstRows)
         dR = _.first(dR, gda.nFirstRows);
     console.log("dataNativeReady Lin ", dR.length);
-    console.log("dataNativeReady "+dR);
-    console.log("dataNativeReady "+JSON.stringify(dR));
+    //console.log("dataNativeReady "+dR);
+    //console.log("dataNativeReady "+JSON.stringify(dR));
 
     var dS = gda._slide().dataSource;
     var ds = gda.dataSources.map[dS];
