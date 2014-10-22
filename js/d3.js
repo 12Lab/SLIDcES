@@ -1924,7 +1924,10 @@
         callback(null, request);
       });
       dispatch.beforesend.call(xhr, request);
-      request.send(data == null ? null : data);
+      request.send(data == null ?
+         null :
+         data
+        );
       return xhr;
     };
     xhr.abort = function() {
@@ -2372,6 +2375,20 @@
       }
     };
   }
+
+  // warning! test Quarter
+  d3_time.quarter = d3_time_interval(function(date) {
+    date = d3_time.day(date);
+    date.setDate(1);    // set Day
+    var Q=1+Math.floor(d3.time.month(date).getMonth()/3); 
+    date.setMonth((Q-1)*3);
+    return date;
+  }, function(date, offset) {
+    date.setMonth(date.getMonth() + 3*offset);
+  }, function(date) {
+    return new Date(date.getFullYear(),3*Math.floor((date.getMonth())/3));
+  });
+
   d3_time.year = d3_time_interval(function(date) {
     date = d3_time.day(date);
     date.setMonth(0, 1);

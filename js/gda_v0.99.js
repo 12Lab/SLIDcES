@@ -11,7 +11,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "74",
+    minor:   "75",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -65,6 +65,7 @@ var gda = {
     bPollTimer : false,
     bPollAggregate : false,
     bPolledAndViewDrawn : false,
+    bViewDrawn : false,
     nPollTimerMS : 5000,
 
     // registered simple or aggregated charts
@@ -281,7 +282,8 @@ gda.utils.addDateOptions = function(d,base,tier) {
         insHere = d[tier];
     }
     insHere.Year = d3.time.year(base);
-    insHere.Quarter = 1+Math.floor(d3.time.month(base).getMonth()/3); // this one isn't supported by D3 (yet).
+    insHere.Quarter = d3.time.quarter(base);//1+Math.floor(d3.time.month(base).getMonth()/3); // this one isn't supported by D3 (yet).
+    insHere.QoY = 1+Math.floor(d3.time.month(base).getMonth()/3); // this one isn't supported by D3 (yet).
     insHere.Month = d3.time.month(base);
     insHere.Week = d3.time.week(base);
     insHere.Day = d3.time.day(base);
@@ -471,10 +473,9 @@ gda.slide = function( _slide ) {
 };
 
 gda.applySlideFilters = function(filters) {
-    console.log("aSF: " + JSON.stringify(filters));
+    console.log("aSF: " + (filters ? JSON.stringify(filters) : ""));
     var dS = gda._slide().dataSource;
     if (gda.cf[dS]) {
-    console.log("aSF: have gdf");
     if (!arguments.length) filters = gda._slide().filters;
         console.log("aSF: now " + JSON.stringify(filters));
         if (filters) {
@@ -1534,6 +1535,7 @@ gda.view = function() {
                     gda._slide().display();
                 gda._slide().displayPopulate() 
             }
+            gda.bViewDrawn = true;
         },
     };
 }();
@@ -1572,6 +1574,7 @@ gda.clearWorkingState = function() {
     gda.bPollTimer = false;
     gda.bPollAggregate = false;
     gda.bPolledAndViewDrawn = false;
+    gda.bViewDrawn = false;
     gda.nPollTimerMS = 15000;
 };
 
@@ -1642,13 +1645,13 @@ gda.dimensionByCol = function(cname,cf,bFilterNonNumbers, nFixed) {
         res = cf.dimension(function (d) {
             //return d[cname];
             var v = bFilterNonNumbers ? +d[cname] : d[cname];
-	    if (nFixed !== undefined && nFixed !== null) {
-		    v = v.toFixed(nFixed);
-	    }
+            if (nFixed !== undefined && nFixed !== null) {
+                v = v.toFixed(nFixed);
+            }
             return bFilterNonNumbers ? ( (isNaN(v))?0.0:v ) : v;
             });
         gda.dimensions[dS].push({dName: cname, dFilter: bFilterNonNumbers, dFixed: nFixed, dDim: res});
-        console.log("dBC: " + JSON.stringify(gda.dimensions[dS]));
+        console.log("dBC: " + JSON.stringify(gda.dimensions[dS][gda.dimensions[dS].length-1]));
     }
     else if (aDimObj) {
         res = aDimObj.dDim;
@@ -1790,7 +1793,7 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
 // below are the 'informational display' charts/support
 
 gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverrides) {
-    console.log("gda nC: add '" + cTitle + "' " + chartType + " [" + cnameArray + "] overrides: " + JSON.stringify(chartOverrides));
+    console.log("gda nC: add '" + cTitle + "' " + chartType + " [" + cnameArray + "]" + (chartOverrides ? " overrides: " + JSON.stringify(chartOverrides):""));
 
     var iChart = newBaseChart(cf, cnameArray, sChtGroup, chartType);
     gda.charts[iChart].Title = cTitle;
@@ -2485,6 +2488,16 @@ gda.newTimelineDisplay = function(iChart, dEl) {
    // addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
+    var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
+        .width(chtObj.wChart)
+        .height(chtObj.hChart);
+    ftX.stdMarginBottom = ftX.margins().bottom;
+    ftX.margins().bottom = ftX.stdMarginBottom + 30;    // temp workaround.
+    // setting that in the renderlet is 'too late' ? not working.
+
+    chtObj.chart = ftX;        // for now. hold ref
+    ftX.gdca_chart = chtObj;
+
     var v0 = null;
     var xmin = null;
     var xmax = null;
@@ -2514,7 +2527,18 @@ gda.newTimelineDisplay = function(iChart, dEl) {
     if (dDims[0].isDate) {
         xe = d3.time.month;
         if (chtObj.overrides["timefield"]) {
-            var p = "month";//chtObj.overrides["reportingresolution"];
+            var r = chtObj.overrides["axisresolution"];
+            var p = chtObj.overrides["timefield"].toLowerCase();//"month";//chtObj.overrides["reportingresolution"];
+            if (p === "quarter") {
+                xu = d3.time.months;
+                xe = d3.time.quarter;//month;
+                xmin = xe.floor(xmin);
+                //var Qi = xmin.getMonth()/3;
+                //xmin.setMonth(Qi*3);
+                xmax = xe.ceil(xmax);   // works
+                // xmax = d3.time.quarter.offset(xmax,1);
+            }
+            else {
             var tInc = gda["T"+p+"IncMsecs"];   // time increment to assure max!=min, and max is past all data (.month only covers to first day of month by default)
                                                 // this is to mask a brushing deficiency? brushing limit compare should use .month, but it appears to compare d.date to xmax.month (indirectly), instead of d.date.month
                                                 // should a keyAccessor be supplied instead?
@@ -2527,7 +2551,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
             xe = d3.time[p];
             xmin = xe.floor(xmin); //.month.floor(xmin);
             xmax = xe.ceil(xmax);  //.month.ceil(xmax);
-            var r = chtObj.overrides["axisresolution"];
+            }
         xu = d3.time[r]; //.months
         } else {
             xu = d3.time.months;
@@ -2539,21 +2563,11 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         console.log("time scale " + xmin + " to " + xmax);
     }
     else {
-        xs = d3.time.scale().domain([xmin,xmax]);
+        xs = d3.time.scale().domain([xmin,xmax]);   // think wrong. 'time', not.
     }
 
-    //console.log("add bar for Timeline @ " + chtObj.dElid);
-    var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
-    ftX.stdMarginBottom = ftX.margins().bottom;
-    ftX.margins().bottom = ftX.stdMarginBottom + 30;    // temp workaround.
-    // setting that in the renderlet is 'too late' ? not working.
-
-    chtObj.chart = ftX;        // for now. hold ref
-    ftX.gdca_chart = chtObj;
     ftX
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
-        .width(chtObj.wChart)
-        .height(chtObj.hChart)
         .dimension(dDims[0])
         .group(chtObj.dGrps[0]);
     ftX
@@ -2615,7 +2629,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         if (gda.charts.length>1) {
             if (iChart<2) {  // temp workaround until GUI is available
                 gda.charts[iChart].chart.gdca_toFilter = gda.charts[1-iChart];
-            }
+            //}
             ftX.renderlet(function (chart) {
                 if (chart.gdca_toFilter) {
                 console.log("period renderlet");
@@ -2637,6 +2651,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 			    });
                 }
             });
+        }
         }
         if (chtObj.overrides["legend"])
             ftX
@@ -3086,9 +3101,9 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
         .group(chtObj.dGrps[0]); //stateRaisedSum); 
 
 	var p = gda.utils.fieldExists( chtObj.overrides.GeoJSON) ? chtObj.overrides.GeoJSON : null;	// might want to use '.privproperties.' instead
-    if (p) {
-    d3.json(p,
-			//"../JSON_Samples/geo_us-states.json",
+    if (p) {    // why doesn't this work for Edit mode ?
+        var ds = gda.dataSources.map[p];
+        d3.json(ds.dataprovider+ds.datafile,  // need to changeup manageInputSource/etc to take callback.
 		   	function( statesJson) {
 				if (statesJson) {
 					console.log("GeoJSON loaded, " + statesJson);
@@ -3107,11 +3122,11 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
 											//return d["properties"]["name"];
 											return d[chtObj.overrides.GeoJSON_Property_Accessor][chtObj.overrides[sCname]];
 										})
-					});
+					}); // during Edit, ftX._groupName is undefined here.
 					console.log("renderALL GeoJSON");
 					dc.renderAll(sChartGroup);
 				}
-    });
+        });
         if (chtObj.overrides["legend"])
             ftX
                 .legend(dc.legend());
@@ -3845,10 +3860,11 @@ gda.saveState = function (d,i) { // or ? https://code.google.com/p/google-gson/
         doc.write('"branch": "' + gda.branch + '",\n\n');
         doc.write('"help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv"\n');
         if (dataSourcesAsTxt)
-            doc.write('",\ndataSources" : ' + dataSourcesAsTxt);
+            doc.write(',\n"dataSources" : ' + dataSourcesAsTxt);
         if (slidesAsTxt)
-            doc.write('",\nslides" : ' + slidesAsTxt + '\n');
-        doc.write('",\n\nWarning": "Nothing to Save"\n');
+            doc.write(',\n"slides" : ' + slidesAsTxt + '\n');
+        if (!dataSourcesAsTxt && !slidesAsTxt)
+            doc.write(',\n\n"Warning": "Nothing to Save"\n');
         doc.write("}");
       //doc.write("<pre>//Manually Save: Right-Click, View Source, File/SaveAs name.csv\n\nLine1,Field2,Field3\nLine2,Field2,Field3\n</pre>");
         doc.close();
@@ -3973,8 +3989,11 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                 gda.slides.append(gda.slide(restoredSlide));  // decorate 
             }
         });
-        if (bAny)
-            gda.view.show();
+        if (bAny) {
+            if (gda.bViewDrawn !== true) {
+                gda.view.show();
+            }
+        }
     }
 
 };
@@ -4097,7 +4116,7 @@ function slideReaderMethod(uiObject,callback) {
 // For a standard single CSV, use the subsequent code block
 var iUid = 0;
 gda.dataReady = function(data) { //    from Input button handler
-    console.log("dataReady data "+ data && data.length>0 ?data.substring(0,40):"<none?>");
+    console.log("dataReady data "+ data && data.length>0 ?data.substring(0,120):"<none?>");
     var dR = [];
     // special case for JSON 'set' as string, convert to array
     if (data[0] === "{") {
@@ -4269,6 +4288,10 @@ gda.isDataFileTypeSupported = function(filepath) {
     return filetype;
 };
 
+// modify fileLoadImmediate, manageInputSource to take a callback, so that
+// it can be used for GeoJSON loading, too?
+// Then dataSource or more likely Slide must specify the destination, too.
+
 // returns true if it did a deferred load
 gda.fileLoadImmediate = function() {
     if (gda.utils.fieldExists(gda._slide().dataSource)) {
@@ -4433,7 +4456,7 @@ function allDataLoaded(error, testArray) {
         
     }
     if (testArray.length>0)
-        console.log("allDataLoaded in " + JSON.stringify(testArray[0]) + " <==========");
+        console.log("allDataLoaded in " + JSON.stringify(testArray[0]).substring(0,120) + "... <==========");
     if (testArray && testArray.length>0) {// && testArray[0] // relaxed 10/4/2014 && testArray[0].length>0)
         for (var i=0;i<testArray.length && (i<gda.nFirstRows || !gda.bFirstRowsOnly) ;i++){   // 1+. 0 is column headings
             console.log("allDataLoaded: filtering " + (i+1) + " of " + testArray.length);
@@ -4492,6 +4515,7 @@ gda.dataFilter = function(data) {
 }
 
 function trimColName(cname) {
+    var cnameOrig = cname;
     if (cname.trim().length===0) cname = "blank"+(++iUid);
     else {
         cname = cname.replace(/\&/g,"_");    // replace ampersands
@@ -4505,7 +4529,8 @@ function trimColName(cname) {
         cname = cname.replace(/\)/g,"");    // remove parens
     }
     //cname = capitalize(cname); // preferred, but not the right way/place
-    console.log("Cleaned Column Name: " + cname );
+    if (cnameOrig !== cname)
+        console.log("Cleaned Column Name: from '" + cnameOrig + "' to " + cname );
     return cname;
 }
 
