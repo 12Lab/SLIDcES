@@ -2274,6 +2274,11 @@
     getMonth: function() {
       return this._.getUTCMonth();
     },
+// review
+    getQuarter: function() {
+      return //this._.getUTCFullYear()+"Q"+
+        (1+(Math.floor(this._.getUTCMonth()/3)));
+    },
     getSeconds: function() {
       return this._.getUTCSeconds();
     },
@@ -2307,6 +2312,7 @@
     setMonth: function() {
       d3_time_prototype.setUTCMonth.apply(this._, arguments);
     },
+    // setQuarter: ?xxx setUTCMonth.apply(this._, ??? (arguments[0])/3 ??? );
     setSeconds: function() {
       d3_time_prototype.setUTCSeconds.apply(this._, arguments);
     },
@@ -2566,6 +2572,14 @@
       p: function(d) {
         return locale_periods[+(d.getHours() >= 12)];
       },
+      q: function(d) {
+        return d3_time_formatPad(d.getFullYear() % 100, p, 2) + "Q" +
+            (1+Math.floor(d.getMonth()/3));
+      },
+      Q: function(d) {
+        return d3_time_formatPad(d.getFullYear() % 1e4, p, 4) + "Q" +
+            (1+Math.floor(d.getMonth()/3));
+      },
       S: function(d, p) {
         return d3_time_formatPad(d.getSeconds(), p, 2);
       },
@@ -2606,6 +2620,8 @@
       m: d3_time_parseMonthNumber,
       M: d3_time_parseMinutes,
       p: d3_time_parseAmPm,
+      q: d3_time_parseYearQuarter,
+      Q: d3_time_parseFullYearQuarter,
       S: d3_time_parseSeconds,
       U: d3_time_parseWeekNumberSunday,
       w: d3_time_parseWeekdayNumber,
@@ -2683,6 +2699,30 @@
     d3_time_numberRe.lastIndex = 0;
     var n = d3_time_numberRe.exec(string.substring(i));
     return n ? (date.W = +n[0], i + n[0].length) : -1;
+  }
+  function d3_time_parseFullYearQuarter(date, string, i) {  // 1973Q1
+    d3_time_numberRe.lastIndex = 0;
+    var n = d3_time_numberRe.exec(string.substring(i, i + 4));
+    var n1 = d3_time_numberRe.exec(string.substring(i+5, i + 6));
+    var result = -1;
+    if (n && n1>0 && n1<=4 && string.substring(i+4,i+5)==="Q") {
+        date.y = +n[0], i + n[0].length;
+        date.setMonth((n1-1)*3);
+        date.setDate(1);
+    }
+    return result;
+  }
+  function d3_time_parseYearQuarter(date, string, i) { // 73Q1
+    d3_time_numberRe.lastIndex = 0;
+    var n = d3_time_numberRe.exec(string.substring(i, i + 2));
+    var n1 = d3_time_numberRe.exec(string.substring(i+3, i + 4));
+    var result = -1;
+    if (n && n1>0 && n1<=4 && string.substring(i+2,i+3)==="Q") {
+        date.y = d3_time_expandYear(+n[0]), i + n[0].length;
+        date.setMonth((n1-1)*3);
+        date.setDate(1);
+    }
+    return result;
   }
   function d3_time_parseFullYear(date, string, i) {
     d3_time_numberRe.lastIndex = 0;
@@ -9159,6 +9199,20 @@
   });
   d3_time.months = d3_time.month.range;
   d3_time.months.utc = d3_time.month.utc.range;
+  d3_time.quarter = d3_time_interval(function(date) {
+    date = d3_time.day(date);
+    date.setDate(1);    // set Day
+    var Q=1+Math.floor(d3.time.month(date).getMonth()/3); 
+    date.setMonth((Q-1)*3);
+    return date;
+  }, function(date, offset) {
+    date.setMonth(date.getMonth() + 3*offset);
+  }, function(date) {
+    // xxx not sure if this should be a Date or a Q# (1,2,3,4)
+    return new Date(date.getFullYear(),3*Math.floor((date.getMonth())/3));
+  });
+  d3_time.quarters = d3_time.quarter.range;
+  d3_time.quarters.utc = d3_time.quarter.utc.range;
   function d3_time_scale(linear, methods, format) {
     function scale(x) {
       return linear(x);

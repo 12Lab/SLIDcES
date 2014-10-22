@@ -1,7 +1,29 @@
-{"version": "0.099", "minor": "40", "branch": "gdca-dev", "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv", "slides" : [{"title":"US Venture Capital Landscape 2011","dataprovider":"/CSV_Samples/","datafile":"vc.csv","bLoaded":true,"bListOfMany":false,"bLocalFile":true,"bAggregate":false,"_idCounter":2894,"columns":["City","CloseDate","EntityIDRoundID","IndustryCode","Industry_Group","Industry_Segment","Metropolitan_Statistical_Area","PrimaryRegion","RoundBusStat","RoundClassDescr","State","Subregion","Deals","Number_of_Deals","Raised","_counter","_qty"],"keymap":{"City":"City","CloseDate":"CloseDate","EntityIDRoundID":"EntityIDRoundID","IndustryCode":"IndustryCode","Industry Group":"Industry_Group","Industry Segment":"Industry_Segment","Metropolitan Statistical Area":"Metropolitan_Statistical_Area","PrimaryRegion":"PrimaryRegion","RoundBusStat":"RoundBusStat","RoundClassDescr":"RoundClassDescr","State":"State","Subregion":"Subregion","Deals":"Deals","Number of Deals":"Number_of_Deals","Raised":"Raised","_counter":"_counter","_qty":"_qty"},"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":["_qty","_counter"],"csetupSortTableCols":["State"]},"charts":[
-{"Title":"VC Distribution by States (color: total amount raised)","myCols":{"csetupChartCols":["Raised","State"]},"type":"Choropleth","sChartGroup":"one","overrides":{"wChart":"990","hChart":"550","GeoJSON":"../JSON_Samples/geo_us-states.json","GeoJSON_Property_Accessor":"properties","State":"name"}},
-{"Title":"By Industries (y: number of deals, x: total amount raised in millions, radius: amount raised)",
-"myCols":{"csetupChartCols":["Industry_Group","Raised","Deals"]},"type":"Bubble","sChartGroup":"one","overrides":{"wChart":"990","hChart":"200"}},
-{"Title":"By Rounds (y: number of deals, x: total amount raised in millions, radius: amount raised)",
-"myCols":{"csetupChartCols":["RoundClassDescr","Raised","Deals"]},"type":"Bubble","sChartGroup":"one","overrides":{"wChart":"990","hChart":"200"}}
-],"bUseTable":true,"bShowTable":false,"bShowTableColumnSelectors":false,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-08-12T20:52:56.000Z"}] }
+{"version": "0.099",
+
+"minor": "75",
+
+"branch": "gdca-dev",
+
+"help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv"
+,
+"dataSources" : {
+"vc":{
+"dataprovider":"/CSV_Samples/","datafile":"vc.csv","bLocalFile":true,"bLoaded":true,"bListOfMany":false,"bAggregate":false,"_idCounter":4341,
+"keymap":{
+"City":"City","CloseDate":"CloseDate","EntityIDRoundID":"EntityIDRoundID","IndustryCode":"IndustryCode","Industry Group":"Industry_Group","Industry Segment":"Industry_Segment","Metropolitan Statistical Area":"Metropolitan_Statistical_Area","PrimaryRegion":"PrimaryRegion","RoundBusStat":"RoundBusStat","RoundClassDescr":"RoundClassDescr","State":"State","Subregion":"Subregion","Deals":"Deals","Number of Deals":"Number_of_Deals","Raised":"Raised","_counter":"_counter","_qty":"_qty"
+}
+},
+"geo_us-states":{
+"dataprovider":"../JSON_Samples/","datafile":"geo_us-states.json","bLocalFile":true,"bLoaded":false,"bListOfMany":false,"bAggregate":false,"_idCounter":0,
+"keymap":{
+}
+}
+},
+"slides" : [
+{"title":"US Venture Capital Landscape 2011", "dataSource":"vc", "columns":["City", "CloseDate", "EntityIDRoundID", "IndustryCode", "Industry_Group", "Industry_Segment", "Metropolitan_Statistical_Area", "PrimaryRegion", "RoundBusStat", "RoundClassDescr", "State", "Subregion", "Deals", "Number_of_Deals", "Raised", "_counter", "_qty", "cumFileUnits"],"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":["_qty", "_counter"],"csetupSortTableCols":["State"]},"charts":[
+{"Title":"VC Distribution by States (color: total amount raised)", "myCols":{"csetupChartCols":["Raised", "State"]},"type":"Choropleth", "sChartGroup":"one", "overrides":{"wChart":"990", "hChart":"550", "GeoJSON":"geo_us-states", "GeoJSON_Property_Accessor":"properties", "State":"name", "legend":false}},
+{"Title":"By Industries (y: number of deals, x: total amount raised in millions, radius: amount raised)", "myCols":{"csetupChartCols":["Industry_Group", "Raised", "Deals"]},"type":"Bubble", "sChartGroup":"one", "overrides":{"wChart":"990", "hChart":"200"}},
+{"Title":"By Rounds (y: number of deals, x: total amount raised in millions, radius: amount raised)", "myCols":{"csetupChartCols":["RoundClassDescr", "Raised", "Deals"]},"type":"Bubble", "sChartGroup":"one", "overrides":{"wChart":"990", "hChart":"200"}}
+],"bUseTable":true,"bShowTable":false,"bShowDataSource":false,"bShowSlidesSource":false,"bAllowOverrideChanges":false,"bAccessOverrides":false,"bShowTableColumnSelectors":false,"bShowLinksInTable":false,"bShowPicturesInTable":false,"myId":0,"dataLastModifiedDate":"2014-08-12T20:52:56.000Z"}
+]
+}

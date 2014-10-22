@@ -1,5 +1,7 @@
 // make dataset globally available
 
+// next up, specification for tying ds to cf to charts (group)
+
 var sFileChartGroup = "FileListGroup";  // temporary, for the File List table
 var sChartGroupRoot = "grp";
 var sChartGroup = "one";                // temporary, for all Slide charts
@@ -2014,18 +2016,13 @@ gda.newTimelineChart = function(iChart, cf) {
         var dXGrp = null;
         if (gda.isDate(chtObj.cnameArray[0])) {
         gda.addOverride(chtObj,"timefield","Month");
-        //gda.addOverride(chtObj,"reportingresolution","month");
         gda.addOverride(chtObj,"axisresolution","months");
 
             xDimension = gda.dimensionByCol(
-                                chtObj.overrides["timefield"],
-                                //chtObj.cnameArray[0],
+                                chtObj.overrides["timefield"], //chtObj.cnameArray[0],
                                 chtObj.cf);
             xDimension.isDate = true;
-            dXGrp = xDimension.group().reduceCount();//function (d) {
-            //return d3.time.month(d[chtObj.cnameArray[0]]);
-//            return d[chtObj.cnameArray[1]];  // + ?
-            //});
+            dXGrp = xDimension.group().reduceCount();
         } else {
             xDimension = gda.dimensionByCol(
                                     chtObj.cnameArray[0],
@@ -2437,7 +2434,6 @@ gda.newBubbleDisplay = function(iChart, dEl) {
 	.radiusValueAccessor(function (p) {
         if (chtObj.cnameArray.length>2)
 	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];
-	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];
 	})
 	.x(d3.scale.linear().domain([0, 5000]))
 	.r(d3.scale.linear().domain([0, 4000]))
@@ -2482,17 +2478,15 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    //console.log("gda nMD: _id " + dElP.id + " i " + iChart );
     
 	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
-   // addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
     var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
         .width(chtObj.wChart)
         .height(chtObj.hChart);
     ftX.stdMarginBottom = ftX.margins().bottom;
-    ftX.margins().bottom = ftX.stdMarginBottom + 30;    // temp workaround.
+    ftX.margins().bottom = ftX.stdMarginBottom + 30;    // temp workaround. provide margin override
     // setting that in the renderlet is 'too late' ? not working.
 
     chtObj.chart = ftX;        // for now. hold ref
@@ -2521,6 +2515,9 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         }
     }
 
+    ftX
+        .gap(30);
+
     var xu = dc.units.ordinal();
     var xe = null;  // default
     var xs = d3.scale.ordinal();
@@ -2528,15 +2525,17 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         xe = d3.time.month;
         if (chtObj.overrides["timefield"]) {
             var r = chtObj.overrides["axisresolution"];
-            var p = chtObj.overrides["timefield"].toLowerCase();//"month";//chtObj.overrides["reportingresolution"];
+            var p = chtObj.overrides["timefield"].toLowerCase();
             if (p === "quarter") {
-                xu = d3.time.months;
-                xe = d3.time.quarter;//month;
+                xu = d3.time.quarters;//QoY;//months;
+                xe = d3.time.quarter;
                 xmin = xe.floor(xmin);
-                //var Qi = xmin.getMonth()/3;
-                //xmin.setMonth(Qi*3);
-                xmax = xe.ceil(xmax);   // works
-                // xmax = d3.time.quarter.offset(xmax,1);
+                //xmax.setMonth(xmax.getMonth()+3);   // force xaxis to give 'space' for a quarter's time
+                xmax = d3.time.quarter.offset(xe.ceil(xmax),1);   // force xaxis to give 'space' for a quarter's time
+                // could generalize that for any time period, and start bar left edge at time start, and give a 9x% width
+                // or bar gap of a few pixels.
+                ftX
+                    .gap(5);
             }
             else {
             var tInc = gda["T"+p+"IncMsecs"];   // time increment to assure max!=min, and max is past all data (.month only covers to first day of month by default)
@@ -2571,8 +2570,9 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         .dimension(dDims[0])
         .group(chtObj.dGrps[0]);
     ftX
-        .centerBar(true)
-        .gap(30)
+        .centerBar(dDims[0].isDate === false);//true);  or perhaps is ordinal?
+    
+    ftX
         .x(xs)//.nice())
         .xUnits(xu)
         .elasticX(true)
@@ -4160,7 +4160,7 @@ gda.dataNativeReady = function(dR) {
         gda._slide().filters = {};
     }
 
-    var ds = gda.dataSources.map[gda._slide().dataSource];
+    //var ds = gda.dataSources.map[gda._slide().dataSource];
     if (ds.bListOfMany)
         dataArrayReady(null, [dR]);
     else {
