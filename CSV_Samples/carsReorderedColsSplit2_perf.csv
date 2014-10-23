@@ -1,0 +1,56 @@
+displacement_cc,power_hp,zeroTo60mph_s,year,name
+360,175,11,73,AMC Ambassador Brougham
+390,190,8.5,70,AMC Ambassador DPL
+304,150,11.5,72,AMC Ambassador SST
+232,90,18.2,79,AMC Concord DL 6
+258,120,15.1,78,AMC Concord DL
+151,,20.5,82,AMC Concord DL
+232,90,17.2,78,AMC Concord
+151,90,20.1,80,AMC Concord
+232,100,15,73,AMC Gremlin
+232,100,13,71,AMC Gremlin
+232,100,16,75,AMC Gremlin
+199,90,15,70,AMC Gremlin
+258,110,13.5,71,AMC Hornet Sportabout (Wagon)
+199,97,15.5,70,AMC Hornet
+232,100,16,73,AMC Hornet
+232,100,16,74,AMC Hornet
+232,90,17.6,76,AMC Hornet
+304,150,15.5,74,AMC Matador (Wagon)
+304,150,12.5,72,AMC Matador (Wagon)
+304,150,11.5,73,AMC Matador
+258,110,19,75,AMC Matador
+304,120,13.9,76,AMC Matador
+258,110,18,74,AMC Matador
+232,100,15.5,71,AMC Matador
+258,95,17.8,76,AMC Pacer D/L
+232,90,17,75,AMC Pacer
+360,175,11,70,AMC Rebel SST (Wagon)
+304,150,12,70,AMC Rebel SST
+121,80,15,79,AMC Spirit DL
+114,91,14,73,Audi 100 LS
+115,95,15,75,Audi 100 LS
+107,90,14.5,70,Audi 100 LS
+97,78,15.8,80,Audi 4000
+131,103,15.9,78,Audi 5000
+121,67,19.9,80,Audi 5000S (Diesel)
+98,83,16.5,74,Audi Fox
+121,113,12.5,70,BMW 2002
+121,110,12.8,77,BMW 320i
+350,175,13,73,Buick Century 350
+181,110,16.4,82,Buick Century Limited
+350,150,14.5,74,Buick Century Luxus (Wagon)
+231,105,15.8,78,Buick Century Special
+231,110,21,75,Buick Century
+231,110,15.8,81,Buick Century
+455,225,11,73,Buick Electra 225 Custom
+455,225,10,70,Buick Estate Wagon (Wagon)
+350,155,14.9,79,Buick Estate Wagon (Wagon)
+350,155,13.5,72,Buick Lesabre Custom
+111,80,14.8,77,Buick Opel Isuzu Deluxe
+231,165,13.4,78,Buick Regal Sport Coupe (Turbo)
+231,110,15,75,Buick Skyhawk
+350,165,11.5,70,Buick Skylark 320
+151,90,16,79,Buick Skylark Limited
+231,105,16.9,77,Buick Skylark
+151,84,16.4,81,Buick Skylark

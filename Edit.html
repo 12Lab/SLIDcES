@@ -90,6 +90,11 @@ gda.dataFilter = function(data) {
                 }
             });
         }
+        TcumFileUnits = 1;
+        _.each(newData, function(d) {
+            d.cumFileUnits = TcumFileUnits;
+            TcumFileUnits++;
+        });
     }
     return newData;
 }

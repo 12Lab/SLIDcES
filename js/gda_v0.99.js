@@ -11,9 +11,45 @@ var sChartGroup = "one";                // temporary, for all Slide charts
 gda = (function(){
 'use strict';
 
+/* Array.joinWith - shim         by Joseph Myers  7/ 6/2013 */
+/*   modified to accept 1+ keys, by Chris Meier  10/22/2014 */
+
+
+if (!Array.prototype.joinWith) {
+    +function () {
+        Array.prototype.joinWith = function(that, byA, select, omit) {
+            var together = [], length = 0;
+            if (select) select.map(function(x){select[x] = 1;});
+            function fields(it) {
+                var f = {}, k;
+                for (k in it) {
+                    if (!select) { f[k] = 1; continue; }
+                    if (omit ? !select[k] : select[k]) f[k] = 1;
+                }
+                return f;
+            }
+            function add(it) {
+                var pkey = '';
+                _.each(byA, function(by) {
+                    pkey=pkey+'.'+it[by];
+                });
+                var pobj = {};
+                if (!together[pkey]) together[pkey] = pobj,
+                    together[length++] = pobj;
+                pobj = together[pkey];
+                for (var k in fields(it))
+                    pobj[k] = it[k];
+            }
+            this.map(add);
+            that.map(add);
+            return together;
+        }
+    }();
+}
+
 var gda = {
     version: "0.099",
-    minor:   "75",
+    minor:   "77",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -131,6 +167,9 @@ gda.dataSources.restore = function(dataSourceMap) {
     _.each(dataSourceMap, function(aDataSource, dsName, dsEntry) {
         var dsRestored = jQuery.extend(true, gda.newDataSourceState(), aDataSource);   // add any missing fields.
         console.log("rs: dsN " + dsName );
+        if (gda.utils.fieldExists(dsRestored.type) && dsRestored.type === "join")
+        console.log("rs: dataSource join " + JSON.stringify(dsRestored));
+        else
         console.log("rs: dataSource " + dsRestored.dataprovider + dsRestored.datafile);
 
         gda.dataSources.restoreOne(dsName, dsRestored);
@@ -144,13 +183,47 @@ gda.dataSources.uniqueIndex = 0;
 gda.dataSources.restoreOne = function(dsName, dsRecord) {
     if (dsName === "blank") dsName = dsName + (++gda.dataSources.uniqueIndex);
     if (gda.utils.fieldExists(gda.dataSources.map[dsName])) {   // do nothing if already present.
+        console.log("tossed extraneous " + dsName);
         return dsName;
     }
     else {
         gda.dataSources.map[dsName] = JSON.parse(JSON.stringify( dsRecord )); // cleanup/copy
+        if (gda.utils.fieldExists(dsRecord.type) && dsRecord.type === "join") {
+            // perform a join using the keys+, on includes dataSources+
+            // prior to handing off to crossfilter
+            var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
+            _.each(dsRecord.dataSources, function(ds) {
+                // need helper function
+                var dsR = gda.dataSources.map[ds]; // only allows 1 deep
+                var fn = dsR.dataprovider+dsR.datafile;
+                qF.defer(d3.csv, fn); // temp, just call csv directly. need generic handler for a file, passing in a callback
+            });
+            qF.awaitAll(function(error, results) {
+                            console.log("prepareJoin e(" +
+                                   (error ?
+                                        (error.message ? 
+                                            error.message
+                                            :error.statusText)
+                                        :"no error")+")");
+                            if (error || !results || results.length<1)  {
+                                console.log("prepareJoin: needs more than 1!");
+                            }
+                            else
+                                gda.dataSources.readyJoin(dsRecord.keys,results);
+            });
+        }
         return dsName;
     }
 }
+
+gda.dataSources.readyJoin = function(keyA, results) {
+    var rA = results[0];    // could use _.first(results);
+    _.each(_.rest(results), function(aB) {
+        rA = rA.joinWith(aB, keyA);
+    });
+
+    ingestArray([rA]);
+};
 
 gda.datasource = function( _datasource ) {
     var _aDatasource = _datasource ? _datasource : {};
@@ -291,6 +364,7 @@ gda.utils.addDateOptions = function(d,base,tier) {
     insHere.Day = d3.time.day(base);
     insHere.DoW = base.getDay();
 };
+
 
 gda.addOverride = function( anObj, key, value ) {
         if (!anObj.overrides) 
@@ -4440,12 +4514,17 @@ function allDataLoaded(error, testArray) {
     }
     else
     {
-    console.log("allDataLoaded in " + testArray.length + " <==========");
+        ingestArray(testArray);
+    }
+};
+
+function ingestArray(testArray) {
+    console.log("ingestArray in " + testArray.length + " <==========");
     // special case for JSON 'set' as string, convert to array
     if (testArray.length === 1 &&
         gda.utils.fieldExists(testArray[0]["1"]) &&
         gda.utils.fieldExists(testArray[0]["1"].DeviceID)) {
-        console.log("allDataLoaded JSON");  // special case for now, Almond+
+        console.log("ingestArray JSON");  // special case for now, Almond+
         var o = testArray[0];
         if (o) {
         testArray = [_.values(o)];
@@ -4456,10 +4535,10 @@ function allDataLoaded(error, testArray) {
         
     }
     if (testArray.length>0)
-        console.log("allDataLoaded in " + JSON.stringify(testArray[0]).substring(0,120) + "... <==========");
+        console.log("ingestArray in " + JSON.stringify(testArray[0]).substring(0,120) + "... <==========");
     if (testArray && testArray.length>0) {// && testArray[0] // relaxed 10/4/2014 && testArray[0].length>0)
         for (var i=0;i<testArray.length && (i<gda.nFirstRows || !gda.bFirstRowsOnly) ;i++){   // 1+. 0 is column headings
-            console.log("allDataLoaded: filtering " + (i+1) + " of " + testArray.length);
+            console.log("ingestArray: filtering " + (i+1) + " of " + testArray.length);
             dR = testArray[i];
             if (gda.bFirstRowsOnly && dR.length>gda.nFirstRows)
                 dR = _.first(dR, gda.nFirstRows);
@@ -4474,7 +4553,7 @@ function allDataLoaded(error, testArray) {
             testArray[i] = dR;
         }
 
-        console.log("allDataLoaded Lin " + testArray.length );
+        console.log("ingestArray Lin " + testArray.length );
 
         var dS = gda._slide().dataSource;
         var ds = gda.dataSources.map[dS];
@@ -4487,17 +4566,16 @@ function allDataLoaded(error, testArray) {
             gda.new_crossfilter();
 
         for (var i=0;i<testArray.length && (i<gda.nFirstRows || !gda.bFirstRowsOnly) ;i++){   // 1+. 0 is column headings
-            console.log("allDataLoaded dataKeymapAdd ");
+            console.log("ingestArray dataKeymapAdd ");
             var dR = testArray[i];
             gda.dataKeymapAdd(dR);
             testArray[i] = dR;
         }
     }
 
-    console.log("allDataLoaded done  <==========");
+    console.log("ingestArray done  <==========");
 
     gda.dataComplete();
-    }
 }
 
 function dataAdd(data) {
