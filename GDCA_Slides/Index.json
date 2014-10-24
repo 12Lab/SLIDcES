@@ -1,9 +1,11 @@
-{"version": "0.099", "minor": "37", "branch": "gdca-dev", "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+{"version": "0.099", "minor": "72", "branch": "gdca-dev", "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
 "dataSources" : {
 "Index" : {
     "type":"csv",
     "dataprovider":"/CSV_Samples/","datafile":"Index.csv","bLoaded":true,"bListOfMany":false, "_idCounter":17,
-    "keymap":{"Type":"Type","Category":"Category","Link":"Link","_counter":"_counter","_qty":"_qty"}
+    "keymap":{
+"Type":"Type","Category":"Category","Link":"Link","_counter":"_counter","_qty":"_qty"
+}
 }
 },
 "slides" : [
