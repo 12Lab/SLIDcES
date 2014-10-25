@@ -1,5 +1,5 @@
 (function(exports){
-crossfilter.version = "1.3.7";
+crossfilter.version = "1.3.11";
 function crossfilter_identity(d) {
   return d;
 }
@@ -554,7 +554,7 @@ function crossfilter() {
     var n0 = n,
         n1 = newData.length;
 
-    // If there's actually new data to add…
+    // If there's actually new data to add�
     // Merge the new data into the existing data.
     // Lengthen the filter bitset to handle the new records.
     // Notify listeners (dimensions and groups) that new data is available.
@@ -612,7 +612,7 @@ function crossfilter() {
     var one = ~m & -~m, // lowest unset bit as mask, e.g., 00001000
         zero = ~one, // inverted one, e.g., 11110111
         values, // sorted, cached array
-        index, // value rank ↦ object id
+        index, // value rank ? object id
         newValues, // temporary array storing newly-added values
         newIndex, // temporary array storing newly-added index
         sort = quicksort_by(function(i) { return newValues[i]; }),
@@ -828,7 +828,7 @@ function crossfilter() {
           removed = [];
 
       for (i = 0; i < n; ++i) {
-        if (!(filters[k = index[i]] & one) ^ (x = f(values[i], i))) {
+        if (!(filters[k = index[i]] & one) ^ !!(x = f(values[i], i))) {
           if (x) filters[k] &= zero, added.push(k);
           else filters[k] |= one, removed.push(k);
         }
@@ -890,7 +890,7 @@ function crossfilter() {
       dimensionGroups.push(group);
 
       var groups, // array of {key, value}
-          groupIndex, // object id ↦ group id
+          groupIndex, // object id ? group id
           groupWidth = 8,
           groupCapacity = crossfilter_capacity(groupWidth),
           k = 0, // cardinality
@@ -901,7 +901,8 @@ function crossfilter() {
           reduceInitial,
           update = crossfilter_null,
           reset = crossfilter_null,
-          resetNeeded = true;
+          resetNeeded = true,
+          groupAll = key === crossfilter_null;
 
       if (arguments.length < 1) key = crossfilter_identity;
 
@@ -946,7 +947,7 @@ function crossfilter() {
         // Find the first new key (x1), skipping NaN keys.
         while (i1 < n1 && !((x1 = key(newValues[i1])) >= x1)) ++i1;
 
-        // While new keys remain…
+        // While new keys remain�
         while (i1 < n1) {
 
           // Determine the lesser of the two current keys; new and old.
@@ -1002,6 +1003,10 @@ function crossfilter() {
           update = updateMany;
           reset = resetMany;
         } else {
+          if (!k && groupAll) {
+            k = 1;
+            groups = [{key: null, value: initial()}];
+          }
           if (k === 1) {
             update = updateOne;
             reset = resetOne;
@@ -1061,6 +1066,7 @@ function crossfilter() {
               : k === 1 ? (reset = resetOne, update = updateOne)
               : reset = update = crossfilter_null;
         } else if (k === 1) {
+          if (groupAll) return;
           for (var i = 0; i < n; ++i) if (filters[i]) return;
           groups = [], k = 0;
           filterListeners[filterListeners.indexOf(update)] =
@@ -1242,9 +1248,8 @@ function crossfilter() {
       if (i >= 0) dataListeners.splice(i, 1);
       i = removeDataListeners.indexOf(removeData);
       if (i >= 0) removeDataListeners.splice(i, 1);
-      for (i = 0; i < n; ++i) filters[i] &= zero;
       m &= zero;
-      return dimension;
+      return filterAll();
     }
 
     return dimension;

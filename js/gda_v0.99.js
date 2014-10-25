@@ -47,7 +47,7 @@ if (!Array.prototype.joinWith) {
 
 var gda = {
     version: "0.099",
-    minor:   "079",
+    minor:   "081",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -224,6 +224,8 @@ gda.dataSources.readyJoin = function(dsName, rType, keys, results) {
     _.each(_.rest(results), function(aB) {  // test for results.length == 1
         rA = rA.joinWith(aB, keys);
     });
+
+    rA = gda.dataNativeReady(dsName,rA);
 
     ingestArray(dsName, [rA]);
 };
@@ -980,7 +982,8 @@ gda.regenerateCharts = function() {
 gda.dataComplete = function() {
     var sl = gda.slides.list();
 
-    var ds = gda.dataSources.map[gda._slide().dataSource];
+    var dS = gda._slide().dataSource;
+    var ds = gda.dataSources.map[dS];
     ds.bLoaded = true;
     //console.log("gda.dataComplete columns " + gda._slide().columns);
 
@@ -1665,7 +1668,7 @@ gda.clearWorkingState = function() {
     gda.bPollAggregate = false;
     gda.bPolledAndViewDrawn = false;
     gda.bViewDrawn = false;
-    gda.nPollTimerMS = 15000;
+    gda.nPollTimerMS = 5000;
 };
 
 gda.sampleData = function(ndims) {
@@ -1694,6 +1697,8 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
     });
 
     if (columns && columns.length>0) {
+        if (!gda.utils.fieldExists(gda.dimensions[sChtGroup]))
+            gda.dimensions[sChtGroup] = [];
         _.each(gda.availCharts, function(chartType) {
             gda.newChart(cf, "Choice", columns, sChtGroup, chartType,
                                       {"nBins":"10",
@@ -1722,9 +1727,9 @@ gda.displayCharts = function() {
 }
 
 gda.addLastChart = function() {
+    var aChart = gda._slide().charts[gda._slide().charts.length-1];
     var dS = aChart.sChartGroup; //gda._slide().dataSource;
     if (gda.cf[dS]) {
-        var aChart = gda._slide().charts[gda._slide().charts.length-1];
         gda.newChart(gda.cf[dS], aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type);
     }
 }
@@ -2550,14 +2555,14 @@ gda.newBubbleDisplay = function(iChart, dEl) {
         .group(chtObj.dGrps[0])
 	.colors(d3.scale.category10())
 	.keyAccessor(function (p) {
-	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];
+	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];    // 1 => 0?
 	})
 	.valueAccessor(function (p) {
-	    return p.value[chtObj.cnameArray[2]];// "deals"];
+	    return p.value[chtObj.cnameArray[2]];// "deals"];           // 2 => 1?
 	})
 	.radiusValueAccessor(function (p) {
         if (chtObj.cnameArray.length>2)
-	    return p.value[chtObj.cnameArray[1]];// "amountRaised"];
+	    return p.value[chtObj.cnameArray[2]];// "amountRaised"];
 	})
 	.x(d3.scale.linear().domain([0, 5000]))
 	.r(d3.scale.linear().domain([0, 4000]))
@@ -2772,6 +2777,14 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 			    dc.events.trigger(function () {
                 if (chart.gdca_toFilter.chart.focus) {
                     console.log("period triggered");
+                    _.each(gda.charts, function(lchtObj) {
+                        if (lchtObj.sChartGroup === chtObj.sChartGroup && //sChartGroup && 
+                            lchtObj.chartType === "Scatter") {
+                            gda.scatterDomains(lchtObj,false); // update
+                            //lchtObj.chart.render();
+                            lchtObj.chart.redraw();
+                        }
+                    });
                     chart.gdca_toFilter.chart.focus(chart.filter());
                 }
 			    });
@@ -3619,6 +3632,28 @@ gda.newScatterDisplay = function(iChart, dEl) {
             scatterChart
                 .legend(dc.legend());
 
+// try something similar for scatter, since Y doesn't appear to be properly elastic.
+//        var currentMax = 0,
+//            ratio,
+//            chartMax = groupData.top(1)[0].value; // initialize with largest value
+//
+//        row
+//          .on('postRedraw', function(chart){
+//            currentMax = groupData.top(1)[0].value; // after redraw, capture largest val
+//            ratio = currentMax/chartMax;
+//            if(ratio < .1 || ratio > 1){ // check if bars are too small or too large
+//                row.elasticX(true);
+//                chartMax = currentMax; // always be sure to reset the chartMax
+//                dc.redrawAll();
+//            } else {
+//                row.elasticX(false);
+//                chartMax = currentMax;
+//            }
+//          });
+
+
+// or it could be the initial domain setting. try updating the ydomain as needed.
+
         return true;
     }
     return false;
@@ -3626,21 +3661,26 @@ gda.newScatterDisplay = function(iChart, dEl) {
 
 gda.scatterDomains = function(chtObj, bInitial){
     var dDims = chtObj.dDims;
-    var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
+    var b1 = dDims[0].bottom(1);
+    var xmin = b1.length==0? 0 : b1[0][chtObj.cnameArray[0]];
     if (!dDims[0].isDate)
     {
         if (isNaN(xmin))
             xmin = 0;
     }
-    var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
+    var t1 = dDims[0].top(1);
+    var xmax = t1.length==0? 0 : t1[0][chtObj.cnameArray[0]];
     console.log("scatterD: xmin,xmax " + xmin + "," + xmax);
-    var ymin = dDims[1].bottom(1)[0][chtObj.cnameArray[1]];
+
+    var yb1 = dDims[1].bottom(1);
+    var ymin = yb1.length==0? 0 : yb1[0][chtObj.cnameArray[1]];
     //var iF = 0;
     //while(isNaN(ymin) && iF<dDims[1].bottom(Infinity).length) { // not efficient!
     //    iF++;
     //    ymin = dDims[1].bottom(iF+1)[iF][chtObj.cnameArray[1]];
     //}
-    var ymax = dDims[1].top   (1)[0][chtObj.cnameArray[1]];
+    var yt1 = dDims[1].top(1);
+    var ymax = yt1.length==0? 0 : yt1[0][chtObj.cnameArray[1]];
     console.log("scatterD: b ymin,ymax " + ymin + "," + ymax);
     if (isNaN(ymin)) {
         ymin = 0;// +ymax - 0.1 * +ymax;//0; the dim[].top/bot(1)[] approach has a 'sparse' data weakness.
@@ -4269,19 +4309,16 @@ gda.dataReady = function(data) { //    from Input button handler
     }
     else
         dR = d3.csv.parse(data);    // parseRows
+    if (dR) {
+        var dS = gda._slide().dataSource;
+        dR = gda.dataNativeReady(dS,dR);
     if (dR)
-        gda.dataNativeReady(dR);
+            gda.dataToCrossfilter(dS,dR);
 }
-
-gda.dataNativeReady = function(dR) {
-    if (gda.bFirstRowsOnly && dR.length>gda.nFirstRows)
-        dR = _.first(dR, gda.nFirstRows);
-    console.log("dataNativeReady Lin ", dR.length);
-    //console.log("dataNativeReady "+dR);
-    //console.log("dataNativeReady "+JSON.stringify(dR));
-
-    var dS = gda._slide().dataSource;
+}
+gda.dataToCrossfilter = function(dS,dR) {
     var ds = gda.dataSources.map[dS];
+
     if ((gda.bPollTimer || // && gda.bPollAggregate) ||
         ds.bAggregate === true) && gda.cf[dS]) {
         if (!gda.bPollAggregate)
@@ -4290,6 +4327,23 @@ gda.dataNativeReady = function(dR) {
     }
     else
         gda.new_crossfilter(dS);
+
+    // should this be moved to FilterInternal? if so user can't override unless
+    // implemented in an accessible member.
+    // Keymap addition should be done at design time, not runtime? current functionality allows new columns to creep in.
+    // KeymapAdd also adds to crossfilter.
+    gda.dataKeymapAdd(dS,dR); // expects array, use slice(1) if parseRows is used above.
+    gda.dataComplete();
+}
+
+gda.dataNativeReady = function(dS,dR) {
+    if (gda.bFirstRowsOnly && dR.length>gda.nFirstRows)
+        dR = _.first(dR, gda.nFirstRows);
+    console.log("dataNativeReady Lin ", dR.length);
+    //console.log("dataNativeReady "+dR);
+    //console.log("dataNativeReady "+JSON.stringify(dR));
+
+    var ds = gda.dataSources.map[dS];
 
     if (ds.bAggregate === true) {
         console.log("bAggregate, retain columns ",gda._slide().columns);
@@ -4300,19 +4354,17 @@ gda.dataNativeReady = function(dR) {
         gda._slide().filters = {};
     }
 
-    //var ds = gda.dataSources.map[gda._slide().dataSource];
-    if (ds.bListOfMany)
+    if (ds.bListOfMany) {
         dataArrayReady(null, [dR]);
+        return null;    // dataArrayReady uses a queue and callbacks to load 1+ files from a list_file.
+    }
     else {
         dR = gda.dataSourceInternal(dR);    // uses gda._slide()....counter
         dR = gda.dataFilter(dR);
         // just acts on first record, so no assignment needed
         gda.dataFilterKeymapTransform(dR); // sets slide columns, unless Aggregate and data previously loaded
 
-        // should this be moved to FilterInternal? if so user can't override unless
-        // implemented in an accessible member.
-        gda.dataKeymapAdd(dS,dR); // expects array, use slice(1) if parseRows is used above.
-        gda.dataComplete();
+        return dR;
     }
 }
 
@@ -4571,6 +4623,8 @@ function dataArrayReady(error, dataArray) {    // [ [{},{}] , ... ]
     }
     qA.awaitAll(allDataLoaded);  // read them all, then continue
     }
+
+    return null;
 }
 
 function allDataLoaded(error, testArray) {
@@ -4604,6 +4658,10 @@ function ingestArray(dsName, testArray) {
     if (testArray.length>0)
         console.log("ingestArray in " + JSON.stringify(testArray[0]).substring(0,120) + "... <==========");
     if (testArray && testArray.length>0) {// && testArray[0] // relaxed 10/4/2014 && testArray[0].length>0)
+
+        // don't do most/all of this on a joined dataSource. already performed on the pieces.
+        // unless there is some benefit to have another user filter on the result...
+
         for (var i=0;i<testArray.length && (i<gda.nFirstRows || !gda.bFirstRowsOnly) ;i++){   // 1+. 0 is column headings
             console.log("ingestArray: filtering " + (i+1) + " of " + testArray.length);
             dR = testArray[i];
