@@ -1408,3 +1408,4 @@ function crossfilter_capacity(w) {
       : 0x100000000;
 }
 })(typeof exports !== 'undefined' && exports || this);
+

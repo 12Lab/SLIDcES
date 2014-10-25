@@ -2777,6 +2777,8 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 			    dc.events.trigger(function () {
                 if (chart.gdca_toFilter.chart.focus) {
                     console.log("period triggered");
+              // this is a test, to try to get scatter y axis to elasticY 
+              // next up try reapplying the new domain to Y's axis
                     _.each(gda.charts, function(lchtObj) {
                         if (lchtObj.sChartGroup === chtObj.sChartGroup && //sChartGroup && 
                             lchtObj.chartType === "Scatter") {
