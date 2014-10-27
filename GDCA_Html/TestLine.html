@@ -32,16 +32,7 @@
 
 // these could go into a shared js file, rather than the .html
 gda.dataFilter = function(data) {
-    var Now = new Date();
-    var TincMsecs = 1000*60*60*8;
-    var NextYear = new Date(Now.getFullYear()+1,0,1);
     console.log("EP dataFilter");
-
-    var fieldExists = function(f) {
-        if (f === undefined) return false;
-        if ((typeof f) === undefined) return false;
-        return true;
-    };
 
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
         if (fieldExists(data[0]["Date"])) {
@@ -51,7 +42,7 @@ gda.dataFilter = function(data) {
             });
         }
 
-        if (fieldExists(data[0].year)) {
+        if (gda.utils.fieldExists(data[0].year)) {
             var format = d3.time.format("%Y");
             _.each(data, function(d) {
                 d.dd = format.parse(d.year);

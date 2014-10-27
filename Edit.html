@@ -90,6 +90,16 @@ gda.dataFilter = function(data) {
                 }
             });
         }
+        else if (gda.utils.fieldExists(data[0].year)) {
+            var format = d3.time.format("%Y");
+            _.each(data, function(d) {
+                d.dd = format.parse(d.year);
+            });
+            newData = data;
+        } 
+        else
+            newData = data;
+
         TcumFileUnits = 1;
         _.each(newData, function(d) {
             d.cumFileUnits = TcumFileUnits;
