@@ -33,33 +33,15 @@ From <a href="http://dc-js.github.io/dc.js/vc/index.html">http://dc-js.github.io
 
 // these could go into a shared js file, rather than the .html
 gda.dataFilter = function(data) {
-    var Now = new Date();
-    var T8incMsecs = 1000*60*60*8;
-    var TdincMsecs = 1000*60*60*24;
-    var NextYear = new Date(Now.getFullYear()+1,0,1);
-    var daysFormat = d3.format(".0f");
     console.log("EP dataFilter");
 
-    var fieldExists = function(f) {
-        if (f === undefined) return false;
-        if ((typeof f) === undefined) return false;
-        return true;
-    };
-
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
-        if (fieldExists(data[0]["Date"])) {
-            var format = d3.time.format("%Y-%m-%d");
+        if (gda.utils.fieldExists(data[0]["CloseDate"])) {
+            var format = d3.time.format("%m/%d/%Y");
             _.each(data, function(d) {
-                d.dd = format.parse(d.Date);
+                d.dd = format.parse(d.CloseDate);
             });
                 }
-
-        if (fieldExists(data[0].year)) {
-            var format = d3.time.format("%Y");
-            _.each(data, function(d) {
-                d.dd = format.parse(d.year);
-            });
-        }
         TcumFileUnits = 1;
         _.each(data, function(d) {
             d.cumFileUnits = TcumFileUnits;
