@@ -1450,6 +1450,7 @@ gda.slides = function() {
                             gda.addRadioB(dCEl, "sEdS", "new", "New", 'dSource', !gda.sEdS, 
                                 function (t) {
                                     gda.sEdS = null;    // until specified and file loaded successfully
+                                    gda.sEmS = null;
                                     gda.view.redraw();
                             });
                         _.each(gda.dataSources.map, function(dScf,dS) {  // was gda.cf
@@ -1457,6 +1458,7 @@ gda.slides = function() {
                             gda.addRadioB(dCEl, "sEdS", dS, dS, 'dSource', dS === gda.sEdS, 
                                 function (t) {
                                     gda.sEdS = t.value === "new" ? null : t.value;
+                                    gda.sEmS = null;
                                     gda.view.redraw();
                             });
                         });
@@ -1541,6 +1543,7 @@ gda.slides = function() {
                             gda.addRadioB(dCEl, "sEmS", "new", "New", 'dSource', !gda.sEmS, 
                                 function (t) {
                                     gda.sEmS = null;    // until specified and file loaded successfully
+                                    gda.sEdS = null;
                                     gda.view.redraw();
                             });
                         _.each(gda.metaSources.map, function(mSobj, mS) {  // dataSource options for meta
@@ -1548,6 +1551,7 @@ gda.slides = function() {
                             gda.addRadioB(dCEl, "sEmS", mS, mS, 'dMSource', mS === gda.sEmS, 
                                 function (t) {
                                     gda.sEmS = t.value === "new" ? null : t.value;
+                                    gda.sEdS = null;
                                     gda.view.redraw();
                             });
                         });
