@@ -50,7 +50,7 @@ gda = (function(){
 
 var gda = {
     version: "0.099",
-    minor:   "087",
+    minor:   "088",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -249,7 +249,14 @@ gda.dataSources.restore = function(dataSourceMap) {
 
         gda.dataSources.restoreOne(dS, dsRestored);
 
-        // don't load until referenced?
+        // don't load until referenced? ideally. but see gda.displayCharts for a short discussion on
+        // timing. Should user be given control over whether a DataSource (dS) instantiates a cf? Or
+        // just have a chart/control reference drive the source to be loaded? We don't want to just
+        // load all dS as cf, except during Edit/design time, since there is no point to specify a
+        // new one unless you intend to work with it.
+        // Another possibility is to load/process the dS/mS when the correponding sChartGroup is
+        // added to gda.sChartGroups. But not needed for edit/design time, so do it in the chart
+        // restore section.
     });
 }
 
@@ -506,8 +513,8 @@ gda.slide = function( _slide ) {
     // starts with a slide clear (and data structures) since the view level uses this to change pages
     _aSlide.display = function() {   // move to view.
         console.log("slide.display from " + gda._currentSlide + " to " +  _aSlide.myId);
-        gda.clearWorkingState();    // 10/6/2014 moved
-        _aSlide.clearDisplay();     // 10/6/2014 moved
+        gda.clearWorkingState();
+        _aSlide.clearDisplay();
         gda._currentSlide = _aSlide.myId;
 
         // set gda's control state up with slide specifics
@@ -525,7 +532,7 @@ gda.slide = function( _slide ) {
                 gda.sChartGroups.push(chtObj.sChartGroup);
         });
 
-        gda.displayCharts();  //9/8/2014 readded
+        gda.displayCharts();
         _aSlide.refreshControls();  // all
         var bDeferredDisplay = false;
                         // For a csv file, this is: folder + file
@@ -878,10 +885,10 @@ gda.removeSelectedChart = function(chtId) {
     }
 }
 
-gda.sortTabCheckboxChanged = function() {
-  var col = this.value;
-  var c = this.class;
-  var checked = this.checked;
+gda.sortTabCheckboxChanged = function(t) {
+  var col = t.value;  // was this.value
+  var c = t.class;
+  var checked = t.checked;
   if (checked) {
     if (!gda.utils.fieldExists(gda.editCols[c]))
         gda.editCols[c] = [];
@@ -898,10 +905,10 @@ gda.sortTabCheckboxChanged = function() {
   gda.regenerateTableAndDim(gda.bShowTable);
 }
 
-gda.colTabCheckboxChanged = function() {
-  var col = this.value;
-  var c = this.class;
-  var checked = this.checked;
+gda.colTabCheckboxChanged = function(t) {
+  var col = t.value;  // was this.value
+  var c = t.class;
+  var checked = t.checked;
   if (checked) {
     if (!gda.utils.fieldExists(gda.editCols[c]))
         gda.editCols[c] = [];
@@ -918,10 +925,10 @@ gda.colTabCheckboxChanged = function() {
   gda.regenerateTable(gda.bShowTable);
 }
 
-gda.colDimCheckboxChanged = function() {
-  var col = this.value;
-  var c = this.class;
-  var checked = this.checked;
+gda.colDimCheckboxChanged = function(t) {
+  var col = t.value;  // was this.value
+  var c = t.class;
+  var checked = t.checked;
   if (checked) {
             var dS = gda.activedataSource();
             var vA = null;
@@ -1165,14 +1172,30 @@ gda.dataComplete = function(dS) {
             // 1. Use Table (shown in Editor)
             // 2. Table Controls (shown when table Use is selected, edit or run).
             // 3. Table Display
+
+// Time for table refactor, to support multiple tables (1 per DataSource for now,
+// and 1 per MetaSource later, and possibly in the future any number of tables
+// per source via dimension definition.
+// 1. create a table prototype
+// 2. restore conversion code to coerce present single table into one for the sChartGroup/dS.
+//     for now use a 'bUseTable' checkbox next to the Data Source radio button entry (edit only)
+//     and put a 'bShowTable' somewhere.
+// 3. bShowTable per Table. And one for Slide (bShowTables)
+// 4. move edit and runtime checkboxes out of here?
+// 5. refactor display of tables
+// 6. File of Files Table, too
+// 7. gda.tables from gda._slide().tables and vice versa when editing
+// 8. reorganize the options (edit mode) and options (run mode) stuff.
+// 9. some of the testing below (gda.activeDataSource) is for edit mode only. fixed when 
+//     multiple table refactored
 gda.showTable = function() {
     var s3 = document.getElementById('slideUseTable');
     if (s3) {
         s3[sTextHTML] = "";
         gda.addCheckB(s3, "useTable", "Use Table", 'objmember',
                 gda._slide().bUseTable, 
-                function () {
-                    gda._slide().bUseTable = this.checked;
+                function (t) {
+                    gda._slide().bUseTable = t.checked;
                     // need method to refresh the Nav controls when un/checked
                     gda.showTable();
                     gda.view.redraw();
@@ -1189,23 +1212,20 @@ gda.showTable = function() {
         var dEl = gda.addElement(s3,"br");
         gda.addCheckB(s3, "FirstRow", "Abort Load after First " + gda.nFirstRows + " Rows", 'objmember',
                 gda.bFirstRowsOnly, 
-                function () {
-                    gda.bFirstRowsOnly = this.checked;
+                function (t) {
+                    gda.bFirstRowsOnly = t.checked;
                     _.each(gda.sChartGroups,function(dS) {  // gda.dataSources.map, should be for each sChartGroup? so if listed but not used...
                         var ds = gda.dataSources.map[dS];
                         ds.bLoaded = false;
                     });
-                    //gda.datafile = null;   // override to force reload
-                    //gda.dataprovider = null;   // override to force reload  added .38
-                    // presently only works with a locally loaded file. change over to any data source
                     gda.fileLoadImmediate();
                     gda.showTable();
                     } );
         var dEl = gda.addElement(s3,"br");
         gda.addCheckB(s3, "useOverrides", "Allow Overrides", 'objmember',
                 gda._slide().bAllowOverrideChanges, 
-                function () {
-                    gda._slide().bAllowOverrideChanges = this.checked;
+                function (t) {
+                    gda._slide().bAllowOverrideChanges = t.checked;
                     gda.view.redraw();
                 } );
     }
@@ -1216,11 +1236,12 @@ gda.showTable = function() {
     var dS = gda.activedataSource();// gda.sEdS;
     var ds = gda.metaSources.map[dS];   // just kludged for now. Table needs improvement after meta & dataSources
     if(!ds) ds = gda.dataSources.map[dS];
+    if (ds) {
     if (gda._slide().bShowTable && ds.columns && ds.columns.length>0) {
         gda.addCheckB(s3, "showHiders", "Show Table Option Configuration", 'objmember',
                 gda._slide().bShowTableColumnSelectors, 
-                function () {
-                    gda._slide().bShowTableColumnSelectors = this.checked;
+                function (t) {
+                    gda._slide().bShowTableColumnSelectors = t.checked;
                     gda.showTable();
                     //gda.view.redraw();    // could add, to workaround slide.next.tablechecked.notabledisplayed bug
                                             // at expense of a full redraw.
@@ -1230,9 +1251,9 @@ gda.showTable = function() {
             var dEl = gda.addElement(s3,"br");
             gda.addCheckB(s3, "PollTimer", "Poll DataSource", 'objmember',
                     gda.bPollTimer, 
-                    function () {
-                        console.log("PT: " + this.checked);
-                        gda.bPollTimer = this.checked;
+                    function (t) {
+                        console.log("PT: " + t.checked);
+                        gda.bPollTimer = t.checked;
                         if (gda.bPollTimer) {
                             //gda.manageInputSource.pollTimerStart();
                             gda.manageInputSource.pollTimerTick();  // calling this kicks one now and schedules the next
@@ -1241,21 +1262,22 @@ gda.showTable = function() {
             var dEl = gda.addElement(s3,"br");
             gda.addCheckB(s3, "PollAggregate", "Aggregate DataSource", 'objmember',
                     gda.bPollAggregate, 
-                    function () {
-                        gda.bPollAggregate = this.checked;
+                    function (t) {
+                        gda.bPollAggregate = t.checked;
                         } );
-        if (gda._allowEdit && gda._anchorEdit) {  // only show this item if editing// gda.editinprogress
+        //if (gda._allowEdit && 
+        if (gda._anchorEdit) {  // only show this item if editing// gda.editinprogress
             var dEl = gda.addElement(s3,"br");
             gda.addCheckB(s3, "showLinks", "Display Http as Links", 'objmember',
                     gda._slide().bShowLinksInTable, 
-                    function () {
-                        gda._slide().bShowLinksInTable = this.checked;
+                    function (t) {
+                        gda._slide().bShowLinksInTable = t.checked;
                         gda.showTable();
                         } );
             gda.addCheckB(s3, "showPictures", "Display Pictures", 'objmember',
                     gda._slide().bShowPicturesInTable, 
-                    function () {
-                        gda._slide().bShowPicturesInTable = this.checked;
+                    function (t) {
+                        gda._slide().bShowPicturesInTable = t.checked;
                         gda.showTable();
                         } );
         }
@@ -1284,6 +1306,7 @@ gda.showTable = function() {
     gda.regenerateTableAndDim(bLocalShowTable);
     else
     gda.regenerateTable(bLocalShowTable);
+    }
 };
 
 // temporary, don't expose eventually
@@ -1364,16 +1387,7 @@ gda.slideRegistry = function() {
 gda.Controls = function() {
     return {
         addEditGUI: function() {
-        if (gda._anchorEdit) {
-            gda.addCheckB(gda._anchorEdit, "Preview", "Preview Full Slide", 'objmember',
-                    !gda._allowEdit,
-                    function (t) {
-                        gda._allowEdit = !t.checked;
-                        // need method to refresh the Nav controls when un/checked
-                        gda.view.redraw();
-                    } );
-            }
-          if (gda._allowEdit) {
+          {//if (gda._allowEdit) {
             var dHostEl = gda._anchorEdit;
 
             var dEl = gda.addElement(dHostEl,"br");
@@ -1426,14 +1440,15 @@ gda.Controls = function() {
         addNavGUI: function() {
             var dHostEl = gda._anchorNav;
 
+            var dElS = gda.addElementWithId(dHostEl,"div","specialEditHeader");
             var dElS = gda.addElementWithId(dHostEl,"div","slideSet");
 
             if (gda._slide()) {
             if (gda._slide().bUseTable) {
             gda.addCheckB(dHostEl, "showTable", "Show Table", 'objmember', //temp, use Nav anchor to "show on Slide"
                     gda.bShowTable, 
-                    function () {
-                        gda.bShowTable = this.checked;
+                    function (t) {
+                        gda.bShowTable = t.checked;
                         gda._slide().bShowTable = gda.bShowTable;
                         gda.showTable();
                     });
@@ -1442,8 +1457,8 @@ gda.Controls = function() {
             if (gda._slide().bAllowOverrideChanges) {
             gda.addCheckB(dHostEl, "accessOverrides", "Access Overrides", 'objmember',
                     gda.bAccessOverrides, 
-                    function () {
-                        gda.bAccessOverrides = this.checked;
+                    function (t) {
+                        gda.bAccessOverrides = t.checked;
                         gda._slide().bAccessOverrides = gda.bAccessOverrides;
                         gda.view.redraw();
                     });
@@ -1612,11 +1627,11 @@ gda.slides = function() {
 
                     var dTd = gda.addElement(dTr,"td");
                         gda.addCheckB(dTd, "aggregate", "Aggregate Data", 'objmember', false, 
-                                function () {
-                                    console.log("Aggregate? " + this.checked);
+                                function (t) {
+                                    console.log("Aggregate? " + t.checked);
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
-                                    ds.bAggregate = this.checked;
+                                    ds.bAggregate = t.checked;
                         });
                 if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) {
                 var dTr = gda.addElement(dTb,"tr");
@@ -1862,7 +1877,20 @@ gda.view = function() {
         },
         showList: function() {                  // needs renaming, or refactor below, used for slide specific control values
             // slide 'control palette' items
-          if (gda._allowEdit) {
+          {//if (gda._allowEdit) {
+        if (gda._anchorEdit) {
+            var docEl = document.getElementById('specialEditHeader');
+            if (docEl) {
+                docEl[sTextHTML] = "";
+            gda.addCheckB(docEl, "Preview", "Preview Full Slide", 'objmember',
+                    !gda._allowEdit,
+                    function (t) {
+                        gda._allowEdit = !t.checked;
+                        // need method to refresh the Nav controls when un/checked
+                        gda.view.redraw();
+                    } );
+            }
+        }
             var docEl = document.getElementById('slideSet');
             if (docEl) {
                 docEl[sTextHTML] = "";
@@ -1976,7 +2004,7 @@ gda.view = function() {
             if (gda._anchorEdit) {
                 gda._anchorEdit[sTextHTML] = "";  // call operators
                 gda.Controls.addEditGUI();
-          if (gda._allowEdit) {
+          {//if (gda._allowEdit) {
                 gda.slides.createContentDataSource(gda._anchorEdit);
                 gda.slides.createContentMetaSource(gda._anchorEdit);
           }
@@ -2080,6 +2108,14 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
 
 gda.displayCharts = function() {
     _.each(gda.sChartGroups, function(dS) {
+        // need data to be loaded by this point, so instead of having gda.cf become an interface that hides driving
+        // a load, instead drive the load of any referenced dS/mS on the current slide when it is selected?
+        // The issue is the creation of the charts needs to have the data fully loaded in order to establish
+        // chart limits, etc. or d3/dc errors might be driven. Can't simply issue a renderAll or redrawAll (which
+        // is incremental) as some gda work needs to happen (update some axis titles, etc at a minimum) the
+        // 'fix' is to gda.view.show after the final data load occurs. It could be performed after each load
+        // completes. A renderAll(sChartGroup=dS/mS) could occur, if the gda stuff becomes registered appropriately
+        // in DC. Since it isn't yet... must brute force it.
         if (gda.cf[dS]) {   // during Edit, not loaded yet when called from slide.display
         gda.charts = [];    // workaround
             _.each(gda._slide().charts, function(aChart) {
@@ -4594,14 +4630,38 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                     aChart.sChartGroup = tempConversionDSname;// restoredSlide.dataSource;
             });
 
+            // non-conversion work!
             if (!bDashOnly || (gda.utils.fieldExists(restoredSlide.bDashInclude) && restoredSlide.bDashInclude)) {
-                bAny = true;
                 gda.slides.append(gda.slide(restoredSlide));  // decorate 
+                if (!bAny) {
+                    bAny = true;
+                    //gda.view.show();    // populate. Doesn't. manually load sChartGroup
+                    _.each(restoredSlide.charts, function(aChart) {
+                        var dS = aChart.sChartGroup;
+                        if (!_.contains(gda.sChartGroups,dS))
+                            gda.sChartGroups.push(dS);
+                    });
+                    _.each(restoredSlide.myCols, function(dsO,dS) {
+                        if (gda.utils.fieldExists(dsO.csetupDimsCols) &&
+                            dsO.csetupDimsCols.length>0)
+                            if (!_.contains(gda.sChartGroups,dS))
+                                gda.sChartGroups.push(dS);
+                    });
+                    _.each(restoredSlide.tables, function(aTable) {
+                        var dS = aTable.sChartGroup;
+                        if (!_.contains(gda.sChartGroups,dS))
+                            gda.sChartGroups.push(dS);
+                    });
+                    gda.fileLoadImmediate();    // drive load ostensible for first slide that will be viewed
+                }
+                else
+                    bAny = true;
             }
+
         });
         if (bAny) {
             if (gda.bViewDrawn !== true) {
-                gda.view.show();
+                //gda.view.show();
             }
         }
     }
@@ -4940,18 +5000,23 @@ gda.isDataFileTypeSupported = function(filepath) {
 // returns true if it did a deferred load
 // might be able to eliminate this and use the newer support
 gda.fileLoadImmediate = function(bForce) {
-    _.each(gda.sChartGroups,function(dS) {  // gda.dataSources.map, should be for each sChartGroup? so if listed but not used...
-        //ds.bLoaded = false;
+    // presently this assumes all charts loaded with a slide are 'instantiated' and thus
+    // available in gda.sChartGroups. Change this to iterate over all the consumers (charts, tables, etc)
+    // and drive the loads from them.
+    // To optimize this further it could begin loading the current dS/mS selection first, which would
+    // only benefit the Editor, so no dice for now.
+    //_.each(gda.charts, function(aChart) {
+        //var dS = aChart.sChartGroup 
+    _.each(gda.sChartGroups,function(dS) {
         var ds = gda.metaSources.map[dS];
-        if (!ds) ds = gda.dataSources.map[dS];
-        if (gda.utils.fieldExists(ds.dataprovider)) {
+        if (ds) {   // mS. no direct load, but as needed by operator (join ,etc).
+        } else {
+        ds = gda.dataSources.map[dS];
+        if (ds && gda.utils.fieldExists(ds.dataprovider)) {
         var filepath = ds.dataprovider;
         if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) filepath = filepath + ds.datafile;
 
-        // this needs changing, now that there can be multiple files per slide
-        //
         if (!gda.utils.fieldExists(ds.bLoaded) || !ds.bLoaded || bForce) {    // only if not already loaded.
-            gda.datafile = filepath;        // most recent loaded. Only one is available at a time, changed per slide.
             ds.bLoaded = false;
 			if (filepath.trim().length>0) {
 				var filetype = gda.isDataFileTypeSupported(filepath);
@@ -5000,6 +5065,7 @@ gda.fileLoadImmediate = function(bForce) {
                 }
 				return true;
 			}
+        }
         }
         }
     });

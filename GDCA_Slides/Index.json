@@ -3,6 +3,7 @@
 "Index" : {
     "type":"csv",
     "dataprovider":"/CSV_Samples/","datafile":"Index.csv","bLoaded":true,"bListOfMany":false, "_idCounter":17,
+    "columns":["Category","Type","Link","_counter","_qty"],
     "keymap":{
 "Type":"Type","Category":"Category","Link":"Link","_counter":"_counter","_qty":"_qty"
 }
@@ -11,6 +12,6 @@
 "slides" : [
 {"title":"the12Lab Index, using SLIDcES", "bAggregate":false,
 "dataSource":"Index",
-"columns":["Category","Type","Link","_counter","_qty"],
+    "columns":["Category","Type","Link","_counter","_qty"],
 "filters":{},"myCols":{"csetupDimsCols":["Category","Type"],"csetupHiddenTableCols":["_counter","_qty","cumFileUnits"],"csetupSortTableCols":["Type"]},"charts":[],"bUseTable":true,"bShowTable":true,"bShowTableColumnSelectors":false,"bShowLinksInTable":true,"bShowPicturesInTable":true,"myId":0,"dataLastModifiedDate":"2014-08-06T02:32:49.000Z"}
 ] }
