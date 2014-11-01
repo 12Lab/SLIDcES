@@ -48,9 +48,22 @@ gda = (function(){
         }();
     }
 
+document.onkeydown = function(evt) {
+    evt = evt || window.event;
+    if (evt.ctrlKey) {
+        if (evt.keyCode == 37)
+            gda.view.showPrev();
+        else if (evt.keyCode == 38) {}
+        else if (evt.keyCode == 39)
+            gda.view.showNext();
+        else if (evt.keyCode == 40) {}
+    }
+};
+    
+
 var gda = {
     version: "0.099",
-    minor:   "088",
+    minor:   "090",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -110,6 +123,8 @@ var gda = {
     bPolledAndViewDrawn : false,
     bViewDrawn : false,
     nPollTimerMS : 5000,
+    sEditPresentTextControl1 : "CPollTimerMS",
+    sEditPresentTextControl2 : "CSlideTitle",
 
     // registered simple or aggregated charts
     availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "Bubble", "ScatterHist", "Choropleth", "Box", "Stats"], // "YHist" //  
@@ -781,7 +796,7 @@ gda.addEditControls = function(_aChart, s4) {
 			var dTb = gda.addElement(s4,"table");
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
-					gda.addTextEntry(dTd, "Title", _aChart.Title,
+					gda.addTextEntry(dTd, "Title", "Title", _aChart.Title,
 							function(newVal, fieldName) {  // adopt same form as below  .Title as a function
 							_aChart.titleCurrent(newVal);	// use for several side effects
 							//_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
@@ -802,7 +817,7 @@ gda.addEditControls = function(_aChart, s4) {
                 if (!bWidth) {
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
-					gda.addTextEntry(dTd, "wChart", _aChart.wChart,
+					gda.addTextEntry(dTd, "wChart", "wChart", _aChart.wChart,
 							function(newVal, fieldName) {
 							//_aChart.settingCurrent("wChart",newVal);
                             if (!_aChart.overrides)
@@ -818,7 +833,7 @@ gda.addEditControls = function(_aChart, s4) {
                 if (!bHeight) {
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
-					gda.addTextEntry(dTd, "hChart", _aChart.hChart,
+					gda.addTextEntry(dTd, "hChart", "hChart", _aChart.hChart,
 							function(newVal, fieldName) {
 							//_aChart.settingCurrent("hChart",newVal);
 							_aChart[fieldName] = _aChart.overrides[fieldName] = newVal;
@@ -834,7 +849,7 @@ gda.addEditControls = function(_aChart, s4) {
 					_.each(_aChart.overrides, function(value, key) {
 						var dTr = gda.addElement(dTb,"tr");
 							var dTd = gda.addElement(dTr,"td");
-							gda.addTextEntry(dTd, key, value,
+							gda.addTextEntry(dTd, key, key, value,
 									function(newVal, fieldName) {
 										//console.log("field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
                                         if (typeof(newVal)==="string") {
@@ -854,7 +869,7 @@ gda.addEditControls = function(_aChart, s4) {
 				}
 				var dTr = gda.addElement(dTb,"tr");
 					var dTd = gda.addElement(dTr,"td");
-					gda.addTextEntry(dTd, "Add Field", "Blank",
+					gda.addTextEntry(dTd, "AddField", "Add Field", "Blank",
 							function(newField) {
 								if (!_aChart.overrides)
 									_aChart.overrides = {};
@@ -1147,11 +1162,13 @@ gda.dataComplete = function(dS) {
     if (ds) {
     ds.bLoaded = true;
 
-    if (!gda.bPollTimer || !gda.bPolledAndViewDrawn)// || !gda.bPollAggregate)
+    if (!gda.bPollTimer || !gda.bPolledAndViewDrawn || !gda.bPolledAndViewDrawn[dS])// || !gda.bPollAggregate)
     {
         //if (!gda.bPolledAndViewDrawn) {
         gda.view.show();
-        gda.bPolledAndViewDrawn = true;
+        if (!gda.bPolledAndViewDrawn)
+            gda.bPolledAndViewDrawn = {};
+        gda.bPolledAndViewDrawn[dS] = true; // should this be by dS
         //}
     }
     else {
@@ -1205,9 +1222,9 @@ gda.showTable = function() {
     if (s3) {
         s3[sTextHTML] = "";
             //var dEl = gda.addElement(s3,"br");
-        gda.addTextEntry(s3, "PollTimerMS", gda.nPollTimerMS,
+        gda.addTextEntry(s3, "PollTimerMS", "PollTimerMS", gda.nPollTimerMS,
                 function(newVal) {
-                gda.nPollTimerMS(newVal);
+                gda.nPollTimerMS = newVal;
                 });
         var dEl = gda.addElement(s3,"br");
         gda.addCheckB(s3, "FirstRow", "Abort Load after First " + gda.nFirstRows + " Rows", 'objmember',
@@ -1673,7 +1690,7 @@ gda.slides = function() {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         var dCEl = gda.addElementWithId(dTd,"div","metaProviderEntry");
-                        gda.addTextEntry(dCEl, "Name", gda.sEmS,
+                        gda.addTextEntry(dCEl, "Name", "Name", gda.sEmS,
                                 function(newVal) {
                                     var mS = newVal;
                                     if (gda.metaSources.map[gda.sEmS] && gda.sEmS !== mS) {
@@ -1691,8 +1708,13 @@ gda.slides = function() {
                         var i=0;
                         _.each(gda.dataSources.map, function(dSobj, dS) {  // dataSource options for meta
                             var bInitial = gda.metaSources.map[mS] && _.contains(gda.metaSources.map[mS].dataSources, dS);
-                            if (i++>0)
+                            if (i++>0) {
                                 var dElBr = gda.addElement(dCEl,"br");
+                                if (ms.type === "join") {
+                                var dTxtT = gda.addTextNode(dCEl,"------------");
+                                var dElBr = gda.addElement(dCEl,"br");
+                                }
+                            }
                             gda.addCheckB(dCEl, dS, dS, 'objmember', bInitial,  // s/"sEmS"/dS
                                     function (t) {
                                         var dS = t.value;
@@ -1729,8 +1751,11 @@ gda.slides = function() {
                         _.each(gda.dataSources.map, function(dSobj, dS) {  // dataSource options for meta
                             if (!gda.utils.fieldExists(ms.keys))
                                 ms.keys = {};
-                            if (i++>0)
+                            if (i++>0) {
                                 var dElBr = gda.addElement(dCEl,"br");
+                                var dTxtT = gda.addTextNode(dCEl,"------------");
+                                var dElBr = gda.addElement(dCEl,"br");
+                            }
                             // add checkboxes for all available columns, with those selected checked
                             var ds = gda.dataSources.map[dS];
                             // change these two clauses up to, first add the checked items in ms.keys[dS] order, then
@@ -1830,11 +1855,27 @@ gda.view = function() {
             gda.clearWorkingState();       // update model
             gda.view.redraw();
         },
+        refocus: function() {
+            // workaround for changing slides in the middle of text entry
+            //$( '#'+gda.sEditPresentTextControl1 ).focus(function() {
+            //  alert( "Handler for 1 .focus() called." );
+            //});
+            //$( '#'+gda.sEditPresentTextControl2 ).focus(function() {
+            //  alert( "Handler for 2 .focus() called." );
+            //});
+            
+            // need to first move the focus from some text entry control to another, so the edit is captured
+            var docElTc = jQuery("#"+gda.sEditPresentTextControl1 );
+            if (docElTc[0] === document.activeElement ) //.hasFocus())
+                var docElTc = jQuery("#"+gda.sEditPresentTextControl2 );
+            docElTc.focus();
+         },
         remove: function() {
             console.log("view.remove");
             if (gda.slideRegistry.list().length === 1) {
                 gda.slides.append();    // append new one, to replace last/current
             }
+            gda.view.refocus(); // in case an edit change was made in a text control
             gda.slides.remove(gda._currentSlide);
             if (gda._currentSlide>gda.slideRegistry.list().length-1)
                 gda._currentSlide = gda.slideRegistry.list().length-1;
@@ -1857,6 +1898,7 @@ gda.view = function() {
             gda.view.redraw();
         },
         showPrev: function() {
+            gda.view.refocus(); // in case an edit change was made in a text control
             var iPrev = gda._currentSlide-1;
             if (iPrev<0)
                 iPrev = 0;
@@ -1866,6 +1908,7 @@ gda.view = function() {
             }
         },
         showNext: function() {
+            gda.view.refocus(); // in case an edit change was made in a text control
             var iNext = gda._currentSlide+1;
             var sl = gda.slides.list();
             if (iNext>=sl.length)
@@ -1961,14 +2004,14 @@ gda.view = function() {
             var dElTE = document.getElementById("slideTitleEntry");
             if (dElTE) {    // prob belongs elsewhere
             dElTE[sTextHTML] = "";
-            gda.addTextEntry(dElTE, "Slide Title", gda._slide().title,
+            gda.addTextEntry(dElTE, "SlideTitle", "Slide Title", gda._slide().title,
                     function(newVal) {  // adopt same form as below  .title as a function
                     gda.slides.titleCurrent(newVal); // was _name =
                     });
 
             var dElDPE = document.getElementById("dataProviderEntry");
             dElDPE[sTextHTML] = "";
-            gda.addTextEntry(dElDPE, (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) ? "Folder" : "Provider", ds.dataprovider,
+            gda.addTextEntry(dElDPE, "FolderEntry", (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) ? "Folder" : "Provider", ds.dataprovider,
                     function(newVal) {
                         var dS = gda.sEdS;
                         var ds = gda.dataSources.map[dS];
@@ -2024,6 +2067,11 @@ gda.view = function() {
                 gda._slide().displayPopulate() 
             }
             gda.bViewDrawn = true;
+            var docElTc = jQuery("#cslideSetcshowSlide"+gda._currentSlide);
+            //$('button').
+            //if (docElTc.length>0)
+           docElTc.effect( "highlight", {color: 'lightblue'}, 2000 );
+            
         },
     };
 }();
@@ -2541,7 +2589,7 @@ gda.newTimelineChart = function(iChart, cf) {
                                             //return gda[fn](i, docEl);
                                             // or perhaps supply some canned common reduce methods
                     if (o.indexOf(';')<0)  { // assume just a field accessor
-                        var dF = new Function("d", "return d." + o + ";");
+                        var dF = new Function("d", 'return +d["' + o + '"];'); //"return +d." + o + ";");
                         //dXGrp = xDimension.group()["reduceSum"](dF);  //about the same speedwise
                         dXGrp = xDimension.group().reduceSum(dF);
                     }
@@ -2588,6 +2636,7 @@ gda.newBarChart = function(iChart, cf) {
     gda.addOverride(chtObj,"legend",false);
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
+    gda.addOverride(chtObj,"top",false);
     var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf);
     chtObj.dDims.push(xDimension);
     var dXGrp = xDimension.group();
@@ -2608,6 +2657,8 @@ gda.newRowChart = function(iChart, cf) {
     gda.addOverride(chtObj,"ignoreValuesBelow",1);
     gda.addOverride(chtObj,"ignoreKey","");
     gda.addOverride(chtObj,"top",false);
+    gda.addOverride(chtObj,"dropOthers",false)
+    gda.addOverride(chtObj,"ordering",false)
     var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf);
     chtObj.dDims.push(xDimension);
     var dXGrp;
@@ -3369,6 +3420,13 @@ gda.newBarDisplay = function(iChart, dEl) {
         });
     }
 
+//    if (chtObj.overrides["top"] ) // doesn't seem to work in 1.6.99. 2.0+ perhaps.
+//        ftX
+//            .data(function(group) {
+//                return group.top(chtObj.overrides["top"]);
+//            });
+
+
     if (chtObj.overrides["legend"])
         ftX
             .legend(dc.legend());
@@ -3627,6 +3685,20 @@ gda.newRowDisplay = function(iChart, dEl) {
         if (chtObj.overrides["legend"])
             ftX
                 .legend(dc.legend());
+
+    if ( chtObj.overrides["dropOthers"] )
+        ftX
+         .data(function (g) {
+                    return _.select(g.all(), function (e) {
+                        return e.key.toLowerCase() != 'others';
+                    });
+                });
+    if ( chtObj.overrides["ordering"] )
+        ftX
+         .ordering(function(d){
+            return -d.value;
+            });
+
 
 	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         return true;
@@ -4652,7 +4724,8 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                         if (!_.contains(gda.sChartGroups,dS))
                             gda.sChartGroups.push(dS);
                     });
-                    gda.fileLoadImmediate();    // drive load ostensible for first slide that will be viewed
+                    if (gda.sChartGroups.length>0)
+                        gda.fileLoadImmediate();    // drive load ostensible for first slide that will be viewed
                 }
                 else
                     bAny = true;
@@ -4664,6 +4737,9 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                 //gda.view.show();
             }
         }
+
+        if (gda.sChartGroups.length === 0)  // main slide happens to be empty of charts tables etc.
+            gda.view.show();
     }
 
 };
@@ -5388,7 +5464,7 @@ gda.addSlideOpen = function(dElHost, theValue) {
     return gda;
 }
 
-gda.addTextEntry = function(dElHost, fieldname, defV, callback) {
+gda.addTextEntry = function(dElHost, fieldname, sTitle, defV, callback) {
     // slide title
     var inputT = document.createElement("input");
     inputT.type = "text";
@@ -5397,7 +5473,7 @@ gda.addTextEntry = function(dElHost, fieldname, defV, callback) {
     inputT.value = defV;
     var Luse = document.createElement("label");
     Luse.htmlFor = inputT;
-    Luse.appendChild(document.createTextNode(fieldname+':'));
+    Luse.appendChild(document.createTextNode(sTitle+':'));
     dElHost.appendChild(Luse);
     dElHost.appendChild(inputT);
     d3.selectAll("input[id="+inputT.id+"]")
