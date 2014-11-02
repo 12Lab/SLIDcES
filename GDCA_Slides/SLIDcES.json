@@ -15,7 +15,9 @@
 }
 },
 "slides" : [
-{"title":"SLIDcES Index, of DC.js in Slides", "dataSource":"SLIDcES", "columns":["Category", "Type", "Link", "_counter", "_qty"],"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":["_counter", "_qty", "cumFileUnits"],"csetupSortTableCols":["Link"]},"charts":[
+{"title":"SLIDcES Index, of DC.js in Slides", "dataSource":"SLIDcES", 
+"columns":["Category", "Type", "Link", "_counter", "_qty"]
+,"filters":{},"myCols":{"csetupDimsCols":[],"csetupHiddenTableCols":["_counter", "_qty", "cumFileUnits"],"csetupSortTableCols":["Link"]},"charts":[
 {"Title":"Category", "myCols":{"csetupChartCols":["Category"]},"type":"Row", "sChartGroup":"SLIDcES", "overrides":{"hChart":"200", "wChart":"200", "legend":false,"ignoreZeroValue":false,"ignoreValuesBelow":1,"ignoreKey":"", "top":false}},
 {"Title":"Type", "myCols":{"csetupChartCols":["Type"]},"type":"Row", "sChartGroup":"SLIDcES", "overrides":{"hChart":"550", "legend":false,"ignoreZeroValue":false,"ignoreValuesBelow":1,"ignoreKey":"", "top":false}}
 ],"bUseTable":true,"bShowTable":true,"bShowDataSource":false,"bShowSlidesSource":false,"bAllowOverrideChanges":false,"bAccessOverrides":false,"bShowTableColumnSelectors":false,"bShowLinksInTable":true,"bShowPicturesInTable":false,"myId":0,"dataLastModifiedDate":"2014-08-06T02:32:49.000Z"}

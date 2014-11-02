@@ -3,7 +3,6 @@
 // next: finish implementing meta. joined columns need to be added to gda._slide().myCols. See 923.
 
 var sFileChartGroup = "FileListGroup";  // temporary, for the File List table
-var sTextHTML = "textContent";//"innerHTML"; textContent works in FireFox, whilc innerHTML doesn't
 
 
 // load miso dataset and create table
@@ -50,11 +49,11 @@ gda = (function(){
 
 document.onkeydown = function(evt) {
     evt = evt || window.event;
-    if (evt.ctrlKey) {
-        if (evt.keyCode == 37)
+    if (evt.ctrlKey && evt.shiftKey && (evt.keyCode != 16 && evt.keyCode != 17)) {
+        if (evt.keyCode == 188)//37)
             gda.view.showPrev();
         else if (evt.keyCode == 38) {}
-        else if (evt.keyCode == 39)
+        else if (evt.keyCode == 190)//39)
             gda.view.showNext();
         else if (evt.keyCode == 40) {}
     }
@@ -63,7 +62,7 @@ document.onkeydown = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "090",
+    minor:   "091",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -74,10 +73,12 @@ var gda = {
     TyearIncMsecs    : 1000*60*60*24*365, // 1 year
 
 
+    _allowDSMS : true,
     _allowEdit : false, //true,  // for charts. need to set when slide is 'selected', from bAllowOverrides, etc.
     _anchorEdit : null,     // document element, where Slide Edit controls are placed
     _anchorNav : null,      // document element, where Slide Navigation controls are placed
     _anchorSlide : null,    // document element, where the Slide is placed
+
 
     _currentSlide : 0,           // active slide in set
     _slidefile : "",
@@ -125,6 +126,7 @@ var gda = {
     nPollTimerMS : 5000,
     sEditPresentTextControl1 : "CPollTimerMS",
     sEditPresentTextControl2 : "CSlideTitle",
+    sTextHTML : "textContent",//"innerHTML"; textContent works in FireFox, whilc innerHTML doesn't
 
     // registered simple or aggregated charts
     availCharts : ["Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "Bubble", "ScatterHist", "Choropleth", "Box", "Stats"], // "YHist" //  
@@ -138,6 +140,17 @@ gda.dateFormat = d3.time.format(gda.numFormats[1]);  // hmm not great
 gda.daysFormat = d3.format(gda.numFormats[2]); 
 gda.counterFormat = d3.format("08d");
 
+gda.newTableState = function() {
+    var _aTable= {};
+    _aTable.bUseTable = true;
+    _aTable.bShowTable = true;
+    _aTable.bShowLinksInTable = false;
+    _aTable.bShowPicturesInTable = false;
+    _aTable.bShowTableColumnSelectors = false;
+    _aTable.csetupSortTableCols = [];
+    _aTable.csetupHiddenTableCols = [];
+    return _aTable;
+}
 
     //gda.datasource(gda.newDataSourceState());
 
@@ -376,9 +389,7 @@ gda.allowEdit = function() {
 
 gda.newSlideState = function() {
     var _aSlide = {};
-    _aSlide.title = "Blank";
-
-    //_aSlide.dataSource = "none";
+    _aSlide.title = "Blank"+dc.utils.uniqueId();
 
     // data source as applied on this slide
     _aSlide.columns = [];   // columns available, from previously loaded data
@@ -395,17 +406,18 @@ gda.newSlideState = function() {
     // chart related
     _aSlide.charts = [];            // newChartState's.
 
+    _aSlide.tables = [];            // new Tables's.
     // table related, refactor into table
     _aSlide.bUseTable = false;          // whether table should be used/allowed on this slide
     _aSlide.bShowTable = false;          // whether table should be shown on this slide
+    _aSlide.bShowTableColumnSelectors = true; // whether table column hide selectors should be available to user
+    _aSlide.bShowLinksInTable = false;  // move to table definition when added
+    _aSlide.bShowPicturesInTable = false;
     _aSlide.bShowDataSource = false;    // maybe these should be implemented as Slide overrides. However no method implemented yet to remove an override
     _aSlide.bShowSlidesSource = false;  // offer interface to view other slide sets?
 
     _aSlide.bAllowOverrideChanges = false;
     _aSlide.bAccessOverrides = false;
-    _aSlide.bShowTableColumnSelectors = true; // whether table column hide selectors should be available to user
-    _aSlide.bShowLinksInTable = false;  // move to table definition when added
-    _aSlide.bShowPicturesInTable = false;
     return _aSlide;
 };
 
@@ -434,7 +446,7 @@ gda.chart = function( _chart ) {    // used to decorate a chart definition for o
         _aChart.Title = aChart.Title;
         // redraw anything?
         if (aChart.titleEl) {
-            aChart.titleEl[sTextHTML] = chtObj.Title;//"";	8/17/2014
+            aChart.titleEl[gda.sTextHTML] = chtObj.Title;//"";	8/17/2014
         }
     };
 
@@ -519,7 +531,7 @@ gda.slide = function( _slide ) {
     };
     _aSlide.clearDisplay = function() {
         console.log("clearDisplay:");
-        if (gda._anchorSlide) gda._anchorSlide[sTextHTML] = "";
+        if (gda._anchorSlide) gda._anchorSlide[gda.sTextHTML] = "";
         _.each(gda.sChartGroups, function(sChartGroup) {
             dc.deregisterAllCharts(sChartGroup);
         });
@@ -532,12 +544,20 @@ gda.slide = function( _slide ) {
         _aSlide.clearDisplay();
         gda._currentSlide = _aSlide.myId;
 
+        // temp workaround
+        if (!gda.utils.fieldExists(gda._slide().tables))
+            gda._slide().tables = [];
+        if (gda._slide().tables.length<1)
+            gda._slide().tables.push(gda.newTableState());
+
         // set gda's control state up with slide specifics
         var dS = gda.activedataSource();
-        gda.editCols.csetupHiddenTableCols = dS && gda._slide().myCols[dS] ? gda._slide().myCols[dS].csetupHiddenTableCols : [];
-        gda.editCols.csetupSortTableCols = dS && gda._slide().myCols[dS] ? gda._slide().myCols[dS].csetupSortTableCols : [];
+        //gda.editCols.csetupHiddenTableCols = dS && gda._slide().myCols[dS] ? gda._slide().myCols[dS].csetupHiddenTableCols : [];
+        //gda.editCols.csetupSortTableCols = dS && gda._slide().myCols[dS] ? gda._slide().myCols[dS].csetupSortTableCols : [];
+        gda.editCols.csetupHiddenTableCols = dS && gda._slide().tables[0] ? gda._slide().tables[0].csetupHiddenTableCols : [];
+        gda.editCols.csetupSortTableCols = dS && gda._slide().tables[0] ? gda._slide().tables[0].csetupSortTableCols : [];
         gda.editCols.csetupChartCols = [];
-        gda.bShowTable = gda._slide().bShowTable;
+        gda.bShowTable = gda._slide().tables[0].bShowTable; //gda._slide().bShowTable;
         gda.bShowDataSource  = gda._slide().bShowDataSource;
         gda.bShowSlidesSource = gda._slide().bShowSlidesSource;
 
@@ -582,7 +602,7 @@ gda.slide = function( _slide ) {
 
         var s1 = document.getElementById('setupDimsCols');
         if (s1) {
-            s1[sTextHTML] = "";
+            s1[gda.sTextHTML] = "";
             var dS = gda.activedataSource();
             var ds = gda.activeDatasource();
             var defV = false;
@@ -623,7 +643,7 @@ gda.slide = function( _slide ) {
             document.title = _aSlide.title;
 
             console.log("refreshControls:");
-            dHostEl[sTextHTML] = "";
+            dHostEl[gda.sTextHTML] = "";
             var dEl = gda.addElement(dHostEl,"h2");
                 var dTxtT = gda.addTextNode(dEl,_aSlide.title);
 
@@ -650,7 +670,7 @@ gda.slide = function( _slide ) {
                     var dTd = gda.addElement(dTr,"td");
                         var dElDT = gda.addElement(dTd,"div");
                         dElDT.setAttribute("class","row");
-                            gda.addElementWithId(dEl,"div","DataTable");
+                            gda.addElementWithId(dElDT,"div","DataTable");
 
             var dElBr = gda.addElement(dHostEl,"br");
             var dTxtT = gda.addTextNode(dHostEl,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
@@ -783,7 +803,7 @@ gda.addEditsToChart = function(_aChart) {
 	if (s3 && s3.parentNode && s3.parentNode.id) {
 		var s4 = document.getElementById(s3.parentNode.id+"controls");
 		if (s4) {
-			s4[sTextHTML] = "";
+			s4[gda.sTextHTML] = "";
 			gda.addButton(s4, "deleteChart", "X", function() {      // but not for selector PieCharts
 				gda.removeSelectedChart(_aChart.__dc_flag__)//chtId)
 			});
@@ -891,7 +911,7 @@ gda.removeSelectedChart = function(chtId) {
             });
         dc.deregisterChart(_aChart.chart, _aChart.sChartGroup);
 //      var s3 = document.getElementById(_aChart.dElid);
-//      s3[sTextHTML] = "";
+//      s3[gda.sTextHTML] = "";
         gda._slide().charts =   // remove chart definition
             _.filter(gda._slide().charts, function(chtObj) {
                 return chtObj.Title !== _aChart.Title;  // better name them !
@@ -915,7 +935,8 @@ gda.sortTabCheckboxChanged = function(t) {
     // if editing, update the slide defaults
     if (gda._anchorEdit) {// gda.editinprogress
         var dS = gda.activedataSource();
-        gda._slide().myCols[dS].csetupSortTableCols = gda.editCols.csetupSortTableCols;
+        //gda._slide().myCols[dS].csetupSortTableCols = gda.editCols.csetupSortTableCols;
+        gda._slide().tables[0].csetupSortTableCols = gda.editCols.csetupSortTableCols;
     }
   gda.regenerateTableAndDim(gda.bShowTable);
 }
@@ -935,7 +956,8 @@ gda.colTabCheckboxChanged = function(t) {
     // if editing, update the slide defaults
     if (gda._anchorEdit) {// gda.editinprogress
         var dS = gda.activedataSource();
-        gda._slide().myCols[dS].csetupHiddenTableCols = gda.editCols.csetupHiddenTableCols;
+        //gda._slide().myCols[dS].csetupHiddenTableCols = gda.editCols.csetupHiddenTableCols;
+        gda._slide().tables[0].csetupHiddenTableCols = gda.editCols.csetupHiddenTableCols;
     }
   gda.regenerateTable(gda.bShowTable);
 }
@@ -997,7 +1019,7 @@ gda.colCheckboxChanged = function(t) {
 gda.updateChartCols = function(defV) {
     var s1 = document.getElementById('setupChartCols');
     if (s1) {
-        s1[sTextHTML] = "";
+        s1[gda.sTextHTML] = "";
 
         var ds = gda.activeDatasource();
         if (ds)
@@ -1022,7 +1044,7 @@ gda.updateDimCharts = function() {
 
 gda.redrawDimCharts = function() {
     var s3 = document.getElementById('MySelectors');
-    s3[sTextHTML] = "";
+    s3[gda.sTextHTML] = "";
     gda.addSelectorCharts(s3);
 }
 
@@ -1068,19 +1090,19 @@ gda.showFilter = function(c,f) {
             // remove empty filters. empty arrays cause some issues when slide is set up
             if (gda._slide().filters[c.gdca_chart.Title])
                 delete gda._slide().filters[c.gdca_chart.Title];
-            c.gdca_chart.filterEl[sTextHTML] = "";
+            c.gdca_chart.filterEl[gda.sTextHTML] = "";
         }
         else {
         gda._slide().filters[c.gdca_chart.Title] = fv;
         if (c.gdca_chart.filterEl) {
-            c.gdca_chart.filterEl[sTextHTML] = "";
+            c.gdca_chart.filterEl[gda.sTextHTML] = "";
 			var txt = gda._slide().filters[c.gdca_chart.Title];
 			if (txt.length>0) {
 			txt = JSON.stringify(txt);
 			txt = txt.replace(/,/g,", ");
 			if (txt.length === 0) txt = "-";
             //var dTxtT = gda.addTextNode(c.gdca_chart.filterEl,txt);	8/17/2014
-            c.gdca_chart.filterEl[sTextHTML] = txt;
+            c.gdca_chart.filterEl[gda.sTextHTML] = txt;
 			}
         }
     }
@@ -1106,7 +1128,7 @@ gda.regenerateTableAndDim = function(bShowTable) {
 // need 'table removal', and do so before redisplay
 gda.regenerateTable = function(bShowTable) {
     var s8 = document.getElementById('DataTable');
-    s8[sTextHTML] = "";
+    s8[gda.sTextHTML] = "";
 
     // requires a dimension for now
     var dS = gda.activedataSource();// gda.sEdS;
@@ -1119,7 +1141,7 @@ gda.regenerateTable = function(bShowTable) {
     if (!gda.utils.fieldExists(gda.editCols.csetupHiddenTableCols))
         gda.editCols.csetupHiddenTableCols = [];
     var diff = _.difference(ds.columns,gda.editCols.csetupHiddenTableCols);
-    var iTable = gda.createTable(gda.cf[dS], gda.dateDimension, diff, dS, gda._slide().bShowLinksInTable, gda._slide().bShowPicturesInTable, JSON.parse(JSON.stringify(gda.editCols))  );// editCols changes, need to retain state
+    var iTable = gda.createTable(gda.cf[dS], gda.dateDimension, diff, dS, gda._slide().tables[0].bShowLinksInTable, gda._slide().tables[0].bShowPicturesInTable, JSON.parse(JSON.stringify(gda.editCols))  );// editCols changes, need to retain state
     gda.newTableDisplay(s8,iTable);
     var chtObj=gda.tables[iTable];
     if (!_.contains(gda.sChartGroups,chtObj.sChartGroup))
@@ -1130,7 +1152,7 @@ gda.regenerateTable = function(bShowTable) {
 gda.regenerateTotalReset = function() {
     var dEl = document.getElementById('TotalReset');
     if (dEl) {
-        dEl[sTextHTML] = "";
+        dEl[gda.sTextHTML] = "";
         _.each(gda.sChartGroups, function(sChartGroup,i) {
             //var sDcData = dEl.id+dc.utils.uniqueId();
                     var dEla = gda.addElement(dEl,"a");
@@ -1144,7 +1166,7 @@ gda.regenerateTotalReset = function() {
 gda.regenerateCharts = function() {
     var docEl = document.getElementById('MyCharts');
     console.log("refresh: clear,addDisplayCharts");
-    docEl[sTextHTML] = "";
+    docEl[gda.sTextHTML] = "";
     if (gda.allowEdit()) {
         var dS = gda.activedataSource();
         if (dS) // could make this: if editing, then, if dS, so when editing with no dS no charts are displayed
@@ -1193,9 +1215,9 @@ gda.dataComplete = function(dS) {
 // Time for table refactor, to support multiple tables (1 per DataSource for now,
 // and 1 per MetaSource later, and possibly in the future any number of tables
 // per source via dimension definition.
-// 1. create a table prototype
-// 2. restore conversion code to coerce present single table into one for the sChartGroup/dS.
-//     for now use a 'bUseTable' checkbox next to the Data Source radio button entry (edit only)
+//x1. create a table prototype
+//x2. restore conversion code to coerce present single table into one for the sChartGroup/dS.
+// 2a. for now use a 'bUseTable' checkbox next to the Data Source radio button entry (edit only)
 //     and put a 'bShowTable' somewhere.
 // 3. bShowTable per Table. And one for Slide (bShowTables)
 // 4. move edit and runtime checkboxes out of here?
@@ -1206,9 +1228,10 @@ gda.dataComplete = function(dS) {
 // 9. some of the testing below (gda.activeDataSource) is for edit mode only. fixed when 
 //     multiple table refactored
 gda.showTable = function() {
+  if (gda._allowEdit ) {
     var s3 = document.getElementById('slideUseTable');
     if (s3) {
-        s3[sTextHTML] = "";
+        s3[gda.sTextHTML] = "";
         gda.addCheckB(s3, "useTable", "Use Table", 'objmember',
                 gda._slide().bUseTable, 
                 function (t) {
@@ -1218,9 +1241,10 @@ gda.showTable = function() {
                     gda.view.redraw();
                 } );
     }
+   
     var s3 = document.getElementById('slideUseOverrides');
     if (s3) {
-        s3[sTextHTML] = "";
+        s3[gda.sTextHTML] = "";
             //var dEl = gda.addElement(s3,"br");
         gda.addTextEntry(s3, "PollTimerMS", "PollTimerMS", gda.nPollTimerMS,
                 function(newVal) {
@@ -1246,19 +1270,22 @@ gda.showTable = function() {
                     gda.view.redraw();
                 } );
     }
+  }
 
-    var s3 = document.getElementById('setupTable');
-    s3[sTextHTML] = "";
     var bLocalShowTable = false;
     var dS = gda.activedataSource();// gda.sEdS;
     var ds = gda.metaSources.map[dS];   // just kludged for now. Table needs improvement after meta & dataSources
     if(!ds) ds = gda.dataSources.map[dS];
     if (ds) {
-    if (gda._slide().bShowTable && ds.columns && ds.columns.length>0) {
+    //if (gda._slide().bShowTable && ds.columns && ds.columns.length>0) {
+    if (gda._slide().tables[0].bShowTable && ds.columns && ds.columns.length>0) {
+      if (gda._allowEdit ) {
+        var s3 = document.getElementById('setupTable');
+        s3[gda.sTextHTML] = "";
         gda.addCheckB(s3, "showHiders", "Show Table Option Configuration", 'objmember',
-                gda._slide().bShowTableColumnSelectors, 
+                gda._slide().tables[0].bShowTableColumnSelectors, 
                 function (t) {
-                    gda._slide().bShowTableColumnSelectors = t.checked;
+                    gda._slide().tables[0].bShowTableColumnSelectors = t.checked;
                     gda.showTable();
                     //gda.view.redraw();    // could add, to workaround slide.next.tablechecked.notabledisplayed bug
                                             // at expense of a full redraw.
@@ -1282,23 +1309,23 @@ gda.showTable = function() {
                     function (t) {
                         gda.bPollAggregate = t.checked;
                         } );
-        //if (gda._allowEdit && 
+        //if gda._allowEdit && 
         if (gda._anchorEdit) {  // only show this item if editing// gda.editinprogress
             var dEl = gda.addElement(s3,"br");
             gda.addCheckB(s3, "showLinks", "Display Http as Links", 'objmember',
-                    gda._slide().bShowLinksInTable, 
+                    gda._slide().tables[0].bShowLinksInTable, 
                     function (t) {
-                        gda._slide().bShowLinksInTable = t.checked;
+                        gda._slide().tables[0].bShowLinksInTable = t.checked;
                         gda.showTable();
                         } );
             gda.addCheckB(s3, "showPictures", "Display Pictures", 'objmember',
-                    gda._slide().bShowPicturesInTable, 
+                    gda._slide().tables[0].bShowPicturesInTable, 
                     function (t) {
-                        gda._slide().bShowPicturesInTable = t.checked;
+                        gda._slide().tables[0].bShowPicturesInTable = t.checked;
                         gda.showTable();
                         } );
         }
-        if (gda._slide().bShowTableColumnSelectors ) {
+        if (gda._slide().tables[0].bShowTableColumnSelectors ) {
             // sorting key(s)
             var dEl = gda.addElement(s3,"br");
             var dEl = gda.addElement(s3,"strong");
@@ -1317,24 +1344,34 @@ gda.showTable = function() {
                 if (ds)
                 gda.showColumnChoices(ds.columns,dElt,'csetupHiddenTableCols', gda.editCols.csetupHiddenTableCols, gda.colTabCheckboxChanged );
         }
+      }
         bLocalShowTable = true;
     }
+  }
     if (!gda.dateDimension)
     gda.regenerateTableAndDim(bLocalShowTable);
     else
     gda.regenerateTable(bLocalShowTable);
-    }
 };
 
 // temporary, don't expose eventually
 gda.showColumnChoices = function(lgdaCols,dEl,colArrayName,defV, changedCallback) {
-    _.each(lgdaCols, function(cname) {
     if (jQuery.isArray(defV)) {
-        gda.addCheckB(dEl, cname, cname, colArrayName, _.contains(defV, cname), changedCallback);
-    } else {
-        gda.addCheckB(dEl, cname, cname, colArrayName, defV, changedCallback);
+        _.each(defV, function(cname) {
+        gda.addCheckB(dEl, cname, cname, colArrayName, true, changedCallback);
+        });
+        _.each(_.difference(lgdaCols,defV), function(cname) {
+        gda.addCheckB(dEl, cname, cname, colArrayName, false, changedCallback);
+        });
     }
-    });
+    else
+        _.each(lgdaCols, function(cname) {
+        //if (jQuery.isArray(defV)) {
+        //    gda.addCheckB(dEl, cname, cname, colArrayName, _.contains(defV, cname), changedCallback);
+        //} else {
+            gda.addCheckB(dEl, cname, cname, colArrayName, defV, changedCallback);
+        //}
+        });
 };
 
 gda.slideRegistry = function() {
@@ -1404,7 +1441,7 @@ gda.slideRegistry = function() {
 gda.Controls = function() {
     return {
         addEditGUI: function() {
-          {//if (gda._allowEdit) {
+          if (gda._allowEdit) {
             var dHostEl = gda._anchorEdit;
 
             var dEl = gda.addElement(dHostEl,"br");
@@ -1567,6 +1604,7 @@ gda.slides = function() {
         // 
         ///////////////////////////////////////////////////////////////////
         createContentDataSource: function(dHostEl) {
+          if (gda._allowEdit && gda._allowDSMS && _.size(gda.dataSources.map)>0) {
             var dS = gda.sEdS;
             var ds = gda.dataSources.map[dS];
             if (!ds) ds = gda.newDataSourceState();
@@ -1656,9 +1694,10 @@ gda.slides = function() {
                         gda.addUploader(dTd, "uploader");
                         var dEl = gda.addElementWithId(dTd,"span","dataFilenameDisplay");
                 }
+              }
             },
         createContentMetaSource: function(dHostEl) {
-            if (_.size(gda.dataSources.map)>0) {
+          if (gda._allowEdit && gda._allowDSMS && _.size(gda.dataSources.map)>0) {
             var mS = gda.sEmS;  // need to decide if this will refer to MetaS or DataS, think MetaS
             //if (!mS) mS = "none";
             var ms = gda.metaSources.map[mS];
@@ -1823,7 +1862,7 @@ gda.slides = function() {
                 }
               }
             }
-            }
+          }
     };
     gda.slides.clear(); // initialize upon first use
     console.log("gda.slides: ready ===============================2");
@@ -1844,6 +1883,9 @@ gda.slides = function() {
 gda.clearAllSlides = function() {
     gda.clearWorkingState();
     gda.slides.clear();
+    _.each(gda.dataSources.map, function(dScf,dS) {  // was gda.cf
+    });
+    gda.dataSources.map = {};
 };
 
 
@@ -1924,19 +1966,26 @@ gda.view = function() {
         if (gda._anchorEdit) {
             var docEl = document.getElementById('specialEditHeader');
             if (docEl) {
-                docEl[sTextHTML] = "";
+                docEl[gda.sTextHTML] = "";
             gda.addCheckB(docEl, "Preview", "Preview Full Slide", 'objmember',
                     !gda._allowEdit,
                     function (t) {
                         gda._allowEdit = !t.checked;
                         // need method to refresh the Nav controls when un/checked
                         gda.view.redraw();
-                    } );
+                } );
+            gda.addCheckB(docEl, "HideDS", "Hide Data/Meta Source", 'objmember',
+                    !gda._allowDSMS,
+                    function (t) {
+                        gda._allowDSMS = !t.checked;
+                        // need method to refresh subset of the (Nav,etc) controls when un/checked
+                        gda.view.redraw();
+                } );
             }
         }
             var docEl = document.getElementById('slideSet');
             if (docEl) {
-                docEl[sTextHTML] = "";
+                docEl[gda.sTextHTML] = "";
                 if (gda._anchorEdit || gda.bShowSlidesSource) {
                     var dTb = gda.addElement(docEl,"table");
                         var dTr = gda.addElement(dTb,"tr");
@@ -2000,17 +2049,18 @@ gda.view = function() {
             var dS = gda.sEdS;
             var ds = gda.dataSources.map[dS];
             if (!ds) ds = gda.newDataSourceState();
-
+        if (gda._allowEdit ) {
             var dElTE = document.getElementById("slideTitleEntry");
             if (dElTE) {    // prob belongs elsewhere
-            dElTE[sTextHTML] = "";
+            dElTE[gda.sTextHTML] = "";
             gda.addTextEntry(dElTE, "SlideTitle", "Slide Title", gda._slide().title,
                     function(newVal) {  // adopt same form as below  .title as a function
                     gda.slides.titleCurrent(newVal); // was _name =
                     });
 
             var dElDPE = document.getElementById("dataProviderEntry");
-            dElDPE[sTextHTML] = "";
+            if (dElDPE) {
+            dElDPE[gda.sTextHTML] = "";
             gda.addTextEntry(dElDPE, "FolderEntry", (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) ? "Folder" : "Provider", ds.dataprovider,
                     function(newVal) {
                         var dS = gda.sEdS;
@@ -2024,15 +2074,17 @@ gda.view = function() {
             }
             var dElFDE = document.getElementById("dataFilenameDisplay");
             if (dElFDE) {
-            dElFDE[sTextHTML] = "";
+            dElFDE[gda.sTextHTML] = "";
             var dTxtT = gda.addTextNode(dElFDE,ds.datafile);
             if (ds.dataLastModifiedDate)
                 var dTxtT = gda.addTextNode(dElFDE," ("+ds.dataLastModifiedDate+")");
             }
+            }
+        }
 
             var dElFDE = document.getElementById("slideFilenameDisplay");
             if (dElFDE) {
-            dElFDE[sTextHTML] = "";
+            dElFDE[gda.sTextHTML] = "";
             var dTxtT = gda.addTextNode(dElFDE,gda._slidefile);
             if (gda._slideLastModifiedDate)
                 var dTxtT = gda.addTextNode(dElFDE," ("+gda._slideLastModifiedDate+")");
@@ -2045,7 +2097,7 @@ gda.view = function() {
         redraw: function() {
             console.log("view.redraw");
             if (gda._anchorEdit) {
-                gda._anchorEdit[sTextHTML] = "";  // call operators
+                gda._anchorEdit[gda.sTextHTML] = "";  // call operators
                 gda.Controls.addEditGUI();
           {//if (gda._allowEdit) {
                 gda.slides.createContentDataSource(gda._anchorEdit);
@@ -2053,11 +2105,11 @@ gda.view = function() {
           }
             }
             if (gda._anchorNav) {
-                gda._anchorNav[sTextHTML] = "";
+                gda._anchorNav[gda.sTextHTML] = "";
                 gda.Controls.addNavGUI();
             }
             if (gda._anchorSlide) {
-                //gda._anchorSlide[sTextHTML] = "";
+                //gda._anchorSlide[gda.sTextHTML] = "";
                 gda._slide().clearDisplay();    // clear displayed contents
                 gda._slide().refreshControls(); // some standard HTML controls need forced refresh
                 //gda.slides.show();  // moved from first in block
@@ -2070,6 +2122,7 @@ gda.view = function() {
             var docElTc = jQuery("#cslideSetcshowSlide"+gda._currentSlide);
             //$('button').
             //if (docElTc.length>0)
+           if (docElTc && docElTc.effect)
            docElTc.effect( "highlight", {color: 'lightblue'}, 2000 );
             
         },
@@ -2096,6 +2149,8 @@ gda.clearWorkingState = function() {
     gda.selectors = [];        // definition of the selector
     gda.charts = [];                // definition of a chart
     gda.tables = [];                // definition of a tables
+    //gda.sEdS = null;
+    //gda.sEmS = null;
 
     if (gda.dateDimension)
         gda.dateDimension.dispose();
@@ -2134,7 +2189,7 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
     var sChtGroup = docEl.id;//"avail";   // for available charts, use the document id as the group
 
     // clear out earlier incarnations
-    docEl[sTextHTML] = "";
+    docEl[gda.sTextHTML] = "";
     dc.deregisterAllCharts(sChtGroup);
     gda.charts =
     _.filter(gda.charts, function(chtObj) {
@@ -2966,7 +3021,7 @@ gda.newBubbleDisplay = function(iChart, dEl) {
     var chtObj=gda.charts[iChart];
     var dDims = chtObj.dDims;
 
-    if (dDims.length>2) {	// need cnamearray test > 2
+    if (dDims.length>0) {	// need cnamearray test > 2
     var cnameArray = chtObj.cnameArray;
     var cname = "";
     _.each(cnameArray, function(sCname,i) {
@@ -4681,7 +4736,12 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                     //restoredSlide.dataSource = dsNameUnique;
 
             }
+
             if (gda.utils.fieldExists(restoredSlide.dataSource)) {
+                // workaround for a few slides/ets.
+                gda.utils.moveField("columns",      restoredSlide, gda.dataSources.map[restoredSlide.dataSource] );
+
+
                 console.log("fix: slide has dataSource " + restoredSlide.dataSource);
                 tempConversionDSname = restoredSlide.dataSource;
                 delete restoredSlide.dataSource;
@@ -4701,6 +4761,22 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                 if (aChart.sChartGroup === "one")
                     aChart.sChartGroup = tempConversionDSname;// restoredSlide.dataSource;
             });
+            if (gda.utils.fieldExists(restoredSlide.bUseTable)) {
+                var tNew = gda.newTableState();
+                gda.utils.moveField("bUseTable", restoredSlide, tNew);
+                gda.utils.moveField("bShowTable", restoredSlide, tNew);
+                gda.utils.moveField("bShowLinksInTable", restoredSlide, tNew);
+                gda.utils.moveField("bShowPicturesInTable", restoredSlide, tNew);
+                gda.utils.moveField("bShowTableColumnSelectors", restoredSlide, tNew);
+                gda.utils.moveField("csetupSortTableCols", restoredSlide.myCols[tempConversionDSname], tNew);
+                gda.utils.moveField("csetupHiddenTableCols", restoredSlide.myCols[tempConversionDSname], tNew);
+                tNew.dataSource = tempConversionDSname;
+                gda.sEdS = tNew.dataSource; // temp workaround
+                if (!_.contains(gda.sChartGroups,tNew.dataSource)) {
+                    gda.sChartGroups.push(tNew.dataSource);
+                }
+                restoredSlide.tables.push(tNew);
+            }
 
             // non-conversion work!
             if (!bDashOnly || (gda.utils.fieldExists(restoredSlide.bDashInclude) && restoredSlide.bDashInclude)) {
