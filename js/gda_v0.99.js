@@ -62,7 +62,7 @@ document.onkeydown = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "091",
+    minor:   "092",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -548,7 +548,7 @@ gda.slide = function( _slide ) {
         if (!gda.utils.fieldExists(gda._slide().tables))
             gda._slide().tables = [];
         if (gda._slide().tables.length<1)
-            gda._slide().tables.push(gda.newTableState());
+            gda._slide().tables.push(gda.newTableState());  // might not want to do this
 
         // set gda's control state up with slide specifics
         var dS = gda.activedataSource();
@@ -566,6 +566,8 @@ gda.slide = function( _slide ) {
             if (!_.contains(gda.sChartGroups,chtObj.sChartGroup))
                 gda.sChartGroups.push(chtObj.sChartGroup);
         });
+
+        gda.fileLoadImmediate ();
 
         gda.displayCharts();
         _aSlide.refreshControls();  // all
@@ -1228,24 +1230,27 @@ gda.dataComplete = function(dS) {
 // 9. some of the testing below (gda.activeDataSource) is for edit mode only. fixed when 
 //     multiple table refactored
 gda.showTable = function() {
-  if (gda._allowEdit ) {
-    var s3 = document.getElementById('slideUseTable');
-    if (s3) {
-        s3[gda.sTextHTML] = "";
-        gda.addCheckB(s3, "useTable", "Use Table", 'objmember',
-                gda._slide().bUseTable, 
-                function (t) {
-                    gda._slide().bUseTable = t.checked;
-                    // need method to refresh the Nav controls when un/checked
-                    gda.showTable();
-                    gda.view.redraw();
-                } );
-    }
    
     var s3 = document.getElementById('slideUseOverrides');
     if (s3) {
         s3[gda.sTextHTML] = "";
-            //var dEl = gda.addElement(s3,"br");
+            gda.addCheckB(s3, "PollTimer", "Poll DataSource", 'objmember',
+                    gda.bPollTimer, 
+                    function (t) {
+                        console.log("PT: " + t.checked);
+                        gda.bPollTimer = t.checked;
+                        if (gda.bPollTimer) {
+                            //gda.manageInputSource.pollTimerStart();
+                            gda.manageInputSource.pollTimerTick();  // calling this kicks one now and schedules the next
+                        }
+                        } );
+            var dEl = gda.addElement(s3,"br");
+            gda.addCheckB(s3, "PollAggregate", "Aggregate DataSource", 'objmember',
+                    gda.bPollAggregate, 
+                    function (t) {
+                        gda.bPollAggregate = t.checked;
+                        } );
+            var dEl = gda.addElement(s3,"br");
         gda.addTextEntry(s3, "PollTimerMS", "PollTimerMS", gda.nPollTimerMS,
                 function(newVal) {
                 gda.nPollTimerMS = newVal;
@@ -1267,6 +1272,19 @@ gda.showTable = function() {
                 gda._slide().bAllowOverrideChanges, 
                 function (t) {
                     gda._slide().bAllowOverrideChanges = t.checked;
+                    gda.view.redraw();
+                } );
+    }
+  if (gda._allowEdit ) {
+    var s3 = document.getElementById('slideUseTable');
+    if (s3) {
+        s3[gda.sTextHTML] = "";
+        gda.addCheckB(s3, "useTable", "Use Table", 'objmember',
+                gda._slide().bUseTable, 
+                function (t) {
+                    gda._slide().bUseTable = t.checked;
+                    // need method to refresh the Nav controls when un/checked
+                    gda.showTable();
                     gda.view.redraw();
                 } );
     }
@@ -1292,23 +1310,7 @@ gda.showTable = function() {
                                             // need to fix checkbox management instead
                                             // so for now, uncheck recheck to display (user).
                     } );
-            var dEl = gda.addElement(s3,"br");
-            gda.addCheckB(s3, "PollTimer", "Poll DataSource", 'objmember',
-                    gda.bPollTimer, 
-                    function (t) {
-                        console.log("PT: " + t.checked);
-                        gda.bPollTimer = t.checked;
-                        if (gda.bPollTimer) {
-                            //gda.manageInputSource.pollTimerStart();
-                            gda.manageInputSource.pollTimerTick();  // calling this kicks one now and schedules the next
-                        }
-                        } );
-            var dEl = gda.addElement(s3,"br");
-            gda.addCheckB(s3, "PollAggregate", "Aggregate DataSource", 'objmember',
-                    gda.bPollAggregate, 
-                    function (t) {
-                        gda.bPollAggregate = t.checked;
-                        } );
+      }
         //if gda._allowEdit && 
         if (gda._anchorEdit) {  // only show this item if editing// gda.editinprogress
             var dEl = gda.addElement(s3,"br");
@@ -1344,7 +1346,7 @@ gda.showTable = function() {
                 if (ds)
                 gda.showColumnChoices(ds.columns,dElt,'csetupHiddenTableCols', gda.editCols.csetupHiddenTableCols, gda.colTabCheckboxChanged );
         }
-      }
+     // }
         bLocalShowTable = true;
     }
   }
@@ -4723,7 +4725,7 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                 gda.utils.moveField("keymap",       restoredSlide,dsNew);
                 gda.utils.moveField("columns",      restoredSlide,dsNew);
 
-                var dsName = "blank";
+                var dsName = "ds"+dc.utils.uniqueId();
                 if (dsNew.datafile.length>0) {
                     var i = dsNew.datafile.indexOf(".");
                     if (i>0) dsName = dsNew.datafile.substring(0,i);
@@ -4740,7 +4742,6 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
             if (gda.utils.fieldExists(restoredSlide.dataSource)) {
                 // workaround for a few slides/ets.
                 gda.utils.moveField("columns",      restoredSlide, gda.dataSources.map[restoredSlide.dataSource] );
-
 
                 console.log("fix: slide has dataSource " + restoredSlide.dataSource);
                 tempConversionDSname = restoredSlide.dataSource;
@@ -4792,14 +4793,17 @@ gda.restoreStateFromObject = function(o, bDashOnly) {
                     _.each(restoredSlide.myCols, function(dsO,dS) {
                         if (gda.utils.fieldExists(dsO.csetupDimsCols) &&
                             dsO.csetupDimsCols.length>0)
-                            if (!_.contains(gda.sChartGroups,dS))
-                                gda.sChartGroups.push(dS);
+                            if (!_.contains(gda.sChartGroups,dsO))
+                                gda.sChartGroups.push(dsO);
                     });
                     _.each(restoredSlide.tables, function(aTable) {
-                        var dS = aTable.sChartGroup;
+                        var dS = aTable.dataSource;
                         if (!_.contains(gda.sChartGroups,dS))
                             gda.sChartGroups.push(dS);
                     });
+                    // presently if there is a source in a 2nd+ slide not in slide 1, it
+                    // doesn't get loaded yet. Could fix that here, or could load on demand
+                    // later, if called upon.
                     if (gda.sChartGroups.length>0)
                         gda.fileLoadImmediate();    // drive load ostensible for first slide that will be viewed
                 }
