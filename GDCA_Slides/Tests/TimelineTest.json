@@ -1,0 +1,86 @@
+{
+    "version": "0.099",
+    "minor": "093",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "carsReorderedCols": {
+            "dataprovider": "/CSV_Samples/",
+            "datafile": "carsReorderedCols.csv",
+            "bLocalFile": true,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "_idCounter": 55,
+            "keymap": {},
+            "columns": [
+                "economy_mpg",
+                "cylinders",
+                "displacement_cc",
+                "power_hp",
+                "weight_lb",
+                "zeroTo60mph_s",
+                "year",
+                "name",
+                "_counter",
+                "_qty",
+                "dd",
+                "Year",
+                "Quarter",
+                "QoY",
+                "Month",
+                "Week",
+                "Day",
+                "DoW",
+                "cumFileUnits"
+            ],
+            "dataLastModifiedDate": "2014-10-27T16:09:13.000Z"
+        }
+    },
+    "metaSources": {},
+    "slides": [
+        {
+            "title": "Timeline Test",
+            "columns": [],
+            "filters": {},
+            "myCols": {},
+            "charts": [
+                {
+                    "Title": "Production Years",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Year",
+                            "displacement_cc"
+                        ]
+                    },
+                    "type": "Timeline",
+                    "sChartGroup": "carsReorderedCols",
+                    "overrides": {
+                        "reduce": false,
+                        "timefield": "Month",
+                        "axisresolution": "years",
+                        "hChart": "250",
+                        "wChart": "800"
+                    }
+                }
+            ],
+            "tables": [
+                {
+                    "sChartGroup": "carsReorderedCols",
+                    "bUseTable": true,
+                    "bShowTable": true,
+                    "bShowLinksInTable": false,
+                    "bShowPicturesInTable": false,
+                    "bShowTableColumnSelectors": false,
+                    "csetupSortTableCols": ["_counter"],
+                    "csetupHiddenTableCols": []
+                }
+            ],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": false,
+            "myId": 0
+        }
+    ]
+}
+
