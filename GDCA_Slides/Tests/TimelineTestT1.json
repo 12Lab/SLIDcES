@@ -10,7 +10,7 @@
             "bLocalFile": true,
             "bListOfMany": false,
             "bAggregate": false,
-            "_idCounter": 55,
+            "_idCounter": 110,
             "keymap": {},
             "columns": [
                 "economy_mpg",
@@ -40,8 +40,18 @@
         {
             "title": "Timeline Test",
             "columns": [],
-            "filters": {},
-            "myCols": {},
+            "filters": {
+                "Production Years": [
+                    [
+                        "0075-08-01T05:00:00.000Z",
+                        "0078-08-01T05:00:00.000Z",
+                        false
+                    ]
+                ]
+            },
+            "myCols": {
+                "null": {}
+            },
             "charts": [
                 {
                     "Title": "Production Years",
@@ -69,7 +79,7 @@
                     "bShowTable": true,
                     "bShowLinksInTable": false,
                     "bShowPicturesInTable": false,
-                    "bShowTableColumnSelectors": false,
+                    "bShowTableColumnSelectors": true,
                     "csetupSortTableCols": [
                         "_counter"
                     ],

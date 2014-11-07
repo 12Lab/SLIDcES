@@ -69,7 +69,7 @@
                     "bShowTable": true,
                     "bShowLinksInTable": false,
                     "bShowPicturesInTable": false,
-                    "bShowTableColumnSelectors": false,
+                    "bShowTableColumnSelectors": true,
                     "csetupSortTableCols": [
                         "_counter"
                     ],
