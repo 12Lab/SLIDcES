@@ -1,24 +1,27 @@
-Category,Type,Link
-Tests,Timeline,/GDCA_Html/TestTimeline.html
-Tests,Line,/GDCA_Html/TestLine.html
-Tests,Hist,/GDCA_Html/TestHist.html
-Tests,Pareto,/GDCA_Html/TestPareto.html
-Tests,ScatterHist,/GDCA_Html/TestScatterHist.html
-Tests,Bar,/GDCA_Html/TestBar.html
-Tests,AllTests,/GDCA_Html/TestAll.html
-Tests,Scatter,/GDCA_Html/TestScatter.html
-Tests,Stats,/GDCA_Html/TestStats.html
-Tests,BoxPlot,/GDCA_Html/TestBox.html
-Tests,Choropleth,/GDCA_Html/TestChoropleth.html
-Tests,Bubble,/GDCA_Html/TestBubble.html
-Tests,Join,/GDCA_Html/TestSplit.html
-Samples,Auto Leases,/GDCA_Html/Leases2014Jul.html
-Samples,Auto Leases,/GDCA_Html/Leases2014Aug.html
-Samples,Auto Leases,/GDCA_Html/AllLeases.html
-Samples,Almond+ Sensors,/GDCA_Html/AlmondPlus.html
-Samples,US Venture Capital Landscape 2011,/GDCA_Html/USVentureCapital.html
-Samples,Wine and Cheese,/GDCA_Html/WineAndCheese.html
-Editor,Prototype,Edit.html
-Project,Notes,/GDCA_Html/VisAnalTable.html
-AllInclusive,All,/GDCA_Html/AllEverything.html
-Samples,"Auto, Electric",/GDCA_Html/PIEV.html
+Category,Type,Comment,Link
+Tests,Timeline,,/GDCA_Html/TestTimeline.html
+Tests,Line,,/GDCA_Html/TestLine.html
+Tests,Hist,,/GDCA_Html/TestHist.html
+Tests,Pareto,,/GDCA_Html/TestPareto.html
+Tests,ScatterHist,,/GDCA_Html/TestScatterHist.html
+Tests,Bar,,/GDCA_Html/TestBar.html
+Tests,AllTests,,/GDCA_Html/TestAll.html
+Tests,Scatter,,/GDCA_Html/TestScatter.html
+Tests,Stats,,/GDCA_Html/TestStats.html
+Tests,BoxPlot,,/GDCA_Html/TestBox.html
+Tests,Choropleth,,/GDCA_Html/TestChoropleth.html
+Tests,Bubble,,/GDCA_Html/TestBubble.html
+Tests,Join,,/GDCA_Html/TestSplit.html
+Tests,"Single chart, no Nav",Bootstrap,/GDCA_Html/SimpleChartLayout.html
+Tests,"Single chart, no Nav",FreeFlow,/GDCA_Html/SimpleChart.html
+Samples,Auto Leases,,/GDCA_Html/Leases2014Jul.html
+Samples,Auto Leases,,/GDCA_Html/Leases2014Aug.html
+Samples,Auto Leases,,/GDCA_Html/AllLeases.html
+Samples,Almond+ Sensors,,/GDCA_Html/AlmondPlus.html
+Samples,US Venture Capital Landscape 2011,,/GDCA_Html/USVentureCapital.html
+Samples,Wine and Cheese,,/GDCA_Html/WineAndCheese.html
+Editor,Prototype,,Edit_origFreeFlow.html
+Editor,Prototype,Bootstrap,Edit_wLayoutB.html
+Project,Notes,,/GDCA_Html/VisAnalTable.html
+AllInclusive,All,,/GDCA_Html/AllEverything.html
+Samples,"Auto, Electric",,/GDCA_Html/PIEV.html
