@@ -79,7 +79,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "097d",
+    minor:   "098",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -148,7 +148,7 @@ var gda = {
                             // These may need to be de-singleton'd
     bPollTimer : false,     // should move to slide, or dataSource (if decoupled)
     bPollAggregate : false, // should move to slide, or dataSource (if decoupled)
-    bPolledAndViewDrawn : false,
+    bPolledAndViewDrawn : {},
     nPollTimerMS : 5000,
 
     SFwait: 0,
@@ -333,7 +333,7 @@ gda.dataSources.restoreOne = function(dS, dsRecord) {
     }
     else {
         gda.dataSources.map[dS] = JSON.parse(JSON.stringify( dsRecord )); // cleanup/copy
-
+        // although the crossfilter could be set up here, it presently isn't until the data is loaded.
         return dS;
     }
 }
@@ -351,28 +351,42 @@ gda.metaSources.restoreOne = function(dS, dsRecord) {
         if (gda.utils.fieldExists(dsRecord.type) && 
             (dsRecord.type === "join" ||
              dsRecord.type === "cf" ) ) {
-            // perform a join using the keys+, on includes dataSources+
-            // prior to handing off to crossfilter
-            var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
-            _.each(dsRecord.dataSources, function(ds) {
-                // need helper function
-                var dsR = gda.dataSources.map[ds]; // only allows 1 deep
-                var fn = dsR.dataprovider+dsR.datafile;
-                qF.defer(d3.csv, fn); // temp, just call csv directly. need generic handler for a file, passing in a callback
-            });
-            qF.awaitAll(function(error, results) {
-                            console.log("prepareJoin e(" +
-                                   (error ?
-                                        (error.message ? 
-                                            error.message
-                                            :error.statusText)
-                                        :"no error")+")");
-                            if (error || !results || results.length<1)  {
-                                console.log("prepareJoin: needs more than 1!");
-                            }
-                            else
-                                gda.metaSources.readyJoin(dS, dsRecord.type, dsRecord.keys, results);
-            });
+                switch(dsRecord.type) {
+                    case "join":
+                        // perform a join using the keys+, on includes dataSources+
+                        // prior to handing off to crossfilter
+                        var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
+                        _.each(dsRecord.dataSources, function(ds) {
+                            // need helper function
+                            var dsR = gda.dataSources.map[ds]; // only allows 1 deep
+                            var fn = dsR.dataprovider+dsR.datafile;
+            // needs update. files should be loaded now, this should just setup the join
+                            qF.defer(d3.csv, fn); // temp, just call csv directly. need generic handler for a file, passing in a callback
+                        });
+                        qF.awaitAll(function(error, results) {
+                                        console.log("prepareJoin e(" +
+                                               (error ?
+                                                    (error.message ? 
+                                                        error.message
+                                                        :error.statusText)
+                                                    :"no error")+")");
+                                        if (error || !results || results.length<1)  {
+                                            console.log("prepareJoin: needs more than 1!");
+                                        }
+                                        else
+                                            gda.metaSources.readyJoin(dS, dsRecord.type, dsRecord.keys, results);
+                        });
+                        break;
+                    case "cf":
+                        // add a dimension to the cf for subsequent use, for now hardwire to support 1
+                        // the cf comes from the dataSource's cf
+                        //var cf = gda.cf[dsRecord.dataSources[0]];
+                        //var dD = gda.dimensionByCol(dS, dsRecord.columns[0],cf,true);
+                        //cf[dsRecord.columns[0]] = dD;
+                        // the cf for the dataSource isn't set up yet, and even if so the dimension cannot be created (I think) until the
+                        // data has been loaded. so defer the setup to the referencing chart.
+                        break;
+                }
         }
         return dS;
     }
@@ -1290,6 +1304,20 @@ gda.regenerateCharts = function() {
 }
 
 gda.dataComplete = function(dS) {
+    if (!gda.bPolledAndViewDrawn)
+        gda.bPolledAndViewDrawn = {};
+    // if there are any meta sources, and this is the first trip through, (meaning, first Poll or not Polling)
+    // defer the 'view updating' until after those are processed.
+    if (gda.metaSources && _.size(gda.metaSources.map)>0 &&
+        gda.bPolledAndViewDrawn[dS] === undefined) {    // note this affects all dS and all slide sChartGroups
+        // defer. would be nice if a gda.view.show could be registered now, but awaitAll on the qR is already active.
+        // for now require a 'view' in the slide file
+    }
+    else {
+        gda.dataCompleteAction(dS);
+    }
+}
+gda.dataCompleteAction = function(dS) {
     var ds = gda.metaSources.map[dS];
     if(!ds) ds = gda.dataSources.map[dS];
     if (ds) {
@@ -1299,8 +1327,6 @@ gda.dataComplete = function(dS) {
     {
         //if (!gda.bPolledAndViewDrawn) {
         gda.view.show(dS);
-        if (!gda.bPolledAndViewDrawn)
-            gda.bPolledAndViewDrawn = {};
         gda.bPolledAndViewDrawn[dS] = true; // should this be by dS
         //}
     }
@@ -1640,6 +1666,9 @@ gda.Controls = function() {
                             gda.view.redraw();
                         });
                 }
+// temp!
+// xxx yyy zzz
+            gda.addButton(dHostEl,"refresh", "Refresh Slide", gda.view.redraw);
             }
 
             // Control location where table controls will be added
@@ -2348,7 +2377,7 @@ gda.clearWorkingState = function() {
     gda.bSparseColumns = false; // workaround, until DataSource
     gda.bPollTimer = false;
     gda.bPollAggregate = false;
-    gda.bPolledAndViewDrawn = false;
+    gda.bPolledAndViewDrawn = {};   // none
     gda.nPollTimerMS = 5000;
 };
 
@@ -2837,6 +2866,7 @@ gda.newTimelineChart = function(iChart, cf) {
         gda.addOverride(chtObj,"reduce",false);
         gda.addOverride(chtObj,"timefield","Month");
         gda.addOverride(chtObj,"axisresolution","months");
+        gda.addOverride(chtObj,"normalize",false);
 
             xDimension = gda.dimensionByCol(
                                 chtObj.sChartGroup,
@@ -2872,6 +2902,15 @@ gda.newTimelineChart = function(iChart, cf) {
         }
         chtObj.dDims.push(xDimension);
         chtObj.dGrps.push(dXGrp); 
+
+        // 'hardwired' here for now, refactor later
+        if (chtObj.overrides["normalize"]) {
+            var mS = chtObj.overrides["normalize"];  // grab the metaSource
+            var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
+            var cf = gda.cf[ms.dataSources[0]];
+            var dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[0],cf);
+            cf[ms.columns[0]] = dD;  // could 'name' the dimension in an object instead of numbering in an array, then add this in.
+        }
     }
 }
 
@@ -3482,9 +3521,6 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         .xUnits(xu)
         .elasticX(true)
         .elasticY(true)
-        //.valueAccessor(function(d){           // try here with accessor for var t = gda.cf["BuildPlanComplete"].dDim.filterExact(d.Quarter); return gda.cf["BuildPlanComplete"].dGrp.value();
-                        //return d.value;
-                    //})
         //.keyAccessor(function(d) {
         //    var m = d.key;
         //    m.setMilliseconds(0);
@@ -3497,6 +3533,22 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         //    return m;  // build from chosen override, hardwired for test
         //})
         ;
+        if (chtObj.overrides["normalize"]) {
+                var mS = chtObj.overrides["normalize"];  // grab the metaSource
+                var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
+                var cf = gda.cf[ms.dataSources[0]];
+                var dD = cf[ms.columns[0]];
+            ftX
+                .valueAccessor(function(d){           // try here with accessor for var t = gda.cf["BuildPlanComplete"].dDim.filterExact(d.Quarter); return gda.cf["BuildPlanComplete"].dGrp.value();
+                        console.log("n: ", JSON.stringify(d), dD, cf);
+                        dD.filterExact(d.key);      // for this reason, it shouldn't be shared.
+                        var t = dD.top(Infinity).length;
+                        dD.filterAll();
+                        console.log("t: ",t);
+                        return d.value/t; // first just a value
+// yyyyy
+                })
+        }
     //if (dDims[0].isDate)
     {
      //   var dR = (xmax-xmin)/1000/60/60/24;
@@ -4958,7 +5010,9 @@ gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
     switch (key.toLowerCase()) {
         case "view":
                 // defer
+                console.log(">>> defer    view action");
                 qR.defer( function(callback) {
+                    console.log(">>> deferred view action");
                     gda.view.show();
                     callback(null, {});
                 });
@@ -4978,7 +5032,9 @@ gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
         case "dataSources".toLowerCase():
                 console.log("key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
                 // defer
+                console.log(">>  defer    dataSource action");
                 qR.defer( function(callback) {
+                    console.log(">>  deferred dataSource action");
                     gda.dataSources.restore(opt);
                     _.each(gda.dataSources.map, function(ds) {
                         // workaround, some existing slides may have ds's bLoaded set
@@ -4990,7 +5046,9 @@ gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
         case "metaSources".toLowerCase():
                 console.log("key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
                 // defer
+                console.log(">   defer    metaSource action");
                 qR.defer( function(callback) {
+                    console.log(">   deferred metaSource action");
                     gda.metaSources.restore(opt);
                     callback(null, {});
                 });
