@@ -283,6 +283,23 @@ gda.dataSources.updateColumns = function() {
     ms.keymap = rA;
     }
 };
+
+// from: https://groups.google.com/forum/#!topic/dc-js-user-group/rBEViYG8bBE
+// alternative, but just for one key (at least this example):
+//      You don't need to join the data fully prior to passing it to crossfilter,
+//      provided you have a common join key. For example:
+//
+//      var metaData = otherCsvData.reduce(function(p,d) {
+//        p[d.myJoinKey] = d;
+//        return p;
+//      }, {});
+//      var ndx = crossfilter(primaryData);
+//      var dimension = ndx.dimension(function(d) { return metaData[d.myJoinKey].joinDataThing; });
+//
+// another alternative, is to do a join in the accessor
+//
+// also explore code in https://github.com/gajus/interdependent-interactive-histograms
+
 gda.dataSources.asText = function() {
     var dss = gda.dataSources.map;
     // workaround, bLoaded should be in a ds 'state' object, not in the stored/restored data
@@ -1068,7 +1085,7 @@ gda.colDimCheckboxChanged = function(t) {
   else {
     var dS = gda.activedataSource();
     gda._slide().myCols[dS][c] = _.without(gda._slide().myCols[dS][c],col);
-    if (gda.hasSelector(col)) {
+    if (gda.hasSelector(col,dS)) {
         var dS = gda.activedataSource();
         gda.removeSelector(col, dS);
     }
@@ -1137,7 +1154,7 @@ gda.updateDimChartsByDS = function(dS) {
         var mC = gda._slide().myCols[dS];
         if (mC)
             _.each(mC.csetupDimsCols, function(col,i) {
-                if (!gda.hasSelector(col)) {
+                if (!gda.hasSelector(col,dS)) {
                     //var dS = gda.activedataSource();
                     gda.newSelector(col, dS, "pieChart");
                 }
@@ -1452,7 +1469,7 @@ gda.showTable = function() {
                                             // so for now, uncheck recheck to display (user).
                     } );
 
-            var dEl = gda.addElement(s3,"br");
+        if (dt.bShowTableColumnSelectors ) {
             gda.addCheckB(s3, "showLinks", "Display Http as Links", 'objmember',
                     dt.bShowLinksInTable, 
                     function (t) {
@@ -1465,7 +1482,6 @@ gda.showTable = function() {
                         dt.bShowPicturesInTable = t.checked;
                         gda.showTable();
                         } );
-        if (dt.bShowTableColumnSelectors ) {
             // sorting key(s)
             var dEl = gda.addElement(s3,"br");
             var dEl = gda.addElement(s3,"strong");
@@ -1592,7 +1608,8 @@ gda.Controls = function() {
 
             gda.addButton(dHostEl,"clearState", "Clear Slide", gda.view.clear);
             gda.addButton(dHostEl,"delSlide", "Remove Slide", function() {gda.view.remove(gda._currentSlide);});
-            gda.addButton(dHostEl,"refresh", "Refresh Slide", gda.view.redraw);
+            // above controls are edit mode, refresh can be used anytime.
+            //gda.addButton(dHostEl,"refresh", "Refresh Slide", gda.view.redraw);
 
             var dEl = gda.addElement(dHostEl,"br");
 
@@ -1636,17 +1653,18 @@ gda.Controls = function() {
 
             var dElR = gda.addElement(dHostEl,"row");
             var dElS = gda.addElementWithId(dElR,"div","specialEditHeader");
-                dElS.setAttribute("class","span10");
+                dElS.setAttribute("class","span12");
             var dElR = gda.addElement(dHostEl,"row");
             var dElS = gda.addElementWithId(dElR,"div","slideSet");
-                dElS.setAttribute("class","span10");
+                dElS.setAttribute("class","span12");
 
             if (gda._slide()) {
                 var dElR = gda.addElement(dHostEl,"row");
                 var dElS = gda.addElementWithId(dElR,"div","slideOptionControls");
-                    dElS.setAttribute("class","span10");
+                    dElS.setAttribute("class","span12");
 
-        var dElb = gda.addElement(dElS,"div");
+        var dElb = gda.addElement(dElS,"div"); // was a "div". want other controls on same line as with span. use bootstrap spans.
+            dElb.setAttribute("class","span12");
             dElb.setAttribute("class","checkbox");
                 if (gda._slide().tables.length>0 && gda._slide().tables[0].bUseTable) {
                   var dt = gda._slide().tables[0];
@@ -1666,9 +1684,11 @@ gda.Controls = function() {
                             gda.view.redraw();
                         });
                 }
-// temp!
-// xxx yyy zzz
-            gda.addButton(dHostEl,"refresh", "Refresh Slide", gda.view.redraw);
+            // dElb here may not work as expected in all cases. dElS however is outside the div and
+            // causes next line. div is used for the checkbox bootstrap css.
+            // move these 'display'/action options to an options object for each slide, including
+            // bAllows above.
+            gda.addButton(dElb,"refresh", "Refresh Slide", gda.view.redraw);
             }
 
             // Control location where table controls will be added
@@ -2193,9 +2213,6 @@ gda.view = function() {
             if (docEl) {
                 docEl[gda.sTextHTML] = "";
 
-                //gda.addButton(docEl,"refresh", "Refresh Slide", gda.view.redraw);
-                //if (gda._anchorEdit || gda.bShowSlidesSource || true) {
-
                 if (gda._anchorEdit || gda.bShowSlidesSource) {
                     var dTb = gda.addElement(docEl,"table");
                         var dTr = gda.addElement(dTb,"tr");
@@ -2377,7 +2394,7 @@ gda.clearWorkingState = function() {
     gda.bSparseColumns = false; // workaround, until DataSource
     gda.bPollTimer = false;
     gda.bPollAggregate = false;
-    gda.bPolledAndViewDrawn = {};   // none
+    gda.bPolledAndViewDrawn = {};
     gda.nPollTimerMS = 5000;
 };
 
@@ -2508,19 +2525,19 @@ gda.newSelector = function(cname, sChtGroup, chartType) {
     selObj.chartType = chartType;
     selObj.sChartGroup = sChtGroup;
     gda.selectors.push( selObj );
-    gda.selCols.push(cname);
+    gda.selCols.push(dS+"."+cname);
     return selObj;
     }
     return null;
 };
 
-gda.hasSelector = function(cname) {
-    return _.contains(gda.selCols, cname);  // selCols can go away if selObj.cname is used
+gda.hasSelector = function(cname,dS) {
+    return _.contains(gda.selCols, dS+"."+cname);  // selCols can go away if selObj.cname is used
 };
 
 gda.removeSelector = function(cname, sChtGroup) {
-    gda.selectors = _.filter(gda.selectors, function(selObj) { return selObj.cname !== cname || selObj.sChartGroup !== sChtGroup; });
-    gda.selCols = _.filter(gda.selCols, function(selCol) { return selCol !== cname });
+    gda.selectors = _.filter(gda.selectors, function(selObj) { return selObj.cname !== sChtGroup+"."+cname || selObj.sChartGroup !== sChtGroup; });
+    gda.selCols = _.filter(gda.selCols, function(selCol) { return selCol !== sChtGroup+"."+cname });
 };
 
 // view element creators
@@ -2571,7 +2588,7 @@ gda.tablesReset = function(i,sChtGroups) {        // needs chart group too.
 // adds new dc pieChart under div dEl as a new sub div
 gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
     var chtObj= {};
-    chtObj.Title = cname;
+    chtObj.Title = gda.sChartGroups.length>1 ? sChtGroup+"."+cname : cname;
     gda.addOverride(chtObj,"legend",false);
     var dStr = gda.addElement(dEl,gda.Htwo);
         var dTitleEl = gda.addElementWithId(dStr,"div",dEl.id+dc.utils.uniqueId());
@@ -2579,9 +2596,8 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
     //var dEl1 = dEl;
 	var dEl1 = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
 
-    addDCdiv(dEl1, "selectors", i, cname, sChtGroup); // add div for DC chart
+    addDCdiv(dEl1, "selectors", i, chtObj.Title, sChtGroup); // add div for DC chart
 
-    chtObj.Title = cname;
     chtObj.sChartGroup = sChtGroup;
     gda.selCharts.push(chtObj);
     //var ftChart = dc.pieChart("#"+dEl.id,sChtGroup);
@@ -2867,6 +2883,8 @@ gda.newTimelineChart = function(iChart, cf) {
         gda.addOverride(chtObj,"timefield","Month");
         gda.addOverride(chtObj,"axisresolution","months");
         gda.addOverride(chtObj,"normalize",false);
+        gda.addOverride(chtObj,"onFilteredChart",false);  // workaround until can observe a crossfilter for filter change
+                                                    // or change normalization to be done in a separate dimension?
 
             xDimension = gda.dimensionByCol(
                                 chtObj.sChartGroup,
@@ -2910,6 +2928,16 @@ gda.newTimelineChart = function(iChart, cf) {
             var cf = gda.cf[ms.dataSources[0]];
             var dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[0],cf);
             cf[ms.columns[0]] = dD;  // could 'name' the dimension in an object instead of numbering in an array, then add this in.
+            if (chtObj.overrides["onFilteredChart"]) {
+    // ???
+    // at the link below ethan recommends using one crossfilter with more complicated grouping
+    // instead of two crossfilters. I think a novel dependency or observer effect would help here.
+    // in crossfilter itself. (if crossfilter changes from any reason (data add/sub, filters)) => notify(me)
+            }
+// also, to allow one pieSelector (say on BU) to adjust two crossfilters that happen to have the
+// same dimension (BU, BU) of course with identical meaning, but not necessarily the same exact
+// set of keys, could create a dim wrapper.
+// http://stackoverflow.com/questions/24225364/apply-filter-from-one-crossfilter-dataset-to-another-crossfilter
         }
     }
 }
@@ -3503,7 +3531,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
             xmax = xe.ceil(xmax);
         }
         xs = d3.time.scale().domain([xmin,xmax]);
-        console.log("time scale " + xmin + " to " + xmax);
+        //console.log("time scale " + xmin + " to " + xmax);
     }
     else {
         xs = d3.time.scale().domain([xmin,xmax]);   // think wrong. 'time', not.
@@ -3538,15 +3566,18 @@ gda.newTimelineDisplay = function(iChart, dEl) {
                 var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
                 var cf = gda.cf[ms.dataSources[0]];
                 var dD = cf[ms.columns[0]];
+
+
+                // need to register with crossfilter or via dc to receive filter changes that affect this cf.
+                // might be able to get the desired effect by creating a fake group on the dimension and use
+                // that here
             ftX
-                .valueAccessor(function(d){           // try here with accessor for var t = gda.cf["BuildPlanComplete"].dDim.filterExact(d.Quarter); return gda.cf["BuildPlanComplete"].dGrp.value();
-                        console.log("n: ", JSON.stringify(d), dD, cf);
+                .valueAccessor(function(d){
+                        //console.log("n: ", JSON.stringify(d), dD, cf);
                         dD.filterExact(d.key);      // for this reason, it shouldn't be shared.
-                        var t = dD.top(Infinity).length;
-                        dD.filterAll();
-                        console.log("t: ",t);
+                        var t = dD.top(Infinity).length;    // dGrp.value()?
+                        dD.filterAll();             // undo the filter, at the least while shared.
                         return d.value/t; // first just a value
-// yyyyy
                 })
         }
     //if (dDims[0].isDate)
@@ -3583,11 +3614,10 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 
 // chart.gdca_toFilter needs to be set by user (via title) through 'Timeline' editing interface.
     // this and another chart. assume for now these two are 0,1 or 1,0
-        if (gda.charts.length>1) {
-            if (iChart<2) {  // temp workaround until GUI is available
-                //gda.charts[iChart].chart.gdca_toFilter = gda.charts[1-iChart];
-                // move this to an override
-            //}
+        if (chtObj.overrides["onFilteredChart"]) {
+            var oFCname = chtObj.overrides["onFilteredChart"];
+            var oFCchart = _.findWhere(gda.charts, {Title: oFCname});  // Title must be unique in a slide!
+            chtObj.chart.gdca_toFilter = oFCchart;
             ftX.renderlet(function (chart) {
                 if (chart.gdca_toFilter) {
                 console.log("period renderlet");
@@ -3619,7 +3649,6 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 			    });
                 }
             });
-        }
         }
         if (chtObj.overrides["legend"])
             ftX
@@ -5950,10 +5979,11 @@ gda.addCheckB = function(dElHost, theValue, sLabel, className, defV, changedCall
         .on("change", function() {
             changedCallback(this);
         });
-    var Luse = document.createElement("label");
-    Luse.htmlFor = checkb;
-    Luse.appendChild(document.createTextNode(sLabel));
-    dElt.appendChild(Luse);     // dElHost
+    //var Luse = document.createElement("label");
+    //Luse.htmlFor = checkb;
+    //Luse.appendChild(document.createTextNode(sLabel));
+    //dElt.appendChild(Luse);     // dElHost
+    dElt.appendChild(document.createTextNode(sLabel));
     return gda;
     // http://getbootstrap.com/css/, mods to work with bootstrap
     // not ideal. perhaps a different flavor.
@@ -6086,4 +6116,3 @@ function indexOfNonMatch (str1, str2) {
 
 
 return gda; })();
-

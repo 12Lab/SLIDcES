@@ -3,7 +3,6 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <link rel="stylesheet" type="text/css" href="css/dc.css"/>
     <style>
         body { font-family: Ubuntu, Helvetica, sans-serif; font-size: 12px; }
     </style>
@@ -16,55 +15,71 @@ Read about SLIDcES at <a href="http://the12lab.com/slidces/">http://the12lab.com
 <div id="Slide">
 </div>
 
-<script type="text/javascript" src="js/d3.js"></script>
-<script type="text/javascript" src="js/queue.v1.min.js"></script>
-<script type="text/javascript" src="js/moment.min.js"></script>
+<link rel="stylesheet" href="/js/jquery-ui-1.11.2.custom/jquery-ui.css">
+<script type="text/javascript" src="/js/jquery-ui-1.11.2.custom/external/jquery/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery-ui-1.11.2.custom/jquery-ui.js"></script>
 
-<script type="text/javascript" src="js/reductio.js"></script>
-<script type="text/javascript" src="js/crossfilter.js"></script>
+  <script src="/js/bootstrap.min.js" type='text/javascript'></script>
 
-<script type="text/javascript" src="js/dc.js"></script>
+  <link href="/css/bootstrap.min.css" rel='stylesheet' type='text/css'>
+  <link href="/css/dc.css" rel='stylesheet' type='text/css'>
 
-<script type="text/javascript" src="js/underscore-min.js"></script>
+<script type="text/javascript" src="/js/d3.js"></script>
+<script type="text/javascript" src="/js/queue.v1.min.js"></script>
+<script type="text/javascript" src="/js/moment.min.js"></script>
 
-<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
-<script type="text/javascript" src="js/gda_v0.99.js"></script>
+<script type="text/javascript" src="/js/reductio.js"></script>
+<script type="text/javascript" src="/js/crossfilter.js"></script>
+
+<script type="text/javascript" src="/js/dc.js"></script>
+
+<script type="text/javascript" src="/js/underscore-min.js"></script>
+
+<script type="text/javascript" src="/js/gda_v0.99.js"></script>
+<script type="text/javascript" src="/js/filters.js"></script>
 
 <script>
 
+  $(function() {
+    // run the currently selected effect
+    function runEffect() {
+      // get effect type from
+      var selectedEffect = "highlight";//$( "#effectTypes" ).val();
+ 
+      // most effect types need no options passed by default
+      var options = {};
+      // some effects have required parameters
+      if ( selectedEffect === "scale" ) {
+        options = { percent: 0 };
+      } else if ( selectedEffect === "transfer" ) {
+        options = { to: "#button", className: "ui-effects-transfer" };
+      } else if ( selectedEffect === "size" ) {
+        options = { to: { width: 200, height: 60 } };
+      }
+ 
+      // run the effect
+      $( "#effect" ).effect( selectedEffect, options, 500, callback );
+    };
+ 
+    // callback function to bring a hidden box back
+    function callback() {
+      setTimeout(function() {
+        $( "#effect" ).removeAttr( "style" ).hide().fadeIn();
+      }, 1000 );
+    };
+ 
+    // set effect from select menu value
+    $( "#button" ).click(function() {
+      runEffect();
+      return false;
+    });
+  });
+
+
 // these could go into a shared js file, rather than the .html
 gda.dataFilter = function(data) {
-    var Now = new Date();
-    var TincMsecs = 1000*60*60*8;
-    var NextYear = new Date(Now.getFullYear()+1,0,1);
     console.log("EP dataFilter");
-
-    var fieldExists = function(f) {
-        if (f === undefined) return false;
-        if ((typeof f) === undefined) return false;
-        return true;
-    };
-
-    if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
-        if (fieldExists(data[0]["Date"])) {
-            var format = d3.time.format("%Y-%m-%d");
-            _.each(data, function(d) {
-                d.dd = format.parse(d.Date);
-            });
-        }
-
-        if (fieldExists(data[0].year)) {
-            var format = d3.time.format("%Y");
-            _.each(data, function(d) {
-                d.dd = format.parse(d.year);
-            });
-        }
-        TcumFileUnits = 1;
-        _.each(data, function(d) {
-            d.cumFileUnits = TcumFileUnits;
-            TcumFileUnits++;
-        });
-    }
+    data = gda.filters.pick(data);
     return data;
 }
 

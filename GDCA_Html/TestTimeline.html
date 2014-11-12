@@ -3,11 +3,10 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <link rel="stylesheet" type="text/css" href="/css/dc.css"/>
     <style>
         body { font-family: Ubuntu, Helvetica, sans-serif; font-size: 12px; }
     </style>
-<title>Ready</title>
+<title>If you see this, upgrade to IE11, Firefox, Chrome or another HTML5 compatible browser</title>
 </head>
 <body>
 <div id="Nav">
@@ -19,6 +18,10 @@
 <script type="text/javascript" src="/js/jquery-ui-1.11.2.custom/external/jquery/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery-ui-1.11.2.custom/jquery-ui.js"></script>
 
+  <script src="/js/bootstrap.min.js" type='text/javascript'></script>
+
+  <link href="/css/bootstrap.min.css" rel='stylesheet' type='text/css'>
+  <link href="/css/dc.css" rel='stylesheet' type='text/css'>
 
 <script type="text/javascript" src="/js/d3.js"></script>
 <script type="text/javascript" src="/js/queue.v1.min.js"></script>
@@ -32,6 +35,7 @@
 <script type="text/javascript" src="/js/underscore-min.js"></script>
 
 <script type="text/javascript" src="/js/gda_v0.99.js"></script>
+<script type="text/javascript" src="/js/filters.js"></script>
 
 <script>
 
@@ -74,28 +78,7 @@
 // these could go into a shared js file, rather than the .html
 gda.dataFilter = function(data) {
     console.log("EP dataFilter");
-
-    if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
-        if (gda.utils.fieldExists(data[0]["Date"])) {
-            var format = d3.time.format("%Y-%m-%d");
-            _.each(data, function(d) {
-                d.dd = format.parse(d.Date);
-            });
-        }
-
-        if (gda.utils.fieldExists(data[0].year)) {
-            var format = d3.time.format("%Y");
-            _.each(data, function(d) {
-                d.dd = format.parse(d.year);
-                gda.utils.addDateOptions(d,d.dd);
-            });
-        }
-        TcumFileUnits = 1;
-        _.each(data, function(d) {
-            d.cumFileUnits = TcumFileUnits;
-            TcumFileUnits++;
-        });
-    }
+    data = gda.filters.pick(data);
     return data;
 }
 
