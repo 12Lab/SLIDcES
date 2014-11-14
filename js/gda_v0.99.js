@@ -5,6 +5,9 @@
 // "I'm new" checkbox. Large tooltips. jqueryui.
 // dS/mS only pages not shown during runtime, but can appear as a dS edit page during edit mode.
 // best benefit would then have reduced selections 'clutter' on slide pages.
+// gaaware.com?
+// slides.com - can it host other engines?
+// refactor gda into 1) single slide display, 2) slide engine, 3) data package, 4) filters
 
 var sFileChartGroup = "FileListGroup";  // temporary, for the File List table
 
@@ -79,7 +82,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "099",
+    minor:   "099a",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -282,7 +285,7 @@ gda.dataSources.map = {};
 //gda.dataSources.map.none = gda.newDataSourceState();
 gda.dataSources.uniqueId = function(ds) {
     if (ds === undefined) {
-        alert("undefined");
+        alert("undefined, resource issue");
         return 0;
     }
     else
@@ -510,6 +513,9 @@ gda.newSlideState = function() {
     _aSlide.tables = [];            // new Tables's.
     _aSlide.bShowDataSource = false;    // maybe these should be implemented as Slide overrides. However no method implemented yet to remove an override
     _aSlide.bShowSlidesSource = false;  // offer interface to view other slide sets?
+    _aSlide.bPollTimer = false;
+    _aSlide.bPollAggregate = false;
+    _aSlide.nPollTimerMS = 5000;
 
     _aSlide.bAllowOverrideChanges = false;
     _aSlide.bAccessOverrides = false;
@@ -575,7 +581,7 @@ gda.utils.labelFunction = function (d) {
             else return d.key;
         };
 gda.utils.titleFunction = function (d,v,i) {
-            if (gda.utils.fieldExists(d.key) && gda.utils.fieldExists(d.value) && d.key.trim) {
+            if (gda.utils.fieldExists(d.key) && gda.utils.fieldExists(d.value) && d.key && d.key.trim) {
                 return (d.key.trim() === "" ? "(blank)" : d.key ) + ": " + d.value ;
             } else if (gda.utils.fieldExists(d.data) && gda.utils.fieldExists(d.data.key) && gda.utils.fieldExists(d.data.value) && d.data.key.trim) {
                 return (d.data.key.trim() === "" ? "(blank)" : d.data.key ) + ": " + d.data.value ;
@@ -669,6 +675,13 @@ gda.slide = function( _slide ) {
         gda.editCols.csetupChartCols = [];
         gda.bShowDataSource  = gda._slide().bShowDataSource;
         gda.bShowSlidesSource = gda._slide().bShowSlidesSource;
+        gda.bPollTimer = gda._slide().bPollTimer;
+        gda.bPollAggregate = gda._slide().bPollAggregate;
+        gda.nPollTimerMS = gda._slide().nPollTimerMS;
+        if (gda.bPollTimer)
+            gda.manageInputSource.pollTimerTick(); // reschedule
+
+        // probably need to add a kickoff for the poll timer
 
         // add dataSources used from chart definitions
         gda.setupSlideContents(gda._slide());
@@ -752,62 +765,70 @@ gda.slide = function( _slide ) {
             // just adds the document elements for the tables
             // could make dependent on bShowTable
 
-            var dTb = gda.addElement(dHostEl,"table");
-                var dTr = gda.addElement(dTb,"tr");
-                    var dTd = gda.addElement(dTr,"td");
-                        var dEl = gda.addElement(dTd,"div");
-                        dEl.setAttribute("class","row");
-                            gda.addElementWithId(dEl,"div","FileTable");
-                    var dTd = gda.addElement(dTr,"td");
-                        var dElDT = gda.addElement(dTd,"div");
-                        dElDT.setAttribute("class","row");
-                            gda.addElementWithId(dElDT,"div","DataTable");
+    var dElTd = gda.addElementWithId(dHostEl,"div","bTable");
+        dElTd.setAttribute("class","span10 offset1");
+            gda.addElementWithId(dElTd,"div","FileTable");
+//          var dTb = gda.addElement(dElTd,"table");
+//              var dTr = gda.addElement(dTb,"tr");
+//                  var dTd = gda.addElement(dTr,"td");
+//                      var dEl = gda.addElement(dTd,"div");
+//                      dEl.setAttribute("class","row");
+//                          gda.addElementWithId(dEl,"div","FileTable");
+//                  var dTd = gda.addElement(dTr,"td");
+//                      var dElDT = gda.addElement(dTd,"div");
+//                      dElDT.setAttribute("class","row");
+//                          gda.addElementWithId(dElDT,"div","DataTable");
+    var dElTd = gda.addElementWithId(dHostEl,"div","cTable");
+        dElTd.setAttribute("class","span10 offset1");
+            gda.addElementWithId(dElTd,"div","DataTable");
 
-            var dElBr = gda.addElement(dHostEl,"br");
-            var dTxtT = gda.addTextNode(dHostEl,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
+    var dElTd = gda.addElementWithId(dHostEl,"div","cfData");
+        dElTd.setAttribute("class","span10");
+            var dElBr = gda.addElement(dElTd,"br");
+            var dTxtT = gda.addTextNode(dElTd,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
 
         if (gda && gda.cf) {
             var i = 0;
             if (_.size(gda.cf) === 0) {
-                var dElBr = gda.addElement(dHostEl,"br");
-                    var dTxtT = gda.addTextNode(dHostEl,(gda.sEdS ? gda.sEdS:""));
+                var dElBr = gda.addElement(dElTd,"br");
+                    var dTxtT = gda.addTextNode(dElTd,(gda.sEdS ? gda.sEdS:""));
             }
             else
             _.each(gda.cf, function(dScf,dS) {
                 if (i++>0) {
-                    var dElBr = gda.addElement(dHostEl,"br");
-                        var dTxtT = gda.addTextNode(dHostEl,"------------");
+                    var dElBr = gda.addElement(dElTd,"br");
+                        var dTxtT = gda.addTextNode(dElTd,"------------");
                 }
                 //var dS = dScf.dS;
-                var dElBr = gda.addElement(dHostEl,"br");
-                    var dTxtT = gda.addTextNode(dHostEl,"CF(" + dS + ")"+(gda.sEdS === dS?"*":""));
-                var dElBr = gda.addElement(dHostEl,"br");
-                    var dTxtT = gda.addTextNode(dHostEl,"CF(size)=" + dScf.size());  // gda.cf[dS].
-                var dElBr = gda.addElement(dHostEl,"br");
-                    var dTxtT = gda.addTextNode(dHostEl,"CF(N,bitMask)=" +
+                var dElBr = gda.addElement(dElTd,"br");
+                    var dTxtT = gda.addTextNode(dElTd,"CF(" + dS + ")"+(gda.sEdS === dS?"*":""));
+                var dElBr = gda.addElement(dElTd,"br");
+                    var dTxtT = gda.addTextNode(dElTd,"CF(size)=" + dScf.size());  // gda.cf[dS].
+                var dElBr = gda.addElement(dElTd,"br");
+                    var dTxtT = gda.addTextNode(dElTd,"CF(N,bitMask)=" +
                                 dScf.sizem().toString(2).length + "," + dScf.sizem().toString(2) );
-                    var dElBr = gda.addElement(dHostEl,"br");
-                    var dTxtT = gda.addTextNode(dHostEl,"CF(maxN)=" + dScf.sizeM());
+                    var dElBr = gda.addElement(dElTd,"br");
+                    var dTxtT = gda.addTextNode(dElTd,"CF(maxN)=" + dScf.sizeM());
             });
             if (gda.tables.length > 0 || _.size(gda._slide().tables) > 0) {
-                var dElBr = gda.addElement(dHostEl,"br");
-                    var dTxtT = gda.addTextNode(dHostEl,"===tables=S=");
+                var dElBr = gda.addElement(dElTd,"br");
+                    var dTxtT = gda.addTextNode(dElTd,"===tables=S=");
                 i=0;
                 _.each(gda._slide().tables, function(aTable) {
                     if (i++>0) {
-                        var dElBr = gda.addElement(dHostEl,"br");
-                            var dTxtT = gda.addTextNode(dHostEl,"------------");
+                        var dElBr = gda.addElement(dElTd,"br");
+                            var dTxtT = gda.addTextNode(dElTd,"------------");
                     }
-                    var dTxtT = gda.addTextNode(dHostEl,aTable.dataSource);  // gda.cf[dS].
+                    var dTxtT = gda.addTextNode(dElTd,aTable.dataSource);  // gda.cf[dS].
                 });
-                var dElBr = gda.addElement(dHostEl,"br");
-                    var dTxtT = gda.addTextNode(dHostEl,"===tables=D=");
+                var dElBr = gda.addElement(dElTd,"br");
+                    var dTxtT = gda.addTextNode(dElTd,"===tables=D=");
                 for(i = 0; i<gda.tables.length; i++) {
                     if (i++>0) {
-                        var dElBr = gda.addElement(dHostEl,"br");
-                            var dTxtT = gda.addTextNode(dHostEl,"------------");
+                        var dElBr = gda.addElement(dElTd,"br");
+                            var dTxtT = gda.addTextNode(dElTd,"------------");
                     }
-                    var dTxtT = gda.addTextNode(dHostEl,aTable.dataSource);  // gda.cf[dS].
+                    var dTxtT = gda.addTextNode(dElTd,aTable.dataSource);  // gda.cf[dS].
                 }
             }
         }
@@ -1183,9 +1204,12 @@ gda.updateDimChartsByDS = function(dS) {
 }
 
 gda.redrawDimCharts = function() {
-    var s3 = document.getElementById('MySelectors');
-    s3[gda.sTextHTML] = "";
-    gda.addSelectorCharts(s3);
+    var docEl = document.getElementById('MySelectors');
+    docEl[gda.sTextHTML] = "";
+        docEl.setAttribute("class","container");
+        var dEl = gda.addElementWithId(docEl,"div",docEl.id+dc.utils.uniqueId() );
+            dEl.setAttribute("class","row");
+    gda.addSelectorCharts(dEl);
 }
 
 gda.showFilters = function() {
@@ -1463,6 +1487,16 @@ gda.showTable = function() {
                     gda._slide().tables[0].bUseTable = t.checked;
                     // need method to refresh the Nav controls when un/checked
                     gda.showTable();
+                    gda.view.redraw();
+                } );
+        gda.addCheckB(s3, "hideShowTable", "Hide 'Show Table'", 'objmember',
+                gda._slide().tables.length>0? gda._slide().tables[0].bHideShowTable : false, 
+                function (t) {
+                    if (t.checked && gda._slide().tables.length <1) {
+                        gda._slide().tables.push(gda.newTableState());
+                    }
+                    gda._slide().tables[0].bHideShowTable = t.checked;
+                    // need method to refresh the Nav controls when un/checked
                     gda.view.redraw();
                 } );
     }
@@ -2538,7 +2572,10 @@ gda.dimensionByCol = function(dS,cname,cf,bFilterNonNumbers, nFixed) {
             if (nFixed !== undefined && nFixed !== null) {
                 v = v.toFixed(nFixed);
             }
+            if (!bFilterNonNumbers || !isNaN(v))
             return bFilterNonNumbers ? ( (isNaN(v))?0.0:v ) : v;
+            else
+                return 0;
             });
         if (!gda.utils.fieldExists(gda.dimensions[dS]))
             gda.dimensions[dS] = [];
@@ -2589,10 +2626,11 @@ gda.removeSelector = function(cname, sChtGroup) {
 gda.addSelectorCharts = function(docEl) {
     var sGroups = [];
     _.each(gda.selectors, function(selObj,i) {
-        var doChartEl = gda.addElementWithId(docEl,"div",docEl.id+dc.utils.uniqueId() );//i;//dElIdBase+i;   // nth view chart element
-        console.log("gda aSC: _id " + doChartEl.id + " i col grp " + i + " " + selObj.cname + " " + selObj.sChartGroup);
+        var dEl = gda.addElementWithId(docEl,"div",docEl.id+dc.utils.uniqueId() );//i;//dElIdBase+i;   // nth view chart element
+            dEl.setAttribute("class","span3");//+chtObj.overrides["span"]);
+        console.log("gda aSC: _id " + dEl.id + " i col grp " + i + " " + selObj.cname + " " + selObj.sChartGroup);
 
-        selObj.chart = gda.newSelectorDisplay(i, selObj.chartType, doChartEl, selObj.cname, selObj.dDim,selObj.dGrp,selObj.sChartGroup);
+        selObj.chart = gda.newSelectorDisplay(i, selObj.chartType, dEl, selObj.cname, selObj.dDim,selObj.dGrp,selObj.sChartGroup);
         // xxx add chart edit controls here
 
         if (!_.contains(sGroups,selObj.sChartGroup))
@@ -3945,7 +3983,7 @@ gda.newParetoDisplay = function(iChart, dEl) {
         else
             gda.pareto.domain(chtObj.sChartGroup, chtObj.dGrps[0].top(Infinity));
 
-        var maxLkey = _.max(gda.pareto.getDomain(), function(key) { return key.length; });
+        var maxLkey = _.max(gda.pareto.getDomain(), function(key) { return key ? key.length : 0; });
         var maxL = maxLkey.length;
         // assume about 5 pixels for font until can extract. Doesn't account for angle
         var xAxisTickLabelAngle = -45;
@@ -4052,10 +4090,13 @@ gda.pareto = (function() {
             pareto.topI = topI;// grp.top(Infinity);    // make selectable
             pareto.dom = [];
             pareto.topI.forEach(function(d) {
-                pareto.dom[pareto.dom.length] = d.key;
+                // if key is a date, and one of them is a null or blank, punt it
+                if (d.key && d.key !== "") {
+                pareto.dom[pareto.dom.length] = d.key ? d.key.toString() : "(blank)";
                 sum = sum + d.value;
                 d.sum = sum;
                 d.pp = 100*sum/all.value();
+                }
             });
         },
         createTempOrderingGroupReversed: function() {
@@ -4690,7 +4731,7 @@ gda.scatterDomains = function(chtObj, bInitial){
         .xAxisLabel(xmin+" => "+ chtObj.cnameArray[0] +" <= "+xmax)
         //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
         .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
-    chtObj.chart.redraw();
+    chtObj.chart.render();//redraw();
     }
 };
 
@@ -4756,7 +4797,7 @@ gda.newTableDisplay = function(dEl, iChart) {
 
     var dElR = gda.addElement(dEl,"row");
     var dElS = gda.addElementWithId(dElR,"div","aTable");
-        dElS.setAttribute("class","span11 offset1");
+        //dElS.setAttribute("class","span11 offset1");
 
     var dEl0 = gda.addElementWithId(dElS,"div",sDcData);
         dEl0.setAttribute("class","row");
@@ -4785,27 +4826,30 @@ gda.newTableDisplay = function(dEl, iChart) {
     else
         selCols = chtObj.selCols;
 
+    var sC = selCols.csetupSortTableCols;
     console.log("cT: sorting by "); 
-    (selCols.csetupSortTableCols && selCols.csetupSortTableCols.length>0) ? console.log(" col " + selCols.csetupSortTableCols[0]) :console.log(" by date d.dd");
+    (sC && sC.length>0) ? console.log(" col " + sC[0]) :console.log(" by date d.dd");
     //(chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ? console.log("col " + chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]) :console.log("by date d.dd");
-    dc.dataTable(".dc-"+sDcData+"-table", chtObj.sChartGroup)
+    var ftT = dc.dataTable(".dc-"+sDcData+"-table", chtObj.sChartGroup)
     // dDims[0] sets the table macro sort order. .sort specifies the order within groups
     .dimension(chtObj.dDims[0])//dateDim        // cf2 might balk at null here
-//  .group(gda.dateDimension)//function (d) { 4/21/13 new change but possibly broke tables // }
-    .group(function (d) {   // make this an override
+      .group(
+            (sC.length >0  ?
+        function (d) {   // make this an override
         var format = d3.format("02d");
         var r = 1;
-        if (d && d.dd){
+        if (d && d[ sC[0] ] && gda.isDate(sC[0]) ){
         //console.log("d.dd " + d.dd);
-        r = d.dd.getFullYear() + "/" + format((d.dd.getMonth() + 1));
+        r = d[sC[0]].getFullYear() + "/" + format((d[sC[0]].getMonth() + 1));
         }
         return r;
-    })
+        } :
+        gda.dateDimension))
     .size(500)  // arbitrary. make selectable
     .columns(chtObj.colAccessor)
     // sorts by available date first unless 2+ columns are chosen, then uses the last chosen, within the date grouper
     //.sortBy(function (d) { return (chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ?+d[chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]]:d.dd; })
-    .sortBy(function (d) { return (selCols.csetupSortTableCols && selCols.csetupSortTableCols.length>0) ?+d[selCols.csetupSortTableCols[0]]:d.dd; })
+      .sortBy(function (d) { return (sC && sC.length>0) ?+d[sC[0]]:d.dd; })
     .order(d3.descending)
     .render();
   //  .sortValues(function(a,b) {
@@ -4814,6 +4858,7 @@ gda.newTableDisplay = function(dEl, iChart) {
 //    .renderlet(function (table) {
 //        table.selectAll(".dc-table-group").classed("info", true);
 //    });
+
 
 //    dc.renderAll(sGroup);
 }
