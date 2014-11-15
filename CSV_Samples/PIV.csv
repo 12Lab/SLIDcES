@@ -1,4 +1,5 @@
 Manufacturer,Model,Level,States,Model Year,Resale Year,Resale,"Warranty (Drive, Year)","Warranty (Drive, Miles)",HP,Torque,CoD,0-30mph sec,30-50mph sec,50-70mph sec,0-60mph sec,MPGe,Charger,kWh,Range (electric),Weight,Length,Width,Height,Wheelbase,Turning Circle,Cargo (seats down),Cargo (seats up)
+ZelectricMotors,ZE Beetle,Base,All,1958-1966,2014,45000,0,0,100,110,,,,,,,,22,90,2400,,,,,,,
 Nissan,Leaf,S,All,2013,2014,16878,5,60000,107,187,,3.4,4,6.9,9.7,115,6.6,24,75,3422,175,69.7,61,106.3,34.2,30,24
 Nissan,Leaf,SL,All,2013,2014,19853,5,60000,107,187,,3.4,4,6.9,9.7,115,6.6,24,75,3422,175,69.7,61,106.3,34.2,30,24
 Nissan,Leaf,SV,All,2013,2014,17953,5,60000,107,187,,3.4,4,6.9,9.7,115,6.6,24,75,3422,175,69.7,61,106.3,34.2,30,24

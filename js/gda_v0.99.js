@@ -82,7 +82,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "099c",
+    minor:   "100",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -171,7 +171,8 @@ var gda = {
     defFormat : 0,
     clickModifiers: [],
     layoutRow : 0,
-    diag : 0        // 1=tick, 2=tick+progress, 3=tick+progress+all
+    bAny : false,
+    diag : 0        // 1=tick+progress, 2=tick+progress+file, 3=tick+progress+file+all
 };
 
 gda.numberFormat = d3.format(gda.numFormats[gda.defFormat]);
@@ -701,7 +702,7 @@ gda.slide = function( _slide ) {
         // move this to Chosen, then active loads based on the sChartGroups (aka dS)?
 
 // should this be conditional at edit time?
-//        gda.fileLoadImmediate ();
+        gda.fileLoadImmediate ();
 //        gda.log(3,"slide.display: continuing after fLoadI");
 // see, used to load here, which would be appropriate in Chosen just after setupSlideContents.
 
@@ -1793,6 +1794,7 @@ gda.slides = function() {
                     gda.clickModifiers.shiftKey)      //  keep existing and open/add additional slides
                 {                                     //  and goto first of newly opened slides
                     gda.switchToSlide = true;
+                    gda.bAny = false;   // or || with above elsewhere?
                 }
                 else if (gda.clickModifiers.ctrlKey)  // ctrl-left-click on link,
                 {                                     //  keep existing and open/add additional slides
@@ -1807,6 +1809,7 @@ gda.slides = function() {
                 {
                     gda.clearAllSlides();
                     gda.slideRegistry.clear();
+                    gda.bAny = false;
                     gda._currentSlide = 0;
                 }
             }
@@ -2494,7 +2497,7 @@ gda.clearWorkingState = function() {
     gda.nFirstRows = 100;
     gda.bSparseColumns = false; // workaround, until DataSource
     gda.bPollTimer = false;
-    gda.bPollTimerRunning = false;
+    //gda.bPollTimerRunning = false;
     gda.bPollAggregate = false;
     gda.bPolledAndViewDrawn = {};
 //    gda.nPollTimerMS = 5000;
@@ -5224,7 +5227,6 @@ gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
 
 gda.slidesSources = {};
 gda.slidesSources.restore = function(opt, bDashOnly) {
-    var bAny = false;
     _.each(opt, function(aSlide) {    // just (key) if parseRows is used.
         // update o.slide to have the slide state defaults, where not set.
         var restoredSlide = jQuery.extend(true, gda.newSlideState(), aSlide);   // add any missing fields.
@@ -5307,23 +5309,24 @@ gda.slidesSources.restore = function(opt, bDashOnly) {
         (gda.utils.fieldExists(restoredSlide.bDashInclude) &&
              restoredSlide.bDashInclude)) {
         gda.slides.append(gda.slide(restoredSlide));  // decorate 
-        if (!bAny) {
-            bAny = true;
+        if (!gda.bAny) {
+            gda.bAny = true;
             gda.setupSlideContents(restoredSlide);
             // presently if there is a source in a 2nd+ slide not in slide 1, it
             // doesn't get loaded yet. Could fix that here, or could load on demand
             // later, if called upon.
 
             // now this should probably go in the Finish
-            if (gda.sChartGroups.length>0)
-                gda.fileLoadImmediate();    // drive load ostensible for first slide that will be viewed
+//            if (gda.sChartGroups.length>0)
+//                gda.fileLoadImmediate();    // drive load ostensible for first slide that will be viewed
+
+//            if (gda.sChartGroups.length === 0)  // main slide happens to be empty of charts tables etc.
+                gda.view.redraw();
             }
         }
 
     });
 
-    if (gda.sChartGroups.length === 0)  // main slide happens to be empty of charts tables etc.
-        gda.view.redraw();    // remove this if testing 'command' in switch works as expected.
 }
 
 gda.addChartGroup = function(sChartGroup) {
@@ -5363,6 +5366,7 @@ gda.restoreState = function(text) {
     gda.clearAllSlides();  // but currently adds a new blank one, so
     gda.slideRegistry.clear();
     gda._currentSlide = 0;
+    gda.bAny = false;
 
             var qR = queue(1);    // serial. parallel=2+, or no parameter for infinite.
             gda.restoreStateFromObject(o, qR, false);
@@ -5758,7 +5762,7 @@ gda.fileLoadImmediate = function(bForce) {
 				alert("Unsupported file type: " + filepath);
 				return false;
 				}
-				gda.log(3,"selFile " + filepath );
+				gda.log(2,"selFile " + filepath );
                 if (!isHttp(filepath))
 				    filepath = filepath + "?q="+Math.random();	// override caching by randomly changing the request path
 				gda.log(3,"selFile " + filepath + " type " + filetype);
@@ -5842,8 +5846,8 @@ gda.manageInputSource  = function() {
                 var iMS = gda.nPollTimerMS;
                 gda.log(1,"mIS pollTS: " + iMS + " ====================    ");
                 gda.bPollTimerRunning = true;
-                d3.timer(gda.manageInputSource.pollTimerTick, +iMS);
-                gda.manageInputSource.poll();
+                d3.timer(gda.manageInputSource.pollTimerTick, 0);// 0, so it's called immediately, +iMS);
+                //gda.manageInputSource.poll(); // and don't need this. allows _elapsed to be synced
             }
             else gda.log(1,"mIS pollTS: already running");
         },
