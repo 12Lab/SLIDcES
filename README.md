@@ -8,29 +8,25 @@ Unlike PowerPoints, Slides made with SLIDcES are interactive, including Table co
 
 Pros
 * Your data stays at your business, no uploads to the Cloud
+* Small Footprint (no long delays to load/refresh)
 
 Current Version
 The 1.0.0-dev branch contains the research prototype, and is a work in progress.
 
 Browser Requirements, tested:
-* InternetExplorer11
-* Chrome
+* InternetExplorer11 (all functionality works)
+* Chrome (all functionality works)
+* Firefox (partial, some functionality isn't yet working)
 
 Roadmap:
-* "*" WYSIWYG Editing
-* "*" Overridable pre-filter
-* "*" Default checkpoint; an initial set of filters/options to achieve a desired view when launched or refreshed (Browser F5).
-* "o" Recallable checkpoints; allows quickly returning to 'discovery', or interesting, points
-* "o" Embeddable in another context, for example in a FileMaker13 Form or a .Net app, presently it can be used in any HTML context.
-* "o" Date management/conversion
-* "o" Precomputing Day,Month,Year
-* "d" Pivottable 'Chart'
-
-Roadmap Key:
-* "x" Completed
-* "*" Working draft, subject to change
-* "o" Future development
-* "d" Deferred
+* WYSIWYG Editing
+* Overridable pre-filter
+* Default checkpoint; an initial set of filters/options to achieve a desired view when launched or refreshed (Browser F5).
+* Recallable checkpoints aka talking points; allows quickly returning to 'discovery', or interesting, points
+* Embeddable in another context, for example in a FileMaker13 Form or an app, presently it can be used in any HTML context.
+* Date management/conversion
+* Precomputing Day,Month,Year,Quarter, etc
+* Pivottable 'Chart'
 
 Installations Include:
 * Operations Group at a Minneapolis Semiconductor Equipment Manufacturer
