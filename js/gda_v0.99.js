@@ -82,7 +82,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "100",
+    minor:   "101",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -801,7 +801,7 @@ gda.slide = function( _slide ) {
             var dElBr = gda.addElement(dElTd,"br");
             var dTxtT = gda.addTextNode(dElTd,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
 
-        if (gda && gda.cf) {
+        if (gda && gda.cf && 1<=gda.diag) {
             var i = 0;
             if (_.size(gda.cf) === 0) {
                 var dElBr = gda.addElement(dElTd,"br");
@@ -4845,7 +4845,8 @@ gda.newTableDisplay = function(dEl, iChart) {
 
     dc.dataCount(".dc-"+sDcData+"-count", chtObj.sChartGroup)
     .dimension(chtObj.cf)
-    .group(chtObj.cf.groupAll());
+    .group(chtObj.cf.groupAll())
+    .render();
 
     var selCols = null;
     if (gda._anchorEdit)

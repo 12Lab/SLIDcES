@@ -20,8 +20,8 @@ Samples,Auto Leases,,/GDCA_Html/AllLeases.html,SLIDcES:/GDCA_Slides/AllLeases.js
 Samples,Almond+ Sensors,,/GDCA_Html/AlmondPlus.html,SLIDcES:/GDCA_Slides/AlmondPlus.json
 Samples,US Venture Capital Landscape 2011,,/GDCA_Html/USVentureCapital.html,SLIDcES:/GDCA_Slides/USVentureCapitalLandscape2011.json
 Samples,Wine and Cheese,,/GDCA_Html/WineAndCheese.html,SLIDcES:/GDCA_Slides/WineAndCheese.json
-Editor,Prototype,,Edit_origFreeFlow.html,
-Editor,Prototype,Bootstrap,Edit_wLayoutB.html,
+Editor,Prototype,,Edit_origFreeFlow.html,N/A
+Editor,Prototype,Bootstrap,Edit_wLayoutB.html,N/A
 Project,Notes,,/GDCA_Html/VisAnalTable.html,SLIDcES:/GDCA_Slides/VisAnalTable.json
 AllInclusive,All,,/GDCA_Html/AllEverything.html,SLIDcES:/GDCA_Slides/AllEverything.json
 Samples,"Auto, Electric",,/GDCA_Html/PIEV.html,SLIDcES:/GDCA_Slides/PIEV.json
