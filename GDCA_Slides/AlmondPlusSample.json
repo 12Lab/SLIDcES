@@ -1,0 +1,219 @@
+{
+    "version": "0.099",
+    "minor": "60",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "slides": [
+        {
+            "title": "Security, Almond+",
+            "dataprovider": "/JSON_Samples/",
+            "datafile": "almondPlus.json",
+            "bLoaded": true,
+            "bListOfMany": false,
+            "bLocalFile": true,
+            "bAggregate": false,
+            "_idCounter": 4,
+            "columns": [
+                "Name",
+                "FriendlyDeviceType",
+                "DeviceType",
+                "DeviceID",
+                "Location",
+                "_counter",
+                "_qty",
+                "ARMMODE",
+                "STATE",
+                "LOW_BATTERY",
+                "TAMPER",
+                "SWITCH_BINARY",
+                "AC_Frequency",
+                "AC_Power",
+                "AC_VoltageRMS",
+                "AC_CurrentRMS"
+            ],
+            "keymap": {
+                "Name": "Name",
+                "FriendlyDeviceType": "FriendlyDeviceType",
+                "DeviceType": "DeviceType",
+                "DeviceID": "DeviceID",
+                "Location": "Location",
+                "_counter": "_counter",
+                "_qty": "_qty",
+                "ARMMODE": "ARMMODE",
+                "STATE": "STATE",
+                "LOW BATTERY": "LOW_BATTERY",
+                "TAMPER": "TAMPER",
+                "SWITCH BINARY": "SWITCH_BINARY",
+                "AC_Frequency": "AC_Frequency",
+                "AC_Power": "AC_Power",
+                "AC_VoltageRMS": "AC_VoltageRMS",
+                "AC_CurrentRMS": "AC_CurrentRMS"
+            },
+            "filters": {},
+            "myCols": {
+                "csetupDimsCols": [],
+                "csetupHiddenTableCols": [
+                    "SWITCH_BINARY",
+                    "AC_Frequency",
+                    "AC_Power",
+                    "AC_VoltageRMS",
+                    "AC_CurrentRMS"
+                ],
+                "csetupSortTableCols": [
+                    "_counter"
+                ]
+            },
+            "charts": [
+                {
+                    "Title": "Device Types",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "FriendlyDeviceType"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "one",
+                    "overrides": {
+                        "hChart": "150"
+                    }
+                },
+                {
+                    "Title": "Perimeter",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "STATE"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "one",
+                    "overrides": {
+                        "hChart": "100"
+                    }
+                },
+                {
+                    "Title": "Investigate",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "TAMPER"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "one",
+                    "overrides": {
+                        "hChart": "100"
+                    }
+                }
+            ],
+            "bUseTable": true,
+            "bShowTable": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": "5000",
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": false,
+            "bShowTableColumnSelectors": false,
+            "bShowLinksInTable": false,
+            "bShowPicturesInTable": false,
+            "myId": 0
+        },
+        {
+            "title": "Energy Switch, Almond+",
+            "dataprovider": "/JSON_Samples/",
+            "datafile": "almondPlus.json",
+            "bLoaded": true,
+            "bListOfMany": false,
+            "bLocalFile": true,
+            "bAggregate": false,
+            "_idCounter": 4,
+            "columns": [
+                "Name",
+                "FriendlyDeviceType",
+                "DeviceType",
+                "DeviceID",
+                "Location",
+                "_counter",
+                "_qty",
+                "ARMMODE",
+                "STATE",
+                "LOW_BATTERY",
+                "TAMPER",
+                "SWITCH_BINARY",
+                "AC_Frequency",
+                "AC_Power",
+                "AC_VoltageRMS",
+                "AC_CurrentRMS"
+            ],
+            "keymap": {
+                "Name": "Name",
+                "FriendlyDeviceType": "FriendlyDeviceType",
+                "DeviceType": "DeviceType",
+                "DeviceID": "DeviceID",
+                "Location": "Location",
+                "_counter": "_counter",
+                "_qty": "_qty",
+                "ARMMODE": "ARMMODE",
+                "STATE": "STATE",
+                "LOW BATTERY": "LOW_BATTERY",
+                "TAMPER": "TAMPER",
+                "SWITCH BINARY": "SWITCH_BINARY",
+                "AC_Frequency": "AC_Frequency",
+                "AC_Power": "AC_Power",
+                "AC_VoltageRMS": "AC_VoltageRMS",
+                "AC_CurrentRMS": "AC_CurrentRMS"
+            },
+            "filters": {},
+            "myCols": {
+                "csetupDimsCols": [
+                    "Location",
+                    "Name"
+                ],
+                "csetupHiddenTableCols": [
+                    "ARMMODE",
+                    "STATE",
+                    "LOW_BATTERY",
+                    "TAMPER"
+                ],
+                "csetupSortTableCols": [
+                    "_counter"
+                ]
+            },
+            "charts": [
+                {
+                    "Title": "AC Power (W)",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "_counter",
+                            "AC_Power"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "one",
+                    "overrides": {
+                        "legend": false,
+                        "elasticX": false,
+                        "elasticY": false,
+                        "brushOn": true,
+                        "mouseZoomable": true,
+                        "hChart": "200"
+                    }
+                }
+            ],
+            "bUseTable": true,
+            "bShowTable": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": "5000",
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": false,
+            "bShowTableColumnSelectors": false,
+            "bShowLinksInTable": false,
+            "bShowPicturesInTable": false,
+            "myId": 0
+        }
+    ]
+}
+

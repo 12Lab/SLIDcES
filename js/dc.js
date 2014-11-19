@@ -5344,7 +5344,8 @@ dc.seriesChart = function (parent, chartGroup) {
         // this works around the fact compositeChart doesn't really
         // have a removal interface
         Object.keys(_charts)
-            .filter(function(c) {return keep.indexOf(c) === -1;})
+            .filter(function(c) {
+                return keep.indexOf(c) === -1;})
             .forEach(function(c) {
                 clearChart(c);
                 children_changed = true;

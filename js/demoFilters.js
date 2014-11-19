@@ -1,13 +1,21 @@
+demo = {};
+demo.filters = {};
 
-gda.filters = {};
-
-gda.filters.pick = function(data) {
+demo.filters.pick = function(data) {
     if (data && data.length>0) {
         if (data[0].DeviceValues)
-            data = gda.filters.almondPlus(data);
+            data = demo.filters.almondPlus(data);
         else if (data[0]["N-Cream"]) {
             _.each(data, function(d) {
                 //d["Panellist"] = +d["Panellist"]
+            });
+        }
+// for 'cars' example
+        else if (gda.utils.fieldExists(data[0].cylinders)) {
+            var format = d3.time.format("%Y");
+            _.each(data, function(d) {
+                d.dd = format.parse(d.year);
+                gda.utils.addDateOptions(d,d.dd);
             });
         }
         else if (gda.utils.fieldExists(data[0].year)) {
@@ -32,7 +40,7 @@ gda.filters.pick = function(data) {
     return data;
 }
 
-gda.filters.almondPlus = function(data) {
+demo.filters.almondPlus = function(data) {
     var newData = [];
     _.each(data, function(d) {
         if (d.DeviceValues) {

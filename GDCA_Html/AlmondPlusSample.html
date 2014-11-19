@@ -9,7 +9,7 @@
 <title>If you see this, upgrade to IE11, Firefox, Chrome or another HTML5 compatible browser</title>
 </head>
 <body>
-    <h3>Requires an Almond+ Wifi/Router with Sensors
+    <h3>Fixed sample data
     </h3>
 <div id="Nav">
 </div>
@@ -21,8 +21,8 @@
 <script type="text/javascript" src="/js/jquery-ui-1.11.2.custom/jquery-ui.js"></script>
 
   <script src="/js/bootstrap.min.js" type='text/javascript'></script>
+<link href="/css/bootstrap.min.css" rel='stylesheet' type='text/css'>
 
-  <link href="/css/bootstrap.min.css" rel='stylesheet' type='text/css'>
   <link href="/css/dc.css" rel='stylesheet' type='text/css'>
 
 <script type="text/javascript" src="/js/d3.js"></script>
@@ -36,8 +36,9 @@
 
 <script type="text/javascript" src="/js/underscore-min.js"></script>
 
+<script type="text/javascript" src="/js/siteSpecific.js"></script>
 <script type="text/javascript" src="/js/gda_v0.99.js"></script>
-<script type="text/javascript" src="/js/filters.js"></script>
+
 
 <script>
 
@@ -79,12 +80,11 @@
 
 // these could go into a shared js file, rather than the .html
 gda.dataFilter = function(data) {
-    console.log("EP dataFilter");
-    data = gda.filters.pick(data);
+    data = siteSpecific.selectAndFilter(data);
     return data;
 }
 
-var sDefaultSlideFile = "/GDCA_Slides/AlmondPlusLive.json";    // enter a csv file path here to auto-load
+var sDefaultSlideFile = "/GDCA_Slides/AlmondPlusSample.json";    // enter a csv file path here to auto-load
 
 var ss = gda.slides;
 gda.bSparseColumns = true;

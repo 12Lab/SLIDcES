@@ -82,14 +82,14 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "101",
+    minor:   "101b",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
     TdayIncMsecs     : 1000*60*60*24,     // 1 day
     TweekIncMsecs    : 1000*60*60*24*7,   // 1 week
-    TmonthIncMsecs   : 1000*60*60*24*30,  // 1 month
-    TquarterIncMsecs : 1000*60*60*24*91,  // 1 quarter
+    TmonthIncMsecs   : 1000*60*60*24*30,  // 1 month    // bit over for Feb?
+    TquarterIncMsecs : 1000*60*60*24*90,  // 1 quarter
     TyearIncMsecs    : 1000*60*60*24*365, // 1 year
 
 
@@ -1363,7 +1363,7 @@ gda.regenerateTotalReset = function() {
 gda.regenerateCharts = function() {
     var docEl = document.getElementById('MyCharts');
     gda.log(3,"regenerateC: clear,addDisplayCharts");
-    docEl[gda.sTextHTML] = "";
+    //docEl[gda.sTextHTML] = "";
                 var dEl = gda.addElementWithId(docEl,"div",docEl.id+dc.utils.uniqueId() );
                     dEl.setAttribute("class","row");
     
@@ -1372,10 +1372,11 @@ gda.regenerateCharts = function() {
         if (dS) // could make this: if editing, then, if dS, so when editing with no dS no charts are displayed
             gda._slide().refresh(dS);
     }
-    else
+    else {
         _.each(gda.sChartGroups, function(sChartGroup) {
             gda._slide().refresh(sChartGroup);
         });
+    }
 }
 
 gda.dataComplete = function(dS) {
@@ -2564,7 +2565,8 @@ gda.displayCharts = function() {
         // need data to be loaded by this point, so instead of having gda.cf become an interface that hides driving
         // a load, instead drive the load of any referenced dS/mS on the current slide when it is selected?
         // The issue is the creation of the charts needs to have the data fully loaded in order to establish
-        // chart limits, etc. or d3/dc errors might be driven. Can't simply issue a renderAll or redrawAll (which
+        // chart limits, etc. or d3/dc errors might be driven, because we've given control of axis extents to
+        // the user. Can't simply issue a renderAll or redrawAll (which
         // is incremental) as some gda work needs to happen (update some axis titles, etc at a minimum) the
         // 'fix' is to gda.view.redraw after the final data load occurs. It could be performed after each load
         // completes. A renderAll(sChartGroup=dS/mS) could occur, if the gda stuff becomes registered appropriately
@@ -2990,6 +2992,8 @@ gda.newTimelineChart = function(iChart, cf) {
         var xDimension = null;
         var dXGrp = null;
         if (gda.isDate(chtObj.cnameArray[0])) {
+        gda.addOverride(chtObj,"elasticX",true);
+        gda.addOverride(chtObj,"elasticY",true);
         gda.addOverride(chtObj,"reduce",false);
         gda.addOverride(chtObj,"timefield","Month");
         gda.addOverride(chtObj,"axisresolution","months");
@@ -3612,15 +3616,23 @@ gda.newTimelineDisplay = function(iChart, dEl) {
             var r = chtObj.overrides["axisresolution"];
             var p = chtObj.overrides["timefield"].toLowerCase();
             if (p === "quarter") {
+                var tInc = gda.TquarterIncMsecs;
+                var d = xmax;
+                var t = d.getTime();
+                t = t + tInc;
+                xmax = new Date(t);
                 xu = d3.time.quarters;//QoY;//months;
                 xe = d3.time.quarter;
+
                 xmin = xe.floor(xmin);
-                //xmax.setMonth(xmax.getMonth()+3);   // force xaxis to give 'space' for a quarter's time
-                xmax = d3.time.quarter.offset(xe.ceil(xmax),1);   // force xaxis to give 'space' for a quarter's time
+
+                // alternative
+                //xmax = d3.time.quarter.offset(xe.ceil(xmax),1);   // force xaxis to give 'space' for a quarter's time
+                xmax = xe.ceil(xmax);   // force xaxis to give 'space' for a quarter's time
                 // could generalize that for any time period, and start bar left edge at time start, and give a 9x% width
                 // or bar gap of a few pixels.
                 ftX
-                    .gap(5);
+                    .gap(5);  // using 'gap'>0 causes #bars to be n-1, dropping last time period. dc.js ~3700 calculateBarWidth
             }
             else {
             var tInc = gda["T"+p+"IncMsecs"];   // time increment to assure max!=min, and max is past all data (.month only covers to first day of month by default)
@@ -3660,8 +3672,10 @@ gda.newTimelineDisplay = function(iChart, dEl) {
     ftX
         .x(xs)//.nice()
         .xUnits(xu)
-        .elasticX(true)
-        .elasticY(true)
+        //.elasticX(true) // MIGHT NEED FALSE!
+        //.elasticY(true)
+        .elasticX(chtObj.overrides["elasticX"])
+        .elasticY(chtObj.overrides["elasticY"])
         //.keyAccessor(function(d) {
         //    var m = d.key;
         //    m.setMilliseconds(0);
@@ -4855,6 +4869,7 @@ gda.newTableDisplay = function(dEl, iChart) {
         selCols = chtObj.selCols;
 
     var sC = selCols.csetupSortTableCols;
+    if (sC && sC.length>0) {
     gda.log(3,"cT: sorting by "); 
     (sC && sC.length>0) ? gda.log(3," col " + sC[0]) :gda.log(3," by date d.dd");
     //(chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ? gda.log(3,"col " + chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]) :gda.log(3,"by date d.dd");
@@ -4889,6 +4904,7 @@ gda.newTableDisplay = function(dEl, iChart) {
 
 
 //    dc.renderAll(sGroup);
+    }
 }
 
 // create a table object						note myCols is temporary. sorted by date unless myCols>=2 and uses [1].
