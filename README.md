@@ -29,7 +29,7 @@ Roadmap:
 * Pivottable 'Chart'
 
 Installations Include:
-* Operations Group at a Minneapolis Semiconductor Equipment Manufacturer
+* Operations Group at a Semiconductor Equipment Manufacturer
 
 Notes
 * DC : Dimensional Charting, http://dc-js.github.io/dc.js/
