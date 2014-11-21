@@ -65,6 +65,8 @@ siteSpecific.almondPlus = function(data) {
                 devValues = _.map(devValues[0], function(v,k) {
                     return _.omit(v,"index");
                 });
+                if (gda.utils.fieldExists(d.Timestamp))
+                    gda.utils.addDateOptions(d,d.Timestamp);
                 d =  _.omit(d, "DeviceValues");
                 var newEntries = {};
                 _.each(devValues, function(v1,k1) {

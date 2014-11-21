@@ -1,0 +1,49 @@
+{
+    "version": "0.099",
+    "minor": "101g",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "slideRefs": [
+        {
+            "dataprovider": "/GDCA_Slides/",
+            "datafile": "ds_AlmondPlus.json",
+            "bLocalFile": true
+        }
+    ],
+    "slides": [
+        {
+            "title": "Sample Test, AlmondPlus via dataSource in a Slide Ref",
+            "columns": [],
+            "filters": {},
+            "myCols": {
+                "NameMe": {
+                    "csetupDimsCols": [
+                        "Location"
+                    ]
+                }
+            },
+            "charts": [
+                {
+                    "Title": "AC Power, Watts, Box Plot",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "AC_Power"
+                        ]
+                    },
+                    "type": "Box",
+                    "sChartGroup": "NameMe"
+                }
+            ],
+            "tables": [],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": true,
+            "bPollAggregate": true,
+            "nPollTimerMS": 5000,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": false,
+            "myId": 0
+        }
+    ]
+}
+
