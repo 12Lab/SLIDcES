@@ -14,6 +14,17 @@ var sFileChartGroup = "FileListGroup";  // temporary, for the File List table
 gda = (function(){
 'use strict';
 
+    if (!Array.prototype.clear) {
+        +function () {
+        Array.prototype.clear = function() {
+          while (this.length > 0) {
+            this.pop();
+          }
+        }
+        }();
+    }
+
+
     /* Array.joinWith - shim         by Joseph Myers  7/ 6/2013 */
     /*   modified to accept 1+ keys, by Chris Meier  10/22/2014 */
     // leaves the .k1.k2.k3 keys, need to add a pass to remove
@@ -82,7 +93,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "101h",
+    minor:   "101j",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -634,7 +645,10 @@ gda.addOverride = function( anObj, key, value ) {
 };
 
 gda.activeChartGroups = function() {
+    if (gda.sEdS)
     return _.union(gda.sChartGroups, [gda.sEdS]);
+    else
+        return gda.sChartGroups;
 };
 
 // this 'slide' is just the information content, not the page representation
@@ -810,7 +824,7 @@ gda.slide = function( _slide ) {
     var dElTd = gda.addElementWithId(dHostEl,"div","cfData");
         dElTd.setAttribute("class","span10");
             var dElBr = gda.addElement(dElTd,"br");
-            var dTxtT = gda.addTextNode(dElTd,"Version " +gda.version+"."+gda.minor + " " + gda.branch);
+            var dTxtT = gda.addTextNode(dElTd,"Version " +gda.version+"."+gda.minor + " " + gda.branch);// + ", DOM(" + _.size(document.getElementsByTagName('*')) + ")"); // a count of all DOM elements
 
         if (gda && gda.cf && 1<=gda.diag) {
             var i = 0;
@@ -1376,7 +1390,7 @@ gda.regenerateTotalReset = function() {
         var dStr = dEl;//gda.addElement(dEl,gda.Htwo);
         _.each(gda.activeChartGroups() , function(sChartGroup,i) {
             var dEla = gda.addElement(dStr,"a");
-                dEla.setAttribute("href","javascript:gda.tablesReset("+sChartGroup+",gda.sChartGroups);");
+                dEla.setAttribute("href","javascript:gda.tablesReset('"+sChartGroup+"');");
                 //dEla.setAttribute("href","javascript:gda.tablesReset("+i+",gda.sChartGroups);");
                 //var dStr = gda.addElement(dEla,gda.Htwo); // h3 here makes a horizontal clickable bar
                     var dTxtT = gda.addTextNode(dEla,"Reset "+sChartGroup);
@@ -1499,6 +1513,7 @@ gda.showTable = function() {
                 'objmember',
                 gda.bFirstRowsOnly, 
                 function (t) {
+                    if (gda.activeChartGroups().length>0) {
                     gda.bFirstRowsOnly = t.checked;
                     _.each(gda.activeChartGroups() ,function(dS) {  // gda.dataSources.map, should be for each sChartGroup? so if listed but not used...
                         var ds = gda.dataSources.map[dS];
@@ -1506,6 +1521,7 @@ gda.showTable = function() {
                     });
                     gda.fileLoadImmediate();
                     gda.showTable();
+                    }
                     } );
         gda.addTextEntry(s3, "nFirstRows", ", 'n' = ", gda.nFirstRows,
                 function(newVal) {
@@ -2764,9 +2780,9 @@ gda.newSelectorDisplay = function(i, chartType, docEl, cname,dDim,dGrp,sChtGroup
 }
 
 // change the embedded javascript to use this instead gda.selectorReset("+cname+","+sChtGroup+";);"
-gda.selectorsReset = function(cname,sChtGroup) {        // needs chart group too.
-    gda.selectors[cname].chart.filterAll(sChtGroup);
-    dc.redrawAll(sChtGroup);
+gda.selectorsReset = function(i) {
+    gda.selectors[i].chart.filterAll(gda.selectors[i].sChartGroup);
+    dc.redrawAll(gda.selectors[i].sChartGroup);
 }
 
 // ! charts need unique ids instead of indices, for naming and access !
@@ -2781,10 +2797,9 @@ gda.chartsReset = function(i,chts) {        // needs chart group too.
 //	gda.log(3,"renderALL gda.tablesReset");
 //    dc.renderAll(sChtGroups[i]);
 //}
-gda.tablesReset = function(sChartGroup,sChtGroups) {        // needs chart group too.
-    dc.filterAll(sChartGroup);//sChtGroups[i]);
-	gda.log(3,"renderALL gda.tablesReset");
-    dc.renderAll(sChartGroup);//sChtGroups[i]);
+gda.tablesReset = function(sChartGroup) {
+    dc.filterAll(sChartGroup);
+    dc.renderAll(sChartGroup);
 }
 
 // adds new dc pieChart under div dEl as a new sub div
@@ -5117,7 +5132,7 @@ function addDCdiv(dEl, chartType, i, cname, sChtGroup) {
         var dEla = gda.addElement(dCen,"a");
         //dEla.setAttribute("href","javascript:gda."+chartType+"["+i+"].chart.filterAll(sChartGroup);dc.redrawAll(sChartGroup);");
                                                                         //sChtGroup sChartGroup gda.charts[i]
-        dEla.setAttribute("href","javascript:gda."+chartType+"Reset("+i+", gda.charts);");
+        dEla.setAttribute("href","javascript:gda."+chartType+"Reset("+i+");");//, gda.charts);");
         dEla.setAttribute("class","reset");
         dEla.setAttribute("style","display: none;");
         var dTxtT = gda.addTextNode(dEla,"reset");
@@ -5640,6 +5655,7 @@ gda.dataToCrossfilter = function(dS,dR) {
     // Keymap addition should be done at design time, not runtime? current functionality allows new columns to creep in.
     // KeymapAdd also adds to crossfilter.
     gda.dataKeymapAdd(dS,dR); // expects array, use slice(1) if parseRows is used above.
+    dR.clear();
     gda.dataComplete(dS);
     }
 }
@@ -6129,8 +6145,10 @@ function ingestArray(dS, testArray) {
             gda.log(3,"ingestArray dataKeymapAdd ");
             var dR = testArray[i];
             gda.dataKeymapAdd(dS,dR);
-            testArray[i] = dR;
+            dR.clear();
+            //testArray[i] = dR;
         }
+        testArray.clear();
     }
 
     gda.log(2,"ingestArray done  <==========");
