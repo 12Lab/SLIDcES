@@ -24,6 +24,25 @@
             },
             "charts": [
                 {
+                    "Title": "AC Power (W)",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "_counter",
+                            "AC_Power"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "NameMe",
+                    "overrides": {
+                        "legend": false,
+                        "elasticX": false,
+                        "elasticY": false,
+                        "brushOn": true,
+                        "mouseZoomable": true,
+                        "hChart": "200"
+                    }
+                },
+                {
                     "Title": "AC Power, Watts, Box Plot",
                     "myCols": {
                         "csetupChartCols": [
@@ -31,7 +50,10 @@
                         ]
                     },
                     "type": "Box",
-                    "sChartGroup": "NameMe"
+                    "sChartGroup": "NameMe",
+                    "overrides": {
+                        "hChart": "200"
+                    }
                 }
             ],
             "tables": [],
@@ -46,4 +68,3 @@
         }
     ]
 }
-

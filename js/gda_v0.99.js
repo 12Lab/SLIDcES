@@ -3,11 +3,12 @@
 // next: tables tables tables
 // it would be nice to add in jsonlint to clean up output for saving
 // "I'm new" checkbox. Large tooltips. jqueryui.
+// Cleaner? move dS/mS to a separate page/tab/slide,
 // dS/mS only pages not shown during runtime, but can appear as a dS edit page during edit mode.
 // best benefit would then have reduced selections 'clutter' on slide pages.
 // gaaware.com?
 // slides.com - can it host other engines?
-// refactor gda into 1) single slide display, 2) slide engine, 3) data package, 4) filters
+// refactor gda into 1) single slide display, 2) slide engine, 3) data package, 4) filters, 5) 'file' package on top of queue, so it can be used elsewhere 6) explore Twine (http://twinery.org/, http://twinery.org/2/#stories, perhaps with http://www.motoslave.net/sugarcube/)
 
 var sFileChartGroup = "FileListGroup";  // temporary, for the File List table
 
@@ -93,7 +94,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "101j",
+    minor:   "102",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -496,11 +497,16 @@ gda.dataSourceInternal = function(ds, data) {
         _.each(data, function(d) {
               if (ds.bTimestamp)
                 d.Timestamp = Now;
-              d = _.omit(d, ds.trimmed);
-//            d._counter = gda._slide().uniqueId();    // should come from data source
-            d._counter = gda.counterFormat(gda.dataSources.uniqueId(ds));
-            //gda.log(3,"dSI: counter " + d._counter);
+              // can't use omit, it returns a copy
+              // either process in place, or, loop above via index
+              // and reassign back into data[i]
+              _.each(ds.trimmed, function(k) {
+                  delete d[k];
+              });
+              //d = _.omit(d, ds.trimmed);  // doesn't work
             d._qty = 1;
+            d._counter = gda.counterFormat(gda.dataSources.uniqueId(ds));
+            //gda.log(4,"dSI: counter " + d._counter);
         });
     }
     return data;
@@ -5366,6 +5372,7 @@ gda.slidesSources.restore = function(opt, bDashOnly) {
             gda.utils.moveField("bListOfMany",  restoredSlide,dsNew);
             gda.utils.moveField("bLocalFile",   restoredSlide,dsNew);
             gda.utils.moveField("bAggregate",   restoredSlide,dsNew);
+            gda.utils.moveField("bTimestamp",   restoredSlide,dsNew);
             gda.utils.moveField("_idCounter",   restoredSlide,dsNew);
             gda.utils.moveField("keymap",       restoredSlide,dsNew);
             gda.utils.moveField("columns",      restoredSlide,dsNew);
@@ -5906,27 +5913,37 @@ gda.fileLoadImmediate = function(bForce) {
                                         //.on("timeout", function(e){
                                         //    alert("timeout " + JSON.stringify(e));
                                         //});
+                        ds.Timestamp_get = new Date();  // calling defer can start the operation
                         qF.defer(xhr.get);
                                     //.on("progress", function() {}) // continue: http://bl.ocks.org/mbostock/3750941
                                     //.get, "error");
                         qF.awaitAll((ds.bListOfMany)
                             ? function(error, dataArray) {
+                                ds.Timestamp_opComplete = new Date();
+                                console.log("time(get) = ",ds.Timestamp_opComplete - ds.Timestamp_get,filepath);
                                 if (errorCheck("dataArrayReady, json", error)) return;
                                 dataArrayReady(dS, dataArray);
                             }
                             : function(error, dataArray) {
+                                ds.Timestamp_opComplete = new Date();
+                                console.log("time(get) = ",ds.Timestamp_opComplete - ds.Timestamp_get,filepath);
                                 if (errorCheck("allDataLoaded, json", error)) return;
                                 allDataLoaded(dS, dataArray);
                             });
                         break;
                 case "csv":
+                        ds.Timestamp_get = new Date();  // calling defer can start the operation
                         qF.defer(d3.csv,filepath);
                         qF.awaitAll((ds.bListOfMany)
                             ? function(error, dataArray) {
+                                ds.Timestamp_opComplete = new Date();
+                                console.log("time(get) = ",ds.Timestamp_opComplete - ds.Timestamp_get,filepath);
                                 if (errorCheck("dataArrayReady, csv", error)) return;
                                 dataArrayReady(dS, dataArray);
                             }
                             : function(error, dataArray) {
+                                ds.Timestamp_opComplete = new Date();
+                                console.log("time(get) = ",ds.Timestamp_opComplete - ds.Timestamp_get,filepath);
                                 if (errorCheck("allDataLoaded, csv", error)) return;
                                 allDataLoaded(dS, dataArray);
                             });

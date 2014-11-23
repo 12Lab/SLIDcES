@@ -49,7 +49,7 @@ siteSpecific.selectAndFilter = function(data) {
 
         TcumFileUnits = 1;
         _.each(data, function(d) {
-            d.cumFileUnits = TcumFileUnits;
+            d.cumFileUnits = TcumFileUnits; 
             TcumFileUnits++;
         })
     }
