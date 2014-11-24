@@ -94,7 +94,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "102",
+    minor:   "102b",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -1903,10 +1903,18 @@ gda.slides = function() {
             }   // this next call is async so that the GUI/caller(HTML) doesn't hang waiting for return/timeout.
                 // but the async could be moved to the caller if allowed from table rc entry.
                 // here it isn't necessary when called from HTML.
+            if (slidespath && slidespath.length>0) {
             gda.slidesLoadImmediate(slidespath, gda.bDashOnly);    // add slidepath immediate load
             if (optFilters) {   // if slidesLoadImmediate is retained as async then this should be above that call
                 gda.log(3,"optFilters, gda.dH");
                 gda.deferredHash = optFilters;
+            }
+            }
+            else {
+                gda.bShowSlidesSource = true;
+                gda._slide().bShowSlidesSource = true;
+                gda.view.redraw();
+                gda.view.redraw();  // workaround. Display not correct on first redraw
             }
         },
         edit: function(dElC,dElN,dElS) {   // control
@@ -2022,7 +2030,10 @@ gda.slides = function() {
                         var doChartEl = gda.addElementWithId(dTd,"div","dataProviderEntry");
                 if (gda.utils.fieldExists(ds.bLocalFile) && !ds.bLocalFile) {
                     var dTd = gda.addElement(dTr,"td");
-                        var dTxtT = gda.addTextNode(dTd,"https://mysafeinfo.com/content/datasets");
+                        var dEla = gda.addElement(dTd,"a");
+                        dEla.setAttribute("href","https://mysafeinfo.com/content/datasets");
+                        dEla.setAttribute("target",'"_blank"');
+                        var dTxtT = gda.addTextNode(dEla,"https://mysafeinfo.com/content/datasets" );
                 }
 
                 var dTr = gda.addElement(dTb,"tr");
@@ -2509,6 +2520,7 @@ gda.view = function() {
                                         newVal = newVal + "\\";  // preserve form?
                                     }
                                     ds.dataprovider = newVal;
+                                    gda.view.redraw();
                                 });
                     }
                     var dElFDE = document.getElementById("dataFilenameDisplay");
@@ -5778,14 +5790,16 @@ gda.dataKeymapAdd = function(dS,dR) { //columns,dR {
 
 gda.slidesLoadImmediate = function(slidespath, bDashOnly) {
     gda.log(3,"sLI:");
-    gda._slidefile = slidespath;    // store path
-    var qR = queue(1);  // qR for restored elements of slides  // serial. parallel=2+, or no parameter for infinite.
-    gda.SFwait = 1; // also resets if something went wrong on an earlier load
-    gda.slideFileLoad(slidespath, function(e,o) {
-                        gda.restoreStateDeferred(e,qR,o, bDashOnly );
-                        gda.SFwait--;
-                    });
-    setTimeout(function() {gda.slidesLoadFinish(qR)}, 250);  // 4 times per sec check if loading is finished
+    if (slidespath && slidespath.length>0) {
+        gda._slidefile = slidespath;    // store path
+        var qR = queue(1);  // qR for restored elements of slides  // serial. parallel=2+, or no parameter for infinite.
+        gda.SFwait = 1; // also resets if something went wrong on an earlier load
+        gda.slideFileLoad(slidespath, function(e,o) {
+                            gda.restoreStateDeferred(e,qR,o, bDashOnly );
+                            gda.SFwait--;
+                        });
+        setTimeout(function() {gda.slidesLoadFinish(qR)}, 250);  // 4 times per sec check if loading is finished
+    }
 };
 
 gda.slidesLoadFinish = function(qR) {
@@ -5813,7 +5827,7 @@ gda.slidesLoadFinish = function(qR) {
 // for the data
 gda.slideFileLoad = function (slidespath, callback) {
     gda.log(3,"sFL: " + slidespath);
-    if (slidespath.length>0) {
+    if (slidespath && slidespath.length>0) {
             //var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
             //qF.defer(d3.json,slidespath);                       // this should not be queued xxx
             //qF.awaitAll(callback); //gda.restoreStateDeferred;

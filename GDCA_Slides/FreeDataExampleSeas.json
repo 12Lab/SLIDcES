@@ -1,0 +1,140 @@
+{
+    "version": "0.099",
+    "minor": "102",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "NameMe": {
+            "dataprovider": "https://mysafeinfo.com/api/data?list=seas&format=csv",
+            "datafile": "",
+            "bLocalFile": false,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "bSparseData": false,
+            "bTimestamp": false,
+            "_idCounter": 26,
+            "keymap": {
+                "Size (Sq mi)": "Size_Sq_mi",
+                "Greatest Depth (mi)": "Greatest_Depth_mi",
+                "Lowest Point": "Lowest_Point"
+            },
+            "columns": [
+                "Sea",
+                "Size_Sq_mi",
+                "Greatest_Depth_mi",
+                "Lowest_Point",
+                "_qty",
+                "_counter",
+                "cumFileUnits"
+            ],
+            "Timestamp_get": "2014-11-23T19:19:38.549Z",
+            "Timestamp_opComplete": "2014-11-23T19:19:38.724Z",
+            "trimmed": []
+        }
+    },
+    "slides": [
+        {
+            "title": "Free Data Seas Example",
+            "columns": [],
+            "filters": {
+                "Blank211": [
+                    [
+                        316597.3503820625,
+                        696200.8764481643,
+                        null
+                    ]
+                ]
+            },
+            "myCols": {},
+            "charts": [
+                {
+                    "Title": "Greatest Depth by Size",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Size_Sq_mi",
+                            "Greatest_Depth_mi"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "NameMe",
+                    "overrides": {
+                        "legend": false,
+                        "elasticX": false,
+                        "elasticY": false,
+                        "brushOn": true,
+                        "mouseZoomable": true,
+                        "log": false,
+                        "yMin": false,
+                        "yMax": false,
+                        "xAxis ticks": 6
+                    }
+                },
+                {
+                    "Title": "Sea Greatest Depth",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Greatest_Depth_mi"
+                        ]
+                    },
+                    "type": "Box",
+                    "sChartGroup": "NameMe",
+                    "overrides": {
+                        "boxPadding": 0.8,
+                        "outerPadding": 0.5,
+                        "boxWidth": false,
+                        "legend": false,
+                        "elasticX": true,
+                        "elasticY": true
+                    }
+                },
+                {
+                    "Title": "Sea Size",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Size_Sq_mi"
+                        ]
+                    },
+                    "type": "Box",
+                    "sChartGroup": "NameMe",
+                    "overrides": {
+                        "boxPadding": 0.8,
+                        "outerPadding": 0.5,
+                        "boxWidth": false,
+                        "legend": false,
+                        "elasticX": true,
+                        "elasticY": true
+                    }
+                }
+            ],
+            "tables": [
+                {
+                    "bUseTable": true,
+                    "bHideShowTable": false,
+                    "bShowTable": true,
+                    "bShowLinksInTable": false,
+                    "bShowPicturesInTable": false,
+                    "bShowTableColumnSelectors": false,
+                    "csetupSortTableCols": [
+                        "Sea"
+                    ],
+                    "csetupHiddenTableCols": [
+                        "cumFileUnits",
+                        "_counter",
+                        "_qty"
+                    ],
+                    "dataSource": "NameMe",
+                    "sChartGroup": "NameMe"
+                }
+            ],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": 5000,
+            "bAllowOverrideChanges": true,
+            "bAccessOverrides": false,
+            "myId": 0
+        }
+    ]
+}
+

@@ -11,8 +11,6 @@
 <body>
 <div id="Nav">
 </div>
-<div id="Edit">
-</div>
 <div id="Slide">
 </div>
 
@@ -42,11 +40,8 @@ gda.dataFilter = function(data) {
     return data;
 }
 
-var sDefaultFile = "/CSV_Samples/carsReorderedCols.csv";    // enter a csv file path here to auto-load
-
 var ss = gda.slides;
-gda.bSparseColumns = true; // needs to be driven in the slide file/ui
-ss.edit(document.getElementById('Edit'), document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
+ss.run(null, document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
 
 </script>
 </body>
