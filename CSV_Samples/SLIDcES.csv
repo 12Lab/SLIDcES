@@ -21,6 +21,7 @@ Samples,Almond+ Sensors,"Live, requires an Almond+",/GDCA_Html/AlmondPlus.html,S
 Samples,Almond+ Sensors,"Static, from file",/GDCA_Html/AlmondPlusSample.html,SLIDcES:/GDCA_Slides/AlmondPlusSample.json
 Samples,US Venture Capital Landscape 2011,,/GDCA_Html/USVentureCapital.html,SLIDcES:/GDCA_Slides/USVentureCapitalLandscape2011.json
 Samples,Wine and Cheese,,/GDCA_Html/WineAndCheese.html,SLIDcES:/GDCA_Slides/WineAndCheese.json
+Editor,Prototype,Horizontal,Edit_origFreeFlow_rightPane.html,N/A
 Editor,Prototype,,Edit_origFreeFlow.html,N/A
 Editor,Prototype,Bootstrap,Edit_wLayoutB.html,N/A
 Run,Prototype,,Run_origFreeFlow.html,N/A

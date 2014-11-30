@@ -1,0 +1,109 @@
+{
+    "version": "0.099",
+    "minor": "102b",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "NameMe": {
+            "dataprovider": "https://mysafeinfo.com/api/data?list=automodels2013&format=json",
+            "datafile": "",
+            "bLocalFile": false,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "bSparseData": false,
+            "bTimestamp": false,
+            "_idCounter": 296,
+            "keymap": {},
+            "columns": [
+                "manu",
+                "mdl",
+                "yr",
+                "_qty",
+                "_counter",
+                "cumFileUnits"
+            ],
+            "Timestamp_get": "2014-11-24T20:41:29.184Z",
+            "Timestamp_opComplete": "2014-11-24T20:41:29.560Z"
+        }
+    },
+    "slides": [
+        {
+            "title": "2013 Model Year Vehicles",
+            "columns": [],
+            "filters": {},
+            "myCols": {
+                "NameMe": {
+                    "csetupDimsCols": []
+                }
+            },
+            "charts": [
+                {
+                    "Title": "Manufacturers",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "manu"
+                        ]
+                    },
+                    "type": "Pareto",
+                    "sChartGroup": "NameMe",
+                    "overrides": {
+                        "legend": false,
+                        "log": false,
+                        "yMin": false,
+                        "top": false
+                    }
+                },
+                {
+                    "Title": "Manufacturer Models",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "mdl"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "NameMe",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": true,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "",
+                        "top": "20",
+                        "dropOthers": false,
+                        "ordering": false,
+                        "hChart": "500"
+                    }
+                }
+            ],
+            "tables": [
+                {
+                    "bUseTable": true,
+                    "bHideShowTable": false,
+                    "bShowTable": false,
+                    "bShowLinksInTable": false,
+                    "bShowPicturesInTable": false,
+                    "bShowTableColumnSelectors": true,
+                    "csetupSortTableCols": [
+                        "manu"
+                    ],
+                    "csetupHiddenTableCols": [
+                        "cumFileUnits",
+                        "_counter",
+                        "_qty",
+                        "yr"
+                    ],
+                    "dataSource": "NameMe",
+                    "sChartGroup": "NameMe"
+                }
+            ],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": 5000,
+            "bAllowOverrideChanges": true,
+            "bAccessOverrides": true,
+            "myId": 0
+        }
+    ]
+}
+

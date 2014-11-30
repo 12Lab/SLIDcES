@@ -26,6 +26,7 @@
                 "_qty",
                 "ARMMODE",
                 "STATE",
+                "asVal",
                 "LOW_BATTERY",
                 "TAMPER",
                 "SWITCH_BINARY",
@@ -68,6 +69,21 @@
                     }
                 },
                 {
+                    "Title": "Perimeter Timeline",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Timestamp",
+                            "asVal"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "one",
+                    "overrides": {
+                        "hChart": "200",
+                        "elasticX":true
+                    }
+                },
+                {
                     "Title": "Perimeter",
                     "myCols": {
                         "csetupChartCols": [
@@ -97,7 +113,7 @@
             "bUseTable": true,
             "bShowTable": false,
             "bPollTimer": true,
-            "bPollAggregate": false,
+            "bPollAggregate": true,
             "nPollTimerMS": "5000",
             "bShowDataSource": false,
             "bShowSlidesSource": false,

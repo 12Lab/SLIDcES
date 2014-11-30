@@ -1,0 +1,199 @@
+{
+    "version": "0.099",
+    "minor": "102h",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "DateSample": {
+            "dataprovider": "/CSV_Samples/",
+            "datafile": "DateSample.csv",
+            "bLocalFile": true,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "bSparseData": false,
+            "bTimestamp": false,
+            "_idCounter": 12,
+            "keymap": {},
+            "columns": [
+                "Start_Date",
+                "End_Date",
+                "Issue",
+                "_qty",
+                "_counter",
+                "cumFileUnits",
+                "End",
+                "EndQuarter",
+                "Start",
+                "StartQuarter"
+            ],
+            "dataLastModifiedDate": "2014-11-28T23:02:39.000Z",
+            "Timestamp_get": "2014-11-29T15:59:43.599Z",
+            "Timestamp_opComplete": "2014-11-29T15:59:43.629Z"
+        }
+    },
+    "metaSources": {
+        "byEnd": {
+            "type": "cf",
+            "dataSources": [
+                "DateSample"
+            ],
+            "bLoaded": false,
+            "keymap": {},
+            "columns": [
+                "EndQuarter"
+            ]
+        }
+    },
+    "slides": [
+        {
+            "title": "Blank1",
+            "columns": [],
+            "filters": {},
+            "myCols": {
+                "DateSample": {
+                    "csetupDimsCols": []
+                }
+            },
+            "charts": [
+                {
+                    "Title": "Line; 3,4,4,2 in Q1..4",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "StartQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Line",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200"
+                    }
+                },
+                {
+                    "Title": "Hist; 3,4,4,2 in Q1..4",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "StartQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Hist",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200"
+                    }
+                },
+                {
+                    "Title": "Scatter; 1's",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "StartQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200"
+                    }
+                },
+                {
+                    "Title": "Timeline, Start; 3,4,4,2 in Q1..4",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "StartQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Timeline",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200",
+                        "elasticX":false,
+                        "timefield":"StartQuarter",
+                        "axisresolution":"quarters"
+                    }
+                },
+                {
+                    "Title": "Timeline, End; 6,2,5 in Q2..4",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "EndQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Timeline",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200",
+                        "elasticX":false,
+                        "timefield":"EndQuarter",
+                        "axisresolution":"quarters"
+                    }
+                },
+                {
+                    "Title": "Timeline, Start/End; 0.66,2,0.4 in Q2..4",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "StartQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Timeline",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200",
+                        "elasticX":false,
+                        "timefield":"StartQuarter",
+                        "axisresolution":"quarters",
+                        "normalize":"byEnd"
+                    }
+                },
+                {
+                    "Title": "Timeline, Start/End, min 1; 1,2,1 in Q2..4",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "StartQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Timeline",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200",
+                        "elasticX":false,
+                        "timefield":"StartQuarter",
+                        "axisresolution":"quarters",
+                        "normalize":"byEnd",
+                        "min":"1"
+                    }
+                }
+            ],
+            "tables": [
+                {
+                    "bUseTable": true,
+                    "bHideShowTable": false,
+                    "bShowTable": true,
+                    "bShowLinksInTable": false,
+                    "bShowPicturesInTable": false,
+                    "bShowTableColumnSelectors": false,
+                    "csetupSortTableCols": [
+                        "StartQuarter"
+                    ],
+                    "csetupHiddenTableCols": [],
+                    "dataSource": "DateSample",
+                    "sChartGroup": "DateSample"
+                }
+            ],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": 5000,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": false,
+            "myId": 0
+        }
+    ]
+}
+

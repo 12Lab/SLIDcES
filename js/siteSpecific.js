@@ -13,6 +13,15 @@ siteSpecific.selectAndFilter = function(data) {
                 d["Product number"] = +d["Product number"]
             });
         }
+        else if (gda.utils.fieldExists(data[0]["Issue"])) {
+            var format = d3.time.format("%m/%d/%Y");
+            _.each(data, function(d) {
+                d.End = format.parse(d["End_Date"]);
+                gda.utils.addDateOption(d,"End","Quarter");
+                d.Start = format.parse(d["Start_Date"]);
+                gda.utils.addDateOption(d,"Start","Quarter");
+            });
+        }
         else if (gda.utils.fieldExists(data[0]["sensor_location_name"])) {
             var format = d3.time.format("%Y-%d-%mT%H:%M:%S");
             var Now = new Date();
@@ -72,17 +81,21 @@ siteSpecific.almondPlus = function(data) {
                 _.each(devValues, function(v1,k1) {
                     newEntries[v1.name] = v1.value;
                 });
+                newEntries["asVal"] = 0;
                 switch(d.DeviceType) {
                     case "19":
                         newEntries["ARMMODE"] = newEntries["ARMMODE"]==="0"? "Off" : "On";
                         break;
                     case "12":
+                        newEntries["asVal"] = +newEntries["asVal"] + (newEntries["STATE"]==="false"? 0.1 : 1);
                         newEntries["STATE"] = newEntries["STATE"]==="false"? "Closed" : "Open";
                         newEntries["LOW BATTERY"] = newEntries["LOW BATTERY"]==="false"? "Good" : "LOW";
+                        newEntries["asVal"] = +newEntries["asVal"] + (newEntries["TAMPER"]==="false"? 0.1 : 0.5);
                         newEntries["TAMPER"] = newEntries["TAMPER"]==="false"? "Okay" : "TAMPERED";
                         break;
                     case "22":
                         var finalEntries = {};
+                        finalEntries["asVal"] = newEntries["asVal"];
                         finalEntries["SWITCH BINARY"] = newEntries["SWITCH BINARY"]==="false"? "Off" : "On";
                         var acPm = parseInt(newEntries["AC_POWERMULTIPLIER"],16);
                         var acPd = parseInt(newEntries["AC_POWERDIVISOR"],16);

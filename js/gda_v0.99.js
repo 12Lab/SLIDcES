@@ -70,7 +70,7 @@ document.onkeydown = function(evt) {
         gda.clickModifiers = {};
         if (evt.ctrlKey) gda.clickModifiers.ctrlKey = true;
         if (evt.shiftKey) gda.clickModifiers.shiftKey = true;
-        //gda.log(3,"okd click actions " + JSON.stringify(gda.clickModifiers));
+        //gda.log(4,"okd click actions " + JSON.stringify(gda.clickModifiers));
     }
     if (evt.ctrlKey && evt.shiftKey) {
         if (evt.keyCode != 16 && evt.keyCode != 17) {
@@ -87,14 +87,14 @@ document.onkeydown = function(evt) {
 document.onkeyup = function(evt) {
     if (gda && gda.clickModifiers) {
         gda.clickModifiers = {};
-        //gda.log(3,"oku click actions cleared");
+        //gda.log(4,"oku click actions cleared");
     }
 };
     
 
 var gda = {
     version: "0.099",
-    minor:   "102b",
+    minor:   "102h",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -117,7 +117,7 @@ var gda = {
     _slide: function() {
                 var sl = gda.slides.list();
                 if (sl.length === 0) {
-                    gda.log(3,"creating default slide");
+                    gda.log(4,"creating default slide");
                     // could do a delay, then retry the sl =.
                     // timing issue when doing a fwd/back in the browser
                     // as a redraw is kicked off before the slide file is
@@ -185,7 +185,7 @@ var gda = {
     clickModifiers: [],
     layoutRow : 0,
     bAny : false,
-    diag : 0        // 1=tick+progress, 2=tick+progress+file, 3=tick+progress+file+all
+    diag : 3        // 1=tick+progress, 2=tick+progress+file, 3=tick+progress+file+all
 };
 
 gda.numberFormat = d3.format(gda.numFormats[gda.defFormat]);
@@ -287,11 +287,11 @@ gda.metaSources.restore = function(metaSourceMap) {
 
     _.each(metaSourceMap, function(aMetaSource, dS, dsEntry) {
         var dsRestored = jQuery.extend(true, gda.newMetaSourceState(), aMetaSource);   // add any missing fields.
-        gda.log(3,"rs: dS " + dS );
+        gda.log(4,"rs: dS " + dS );
         if (gda.utils.fieldExists(dsRestored.type) &&
             (dsRestored.type === "join" ||
             dsRestored.type === "cf" ) )
-            gda.log(3,"rs: metaSource join/cf " + JSON.stringify(dsRestored));
+            gda.log(4,"rs: metaSource join/cf " + JSON.stringify(dsRestored));
 
         gda.metaSources.restoreOne(dS, dsRestored);
 
@@ -369,13 +369,13 @@ gda.dataSources.restore = function(dataSourceMap) {
 
     _.each(dataSourceMap, function(aDataSource, dS, dsEntry) {
         var dsRestored = jQuery.extend(true, gda.newDataSourceState(), aDataSource);   // add any missing fields.
-        gda.log(3,"rs: dS " + dS );
+        gda.log(4,"rs: dS " + dS );
         if (gda.utils.fieldExists(dsRestored.type) &&
             (dsRestored.type === "join" ||
             dsRestored.type === "cf" ) )
             alert("rs: dataSource join/cf " + JSON.stringify(dsRestored));
         else
-            gda.log(3,"rs: dataSource " + dsRestored.dataprovider + dsRestored.datafile);
+            gda.log(4,"rs: dataSource " + dsRestored.dataprovider + dsRestored.datafile);
 
         gda.dataSources.restoreOne(dS, dsRestored);
 
@@ -395,7 +395,7 @@ gda.dataSources.uniqueIndex = 0;
 gda.dataSources.restoreOne = function(dS, dsRecord) {
     if (dS === "blank") dS = dS + (++gda.dataSources.uniqueIndex);
     if (gda.utils.fieldExists(gda.dataSources.map[dS])) {   // do nothing if already present.
-        gda.log(3,"dataSources: tossed extraneous " + dS);
+        gda.log(4,"dataSources: tossed extraneous " + dS);
         return dS;
     }
     else {
@@ -413,7 +413,7 @@ gda.metaSources.uniqueIndex = 0;
 gda.metaSources.restoreOne = function(dS, dsRecord) {
     if (dS === "blank") dS = dS + (++gda.metaSources.uniqueIndex);
     if (gda.utils.fieldExists(gda.metaSources.map[dS])) {   // do nothing if already present.
-        gda.log(3,"tossed extraneous " + dS);
+        gda.log(4,"tossed extraneous " + dS);
         return dS;
     }
     else {
@@ -436,14 +436,14 @@ gda.metaSources.restoreOne = function(dS, dsRecord) {
                             qF.defer(d3.csv, fn); // temp, just call csv directly. need generic handler for a file, passing in a callback
                         });
                         qF.awaitAll(function(error, results) {
-                                        gda.log(3,"prepareJoin e(" +
+                                        gda.log(4,"prepareJoin e(" +
                                                (error ?
                                                     (error.message ? 
                                                         error.message
                                                         :error.statusText)
                                                     :"no error")+")");
                                         if (error || !results || results.length<1)  {
-                                            gda.log(3,"prepareJoin: needs more than 1!");
+                                            gda.log(4,"prepareJoin: needs more than 1!");
                                         }
                                         else
                                             gda.metaSources.readyJoin(dS, dsRecord.type, dsRecord.keys, results);
@@ -465,7 +465,7 @@ gda.metaSources.restoreOne = function(dS, dsRecord) {
 }
 
 gda.metaSources.readyJoin = function(dS, rType, keys, results) {
-    gda.log(3,"rJ: " + dS);
+    gda.log(4,"rJ: " + dS);
     // used upon loading in for both cf, join
     var rA = results[0];    // could use _.first(results);
     _.each(_.rest(results), function(rB) {  // test for results.length == 1
@@ -491,7 +491,7 @@ gda.datasource = function( _datasource ) {
 
 // adds a counter and sets default quantity
 gda.dataSourceInternal = function(ds, data) {
-    gda.log(3,"dataSourceInternal");
+    gda.log(4,"dataSourceInternal");
     var Now = new Date();   // should be set when io triggered or when read is finished
     if (data && data.length>0 ) {    // temporary hardwired filter for certain csv's.
         _.each(data, function(d) {
@@ -626,15 +626,51 @@ gda.utils.titleFunction = function (d,v,i) {
             } else
                 return "(N/A)";
         };
-gda.utils.addDateOptions = function(d,base,tier) {
+
+// eventually replace addDateOptions with this everywhere, but for the short term don't incur too much work updating
+gda.utils.addDateOption = function(d,base,just) {
     var insHere = d;
-    if (tier !== null && tier !== undefined) {
-        if (!gda.utils.fieldExists(d[tier]))
-            d[tier] = {};
-        insHere = d[tier];
+    var tset = ["Year", "Quarter", "QoY", "Month", "Week", "Day", "DoW"];
+    if (just !== undefined) {
+	tset = [just];
     }
+    _.each(tset, function(j) {
+	var res = null;
+	switch(j.toLowerCase()) {
+		case "year":
+			insHere[base+j ] = d3.time.year(d[base]);
+			break;
+		case "quarter":
+			insHere[base+j ] = d3.time.quarter(d[base]);
+			break;
+		case "qoy":
+			insHere[base+j ] = 1+Math.floor(d3.time.month(d[base]).getMonth()/3); // this one isn't supported by D3 (yet).
+			break;
+		case "month":
+			insHere[base+j ] = d3.time.month(d[base]);
+			break;
+		case "week":
+			insHere[base+j ] = d3.time.week(d[base]);
+			break;
+		case "day":
+			insHere[base+j ] = d3.time.day(d[base]);
+			break;
+		case "dow":
+			insHere[base+j ] = d[base].getDay();
+			break;
+	}
+    });
+};
+
+gda.utils.addDateOptions = function(d,base) {	//,tier
+    var insHere = d;
+    //if (tier !== null && tier !== undefined) {
+    //    if (!gda.utils.fieldExists(d[tier]))
+    //        d[tier] = {};
+    //    insHere = d[tier];
+    //}
     insHere.Year = d3.time.year(base);
-    insHere.Quarter = d3.time.quarter(base);//1+Math.floor(d3.time.month(base).getMonth()/3); // this one isn't supported by D3 (yet).
+    insHere.Quarter = d3.time.quarter(base);
     insHere.QoY = 1+Math.floor(d3.time.month(base).getMonth()/3); // this one isn't supported by D3 (yet).
     insHere.Month = d3.time.month(base);
     insHere.Week = d3.time.week(base);
@@ -684,7 +720,7 @@ gda.slide = function( _slide ) {
         gda.clearWorkingState();
     };
     _aSlide.clearDisplay = function() {
-        gda.log(3,"clearDisplay:");
+        gda.log(4,"clearDisplay:");
         gda.layoutRow = 0;
         if (gda._anchorSlide) gda._anchorSlide[gda.sTextHTML] = "";
         _.each(gda.activeChartGroups() , function(sChartGroup) {
@@ -734,7 +770,7 @@ gda.slide = function( _slide ) {
 
 // should this be conditional at edit time?
         gda.fileLoadImmediate ();
-//        gda.log(3,"slide.display: continuing after fLoadI");
+//        gda.log(4,"slide.display: continuing after fLoadI");
 // see, used to load here, which would be appropriate in Chosen just after setupSlideContents.
 
         gda.displayCharts();
@@ -791,7 +827,7 @@ gda.slide = function( _slide ) {
 
             document.title = _aSlide.title;
 
-            gda.log(3,"refreshControls:");
+            gda.log(4,"refreshControls:");
             dHostEl[gda.sTextHTML] = "";
             var dEl = gda.addElement(dHostEl,gda.Hone);
                 var dTxtT = gda.addTextNode(dEl,_aSlide.title);
@@ -883,7 +919,7 @@ gda.slide = function( _slide ) {
             var docEl = document.getElementById('MyCharts');
             gda.addDisplayChart(docEl, gda.charts.length-1, gda._anchorEdit ? gda.addEditsToSelectedChart  : false);
             // would like to render just this chart
-			gda.log(3,"renderALL gda.slide.addDisplayChart");
+			gda.log(4,"renderALL gda.slide.addDisplayChart");
             dc.renderAll(sChtGroup);
             //gda.charts[iChart].chart.render();
     };
@@ -900,9 +936,9 @@ gda.slide = function( _slide ) {
 };
 
 gda.applySlideFilters = function(filters) {
-    gda.log(3,"aSF: " + (filters ? JSON.stringify(filters) : ""));
+    gda.log(4,"aSF: " + (filters ? JSON.stringify(filters) : ""));
     if (!arguments.length) filters = gda._slide().filters;  // needs to be per dataSource
-        gda.log(3,"aSF: now " + JSON.stringify(filters));
+        gda.log(4,"aSF: now " + JSON.stringify(filters));
         if (filters) {
             var lsChartGroups = [];
             _.each(filters, function(f,key) {
@@ -963,7 +999,7 @@ gda.addSelectedChart = function(tObj){
 }
 
 gda.removeChart = function(chtId) {
-    gda.log(3,"removeChart " + JSON.stringify(chtId));
+    gda.log(4,"removeChart " + JSON.stringify(chtId));
     // remove from definition, then repaint.
     // or optimize and remove from active slides, and repaint just document element.
 
@@ -1064,7 +1100,7 @@ gda.addEditControls = function(_aChart, s4) {
 							var dTd = gda.addElement(dTr,"td");
 							gda.addTextEntry(dTd, key, key, value,
 									function(newVal, fieldName) {
-										//gda.log(3,"field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
+										//gda.log(4,"field " + fieldName + " override " + _aChart.overrides[fieldName] + " " + newVal);
                                         if (typeof(newVal)==="string") {
                                             if (newVal === "false") newVal = false;     // otherwise "false" is 'true'
                                             else if (newVal === "true") newVal = true;  // for consistency
@@ -1092,8 +1128,8 @@ gda.addEditControls = function(_aChart, s4) {
 		}
 
 gda.removeSelectedChart = function(chtId) {
-    //gda.log(3,"removeSelectedChart? " + this.checked + " " + JSON.stringify(this));
-    gda.log(3,"removeSelectedChart " + JSON.stringify(chtId));
+    //gda.log(4,"removeSelectedChart? " + this.checked + " " + JSON.stringify(this));
+    gda.log(4,"removeSelectedChart " + JSON.stringify(chtId));
     // remove from slide state, and slide definition
     // which one? need to store/check the identifier for the chart, from radio button
     var _aChart = _.findWhere(gda.charts, {"__dc_flag__": +chtId}); // or should use the doc id ?
@@ -1343,7 +1379,7 @@ gda.regenerateTableAndDim = function(){
         dt.csetupSortTableCols = [];
     if (dt.bShowTable && gda.cf[dS] && dt.csetupSortTableCols.length>0) {
         if (gda.dateDimension) {
-            gda.log(3,"rTaD remove");
+            gda.log(4,"rTaD remove");
             gda.dateDimension.remove();
         }
         gda.dateDimension = gda.cf[dS].dimension(function (d) {
@@ -1407,7 +1443,7 @@ gda.regenerateTotalReset = function() {
 
 gda.regenerateCharts = function() {
     var docEl = document.getElementById('MyCharts');
-    gda.log(3,"regenerateC: clear,addDisplayCharts");
+    gda.log(4,"regenerateC: clear,addDisplayCharts");
     //docEl[gda.sTextHTML] = "";
                 var dEl = gda.addElementWithId(docEl,"div",docEl.id+dc.utils.uniqueId() );
                     dEl.setAttribute("class","row");
@@ -1496,7 +1532,7 @@ gda.showTable = function() {
             gda.addCheckB(s3, "PollTimer", "Poll DataSource", 'objmember',
                     gda.bPollTimer, 
                     function (t) {
-                        gda.log(3,"PT: " + t.checked);
+                        gda.log(4,"PT: " + t.checked);
                         gda.bPollTimer = t.checked;
                         if (gda.bPollTimer) {
                             gda.manageInputSource.pollTimerStart();
@@ -1535,7 +1571,7 @@ gda.showTable = function() {
                 });
         var dEl = gda.addElement(s3,"br");
         gda.addCheckB(s3, "useOverrides", "Allow Overrides", 'objmember',
-                gda._slide().bAllowOverrideChanges, 
+                gda._slide().bAllowOverrideChanges,// || gda.allowEdit(), 
                 function (t) {
                     gda._slide().bAllowOverrideChanges = t.checked;
                     gda.view.redraw();
@@ -1832,7 +1868,7 @@ gda.slides = function() {
     
     gda.slideRegistry.clear();
     gda._currentSlide = 0;
-    gda.log(3,"gda.slides: ready ===============================1");
+    gda.log(4,"gda.slides: ready ===============================1");
     return {
         clear: function() {
             gda.slideRegistry.clear();
@@ -1840,7 +1876,7 @@ gda.slides = function() {
             gda.slides.append();
         },
         open: function(slidespath) {
-            gda.log(3,"click actions " + JSON.stringify(gda.clickModifiers));
+            gda.log(4,"click actions " + JSON.stringify(gda.clickModifiers));
 
             if (gda && gda.clickModifiers) {
                 if (gda.clickModifiers.ctrlKey &&     // ctrl-left-shift-click on link,
@@ -1868,11 +1904,11 @@ gda.slides = function() {
             }
 
             //if (optFilters)
-            //gda.log(3,"optFilters: ",JSON.stringify(optFilters));
+            //gda.log(4,"optFilters: ",JSON.stringify(optFilters));
 
             gda.bDashOnly = false;
             //if (optFilters) {
-            //    gda.log(3,"optFilters");
+            //    gda.log(4,"optFilters");
             //    if (typeof(optFilters)==="string")
             //        optFilters = JSON.parse(optFilters);
             //    if (gda.utils.fieldExists(optFilters.bDashOnly))
@@ -1880,13 +1916,13 @@ gda.slides = function() {
             //}
             gda.slidesLoadImmediate(slidespath, gda.bDashOnly);    // add slidepath immediate load
             //if (optFilters) {   // if slidesLoadImmediate is retained as async then this should be above that call
-            //    gda.log(3,"optFilters, gda.dH");
+            //    gda.log(4,"optFilters, gda.dH");
             //    gda.deferredHash = optFilters;
             //}
         },
         run: function(slidespath,dElN,dElS,optFilters) {
             if (optFilters)
-            gda.log(3,"optFilters: ",JSON.stringify(optFilters));
+            gda.log(4,"optFilters: ",JSON.stringify(optFilters));
 
             gda._anchorEdit = null;
             if (dElN) { gda._anchorNav = dElN; }
@@ -1894,7 +1930,7 @@ gda.slides = function() {
             //gda._slidefile = slidespath;
             gda.bDashOnly = false;
             if (optFilters) {
-                gda.log(3,"optFilters");
+                gda.log(4,"optFilters");
                 //gda.applySlideFilters (optFilters);
                 if (typeof(optFilters)==="string")
                     optFilters = JSON.parse(optFilters);
@@ -1906,7 +1942,7 @@ gda.slides = function() {
             if (slidespath && slidespath.length>0) {
             gda.slidesLoadImmediate(slidespath, gda.bDashOnly);    // add slidepath immediate load
             if (optFilters) {   // if slidesLoadImmediate is retained as async then this should be above that call
-                gda.log(3,"optFilters, gda.dH");
+                gda.log(4,"optFilters, gda.dH");
                 gda.deferredHash = optFilters;
             }
             }
@@ -2002,7 +2038,7 @@ gda.slides = function() {
                         var dCEl = gda.addElementWithId(dTd,"div","dataProviderType");
                         gda.addRadioB(dCEl, "SLFile", "SLFile", "Local File", 'objmemberSource', ds.bLocalFile, 
                                 function () {
-                                    gda.log(3,"as Local");
+                                    gda.log(4,"as Local");
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
                                     ds.bLocalFile = true;   // needs to be for the 'new' dS.
@@ -2010,7 +2046,7 @@ gda.slides = function() {
                             })
                             .addRadioB(dCEl, "SHttp", "SHttp", "Http Source", 'objmemberSource', !ds.bLocalFile, 
                                 function () {
-                                    gda.log(3,"as Http");
+                                    gda.log(4,"as Http");
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
                                     if (dS) {
@@ -2043,14 +2079,14 @@ gda.slides = function() {
                         //var ds = gda.dataSources.map[dS];
                         gda.addRadioB(dCEl, "One", "One", "Single CSV File", 'objmember', !ds.bListOfMany, 
                                 function () {
-                                    gda.log(3,"newOne");
+                                    gda.log(4,"newOne");
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
                                     ds.bListOfMany = false;
                             })
                             .addRadioB(dCEl, "Many", "Many", "CSV File of File List", 'objmember', ds.bListOfMany, 
                                 function () {
-                                    gda.log(3,"newMany");
+                                    gda.log(4,"newMany");
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
                                     ds.bListOfMany = true;
@@ -2059,21 +2095,21 @@ gda.slides = function() {
                     var dTd = gda.addElement(dTr,"td");
                         gda.addCheckB(dTd, "aggregate", "Aggregate Data", 'objmember', ds.bAggregate, 
                                 function (t) {
-                                    gda.log(3,"Aggregate? " + t.checked);
+                                    gda.log(4,"Aggregate? " + t.checked);
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
                                     ds.bAggregate = t.checked;
                         });
                         gda.addCheckB(dTd, "sparse", "Sparse Data", 'objmember', ds.bSparseData, 
                                 function (t) {
-                                    gda.log(3,"Sparse? " + t.checked);
+                                    gda.log(4,"Sparse? " + t.checked);
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
                                     ds.bSparseData = t.checked;
                         });
                         gda.addCheckB(dTd, "timestamp", "Timestamp Data", 'objmember', ds.bTimestamp, 
                                 function (t) {
-                                    gda.log(3,"Sparse? " + t.checked);
+                                    gda.log(4,"Sparse? " + t.checked);
                                     var dS = gda.sEdS;
                                     var ds = gda.dataSources.map[dS];
                                     ds.bTimestamp = t.checked;
@@ -2152,6 +2188,7 @@ gda.slides = function() {
                                     }
                                     //var ms = gda.metaSources.map[mS];
                                     gda.sEmS = mS;
+				    gda.sEdS = null;	// clear the Data Source selection
                                     gda.metaSources.map[mS] = gda.newMetaSourceState();
                                     gda.view.redraw();
                         });
@@ -2171,7 +2208,7 @@ gda.slides = function() {
                             gda.addCheckB(dCEl, dS, dS, 'objmember', bInitial,  // s/"sEmS"/dS
                                     function (t) {
                                         var dS = t.value;
-                                        gda.log(3,"Include dS in meta? " + t.checked);
+                                        gda.log(4,"Include dS in meta? " + t.checked);
                                         if (!gda.sEmS) t.checked = false;
                                         else {
                                         var mS = gda.sEmS;
@@ -2237,14 +2274,14 @@ gda.slides = function() {
                         var dCEl = gda.addElementWithId(dTd,"div","metaProviderType");
                         gda.addRadioB(dCEl, "Join", "Join", "Join", 'objmemberSource', ms.type === "join", 
                                 function () {
-                                    gda.log(3,"join");
+                                    gda.log(4,"join");
                                     ms.type = "join";
                                     gda.dataSources.updateColumns();
                                     gda.view.redraw();
                             })
                             .addRadioB(dCEl, "Ops", "Ops", "Ops", 'objmemberSource', ms.type === "ops", 
                                 function () {
-                                    gda.log(3,"ops");
+                                    gda.log(4,"ops");
                                     if (gda.sEmS) {
                                     var mS = gda.sEmS;
                                     var ms = gda.metaSources.map[mS];
@@ -2254,7 +2291,7 @@ gda.slides = function() {
                             })
                             .addRadioB(dCEl, "cf", "cf", "CF", 'objmemberSource', ms.type === "cf", 
                                 function () {
-                                    gda.log(3,"cf");
+                                    gda.log(4,"cf");
                                     if (gda.sEmS) {
                                     var mS = gda.sEmS;
                                     var ms = gda.metaSources.map[mS];
@@ -2269,7 +2306,7 @@ gda.slides = function() {
                         var dCEl = gda.addElementWithId(dTd,"div","metaProviderType");
                         gda.addButton(dCEl,"Add", "Add Meta",
                                 function () {
-                                    gda.log(3,"add meta");
+                                    gda.log(4,"add meta");
                                     //gda.metaSources.map[gda.sEmS] = gda.newMetaSourceState();
                                     gda.view.redraw();  // want to just drive the processing & refresh
                             });
@@ -2279,7 +2316,7 @@ gda.slides = function() {
           }
     };
     gda.slides.clear(); // initialize upon first use
-    gda.log(3,"gda.slides: ready ===============================2");
+    gda.log(4,"gda.slides: ready ===============================2");
 }();
 
 //////////////
@@ -2307,7 +2344,7 @@ gda.clearAllSlides = function() {
 gda.view = function() {
     return {
         clear: function() {         // clears all contents from this slide. effectively delele/new/show.
-            gda.log(3,"view.clear");
+            gda.log(4,"view.clear");
             gda.clearWorkingState();       // update model
             gda.view.redraw();
         },
@@ -2334,7 +2371,7 @@ gda.view = function() {
             docElTc.focus();
          },
         remove: function() {
-            gda.log(3,"view.remove");
+            gda.log(4,"view.remove");
             if (gda.slideRegistry.list().length === 1) {
                 gda.slides.append();    // append new one, to replace last/current
             }
@@ -2345,13 +2382,13 @@ gda.view = function() {
             gda.view.showChosen();  // slide navigation occurred
         },
         insert: function() {
-            gda.log(3,"view.insert");
+            gda.log(4,"view.insert");
             gda.slides.insert();
             // gda._currentSlide stays as-is.
             gda.view.redraw();  // nothing to prep, just redraw
         },
         append: function() {
-            gda.log(3,"view.append");
+            gda.log(4,"view.append");
             gda.slides.append();
             gda._currentSlide = gda.slideRegistry.list().length-1;
             gda.view.redraw();  // nothing to prep, just redraw
@@ -2543,14 +2580,14 @@ gda.view = function() {
         },
         //unnecessary
         //show: function(dSorNull) {
-        //    gda.log(3,"view.show");
+        //    gda.log(4,"view.show");
         //    gda.view.redraw(dSorNull);
         //},
 // need a distinction between redrawing everything, and just the charts. The redraw implementation
 // causes complete removal of charts and cf dims etc and recreates. Only the ChartTypeDisplay() needs
 // to be refreshed.
         redraw: function(dSorNull) {
-            gda.log(3,"view.redraw");
+            gda.log(4,"view.redraw");
             if (gda._anchorEdit) {
                 gda._anchorEdit[gda.sTextHTML] = "";  // call operators
                 gda.Controls.addEditGUI();
@@ -2673,7 +2710,7 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
 gda.displayTables = function() {
     gda.tables = [];
     _.each(gda._slide().tables, function(aTable) {
-        gda.log(3,"dT: " + JSON.stringify(aTable));
+        gda.log(4,"dT: " + JSON.stringify(aTable));
         //if (!gda.bDashOnly || (gda.utils.fieldExists(aChart.bDashInclude) && aChart.bDashInclude)) {
         //gda.newTable(gda.cf[dS], aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type, aChart.overrides);
     });
@@ -2729,20 +2766,20 @@ gda.dimensionByCol = function(dS,cname,cf,bFilterNonNumbers, nFixed) {
         if (!gda.utils.fieldExists(gda.dimensions[dS]))
             gda.dimensions[dS] = [];
         gda.dimensions[dS].push({dName: cname, dFilter: bFilterNonNumbers, dFixed: nFixed, dDim: res})
-        gda.log(3,"dBC: in " + dS + ", " + JSON.stringify(gda.dimensions[dS][gda.dimensions[dS].length-1]));
+        gda.log(4,"dBC: in " + dS + ", " + JSON.stringify(gda.dimensions[dS][gda.dimensions[dS].length-1]));
     }
     else if (aDimObj) {
         res = aDimObj.dDim;
-        gda.log(3,"dBC: exists " + cname);
+        gda.log(4,"dBC: exists " + cname);
     }
     return res;
 }
 
 // separate model and view (creation of the objects from the view container)
 gda.newSelector = function(cname, sChtGroup, chartType) {
-    gda.log(3,"gda nS: " + sChtGroup + ", add " + chartType + " " + cname);
+    gda.log(4,"gda nS: " + sChtGroup + ", add " + chartType + " " + cname);
     var dS = sChtGroup;
-    gda.log(3,"gda nS: " + dS + " dS");
+    gda.log(4,"gda nS: " + dS + " dS");
     // might want to separate this dimension from the selector, so the
     // UI is optional to the designer
     var dDim = gda.dimensionByCol(dS, cname, gda.cf[dS]);
@@ -2777,7 +2814,7 @@ gda.addSelectorCharts = function(docEl) {
     _.each(gda.selectors, function(selObj,i) {
         var dEl = gda.addElementWithId(docEl,"div",docEl.id+dc.utils.uniqueId() );//i;//dElIdBase+i;   // nth view chart element
             dEl.setAttribute("class","span3");//+chtObj.overrides["span"]);
-        gda.log(3,"gda aSC: _id " + dEl.id + " i col grp " + i + " " + selObj.cname + " " + selObj.sChartGroup);
+        gda.log(4,"gda aSC: _id " + dEl.id + " i col grp " + i + " " + selObj.cname + " " + selObj.sChartGroup);
 
         selObj.chart = gda.newSelectorDisplay(i, selObj.chartType, dEl, selObj.cname, selObj.dDim,selObj.dGrp,selObj.sChartGroup);
         // xxx add chart edit controls here
@@ -2786,7 +2823,7 @@ gda.addSelectorCharts = function(docEl) {
             sGroups.push(selObj.sChartGroup);
     });
     _.each(sGroups, function(sGroup) {
-		gda.log(3,"renderALL gda.addSelectorCharts");
+		gda.log(4,"renderALL gda.addSelectorCharts");
         dc.renderAll(sGroup);
     });
 }
@@ -2812,7 +2849,7 @@ gda.chartsReset = function(i,chts) {        // needs chart group too.
 }
 //gda.tablesReset = function(i,sChtGroups) {        // needs chart group too.
 //    dc.filterAll(sChtGroups[i]);
-//	gda.log(3,"renderALL gda.tablesReset");
+//	gda.log(4,"renderALL gda.tablesReset");
 //    dc.renderAll(sChtGroups[i]);
 //}
 gda.tablesReset = function(sChartGroup) {
@@ -2878,7 +2915,7 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
 // below are the 'informational display' charts/support
 
 gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverrides) {
-    gda.log(3,"gda nC: " + sChtGroup + ", add '" + cTitle + "' " + chartType + " [" + cnameArray + "]" + (chartOverrides ? " overrides: " + JSON.stringify(chartOverrides):""));
+    gda.log(4,"gda nC: " + sChtGroup + ", add '" + cTitle + "' " + chartType + " [" + cnameArray + "]" + (chartOverrides ? " overrides: " + JSON.stringify(chartOverrides):""));
 
     var iChart = newBaseChart(cf, cnameArray, sChtGroup, chartType);
     gda.charts[iChart].Title = cTitle;
@@ -2996,7 +3033,7 @@ gda.newHistChart = function(iChart, cf) {
         if (pbins<xbins)
             xbins = pbins;
         chtObj.nBins = xbins;
-        gda.log(3,"Hist nBins = " + chtObj.nBins);
+        gda.log(4,"Hist nBins = " + chtObj.nBins);
         bExact = true;
     }
 
@@ -3016,6 +3053,7 @@ gda.newYHistChart = function(iChart, cf) {
     gda.charts[iChart].bChooseable = false; // YHist never...
 }
 
+gda.saDateTypes = [ "Year","Quarter","Month","Week","Day" ];
 gda.isDate = function (cname) {
     var bRet = false; // need more sophisticated method, breaks ServiceInst. 
     var saDateStrings = [
@@ -3116,7 +3154,7 @@ gda.newTimelineChart = function(iChart, cf) {
         var xDimension = null;
         var dXGrp = null;
         if (gda.isDate(chtObj.cnameArray[0])) {
-        gda.addOverride(chtObj,"elasticX",true);
+        gda.addOverride(chtObj,"elasticX",false);
         gda.addOverride(chtObj,"elasticY",true);
         gda.addOverride(chtObj,"reduce",false);
         gda.addOverride(chtObj,"timefield","Month");
@@ -3127,7 +3165,7 @@ gda.newTimelineChart = function(iChart, cf) {
 
             xDimension = gda.dimensionByCol(
                                 chtObj.sChartGroup,
-                                chtObj.overrides["timefield"], //chtObj.cnameArray[0],
+                                chtObj.overrides["timefield"] ? chtObj.overrides["timefield"]:chtObj.cnameArray[0],
                                 chtObj.cf);
             xDimension.isDate = true;
 
@@ -3165,6 +3203,7 @@ gda.newTimelineChart = function(iChart, cf) {
             var mS = chtObj.overrides["normalize"];  // grab the metaSource
             var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
             var cf = gda.cf[ms.dataSources[0]];
+	    if (cf) {	// if source is loaded, cf will exist
             var dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[0],cf);
             cf[ms.columns[0]] = dD;  // could 'name' the dimension in an object instead of numbering in an array, then add this in.
             if (chtObj.overrides["onFilteredChart"]) {
@@ -3173,6 +3212,7 @@ gda.newTimelineChart = function(iChart, cf) {
     // instead of two crossfilters. I think a novel dependency or observer effect would help here.
     // in crossfilter itself. (if crossfilter changes from any reason (data add/sub, filters)) => notify(me)
             }
+	    }
 // also, to allow one pieSelector (say on BU) to adjust two crossfilters that happen to have the
 // same dimension (BU, BU) of course with identical meaning, but not necessarily the same exact
 // set of keys, could create a dim wrapper.
@@ -3395,7 +3435,7 @@ gda.addDisplayCharts = function(docEl,sChtGroup, callback) {
         }
     });
     if (bSomeAdded) {
-		gda.log(3,"renderALL gda.addDisplayCharts");
+		gda.log(4,"renderALL gda.addDisplayCharts");
 	   	dc.renderAll(sChtGroup);
 	}
 }
@@ -3481,7 +3521,7 @@ gda.newLineDisplay = function(iChart, dEl) {
         //reverted? 10/3/2014. why?
         //var dElP = dEl;//gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        //gda.log(3,"gda nLD: _id " + dElP.id + " i " + iChart );
+        //gda.log(4,"gda nLD: _id " + dElP.id + " i " + iChart );
         
 		addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
@@ -3512,7 +3552,7 @@ gda.newLineDisplay = function(iChart, dEl) {
             gr = chtObj.dGrps[0];
         }
 
-        //gda.log(3,"add line for Line @ " + chtObj.dElid);
+        //gda.log(4,"add line for Line @ " + chtObj.dElid);
         var ftX = dc.lineChart("#"+chtObj.dElid,chtObj.sChartGroup)
         chtObj.chart = ftX;        // for now. hold ref
         ftX.gdca_chart = chtObj;
@@ -3586,7 +3626,7 @@ gda.newBubbleDisplay = function(iChart, dEl) {
     var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
 
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    //gda.log(3,"gda nSD: _id " + dElP.id + " i " + iChart );
+    //gda.log(4,"gda nSD: _id " + dElP.id + " i " + iChart );
     
     addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
     //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
@@ -3600,7 +3640,7 @@ gda.newBubbleDisplay = function(iChart, dEl) {
         xu = d3.time.days;  // configurable, or automatic based on xmax-xmin?
     }
 
-    //gda.log(3,"add series for Series @ " + chtObj.dElid);
+    //gda.log(4,"add series for Series @ " + chtObj.dElid);
     var ftX = dc.bubbleChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
@@ -3718,7 +3758,10 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         if (isNaN(xmax)) xmax = 0;
     } else
     {
-        v0 = chtObj.overrides["timefield"];
+        if(chtObj.overrides["timefield"])
+            v0 = chtObj.overrides["timefield"];
+        else
+            v0 = chtObj.cnameArray[0];
         xmin = dDims[0].bottom(1)[0][v0];
         xmax = dDims[0].top   (1)[0][v0];
         if (xmin === undefined) xmin = new Date();
@@ -3739,6 +3782,15 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         if (chtObj.overrides["timefield"]) {
             var r = chtObj.overrides["axisresolution"];
             var p = chtObj.overrides["timefield"].toLowerCase();
+// hack, use gda.saDateTypes 
+	    if (!_.contains(gda.saDateTypes,p)) {
+		_.each(gda.saDateTypes, function(s) {
+		    if (p.indexOf(s.toLowerCase())>=0) {
+			p = s.toLowerCase();
+			return;
+		    }
+		});
+	    }
             if (p === "quarter") {
                 var tInc = gda.TquarterIncMsecs;
                 var d = xmax;
@@ -3775,12 +3827,12 @@ gda.newTimelineDisplay = function(iChart, dEl) {
         xu = d3.time[r]; //.months
         } else {
             xu = d3.time.months;
-            xe = d3.time.month;
+            xe = d3.time.month;  // at least temp switched for Almond+
             xmin = xe.floor(xmin);
             xmax = xe.ceil(xmax);
         }
         xs = d3.time.scale().domain([xmin,xmax]);
-        //gda.log(3,"time scale " + xmin + " to " + xmax);
+        //gda.log(4,"time scale " + xmin + " to " + xmax);
     }
     else {
         xs = d3.time.scale().domain([xmin,xmax]);   // think wrong. 'time', not.
@@ -3816,7 +3868,9 @@ gda.newTimelineDisplay = function(iChart, dEl) {
                 var mS = chtObj.overrides["normalize"];  // grab the metaSource
                 var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
                 var cf = gda.cf[ms.dataSources[0]];
+		if (cf) { // if source loaded cf will exist
                 var dD = cf[ms.columns[0]];
+		var fMin = chtObj.overrides["min"] !== false ? +(chtObj.overrides["min"]) : false ;
 
 
                 // need to register with crossfilter or via dc to receive filter changes that affect this cf.
@@ -3824,12 +3878,15 @@ gda.newTimelineDisplay = function(iChart, dEl) {
                 // that here
             ftX
                 .valueAccessor(function(d){
-                        //gda.log(3,"n: ", JSON.stringify(d), dD, cf);
                         dD.filterExact(d.key);      // for this reason, it shouldn't be shared.
                         var t = dD.top(Infinity).length;    // dGrp.value()?
+                        gda.log(0,"norm: "+ d.value + " " + t, t>0 ? d.value/t : 0, d.key);
                         dD.filterAll();             // undo the filter, at the least while shared.
-                        return d.value/t; // first just a value
+			t = t>0 ? d.value/t : 0;
+			if (fMin !== false && t<fMin) t = fMin;
+                        return t;
                 })
+        }
         }
     //if (dDims[0].isDate)
     {
@@ -3871,7 +3928,7 @@ gda.newTimelineDisplay = function(iChart, dEl) {
             chtObj.chart.gdca_toFilter = oFCchart;
             ftX.renderlet(function (chart) {
                 if (chart.gdca_toFilter) {
-                gda.log(3,"period renderlet");
+                gda.log(4,"period renderlet");
         // why was this being removed? ohloh ex https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=renderlet%20select(%22g.y%22).style(%22display%22%2C%20%22none%22)
 		//	    chart.select("g.y").style("display", "none");
 			    chart.gdca_toFilter.chart.filter(chart.filter()); // need method to specify [0]
@@ -3881,10 +3938,10 @@ gda.newTimelineDisplay = function(iChart, dEl) {
 			})
 			.on("filtered", function (chart) {
                 if (chart.gdca_toFilter) {
-                gda.log(3,"period trigger");
+                gda.log(4,"period trigger");
 			    dc.events.trigger(function () {
                 if (chart.gdca_toFilter.chart.focus) {
-                    gda.log(3,"period triggered");
+                    gda.log(4,"period triggered");
               // this is a test, to try to get scatter y axis to elasticY 
               // next up try reapplying the new domain to Y's axis
                     _.each(gda.charts, function(lchtObj) {
@@ -3931,7 +3988,7 @@ gda.newSeriesDisplay = function(iChart, dEl) {
     var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
 
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    //gda.log(3,"gda nSD: _id " + dElP.id + " i " + iChart );
+    //gda.log(4,"gda nSD: _id " + dElP.id + " i " + iChart );
     
 	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
     //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
@@ -3945,7 +4002,7 @@ gda.newSeriesDisplay = function(iChart, dEl) {
         xu = d3.time.days;  // configurable, or automatic based on xmax-xmin?
     }
 
-    //gda.log(3,"add series for Series @ " + chtObj.dElid);
+    //gda.log(4,"add series for Series @ " + chtObj.dElid);
     var ftX = dc.seriesChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
@@ -3987,7 +4044,7 @@ gda.newBarDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    //gda.log(3,"gda nBD: _id " + dElP.id + " i " + iChart );
+    //gda.log(4,"gda nBD: _id " + dElP.id + " i " + iChart );
     
     addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
     //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
@@ -4003,7 +4060,7 @@ gda.newBarDisplay = function(iChart, dEl) {
     // assume about 5 pixels for font until can extract. Doesn't account for angle
     var botMi = maxL>0 ? (maxL-1)*5 : 0;
 
-    //gda.log(3,"add bar for Bar @ " + chtObj.dElid);
+    //gda.log(4,"add bar for Bar @ " + chtObj.dElid);
     var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
         .dimension(dDims[0])
         .group(chtObj.dGrps[0]);
@@ -4089,7 +4146,7 @@ gda.newParetoDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        //gda.log(3,"gda nBD: _id " + dElP.id + " i " + iChart );
+        //gda.log(4,"gda nBD: _id " + dElP.id + " i " + iChart );
     
 		addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
@@ -4212,7 +4269,7 @@ gda.newParetoDisplay = function(iChart, dEl) {
         var leftShift = 8;//chtObj.wChart/20;   // a bit of magic. rough scaling. could be better with a multiplier and an offset
         composite
           //  .renderlet(function(c) {
-          //      gda.log(3,"composite renderlet");
+          //      gda.log(4,"composite renderlet");
           //      c.selectAll("g.x text").attr('dx', "-"+leftShift);
           //  })
             .renderlet(function(c) {
@@ -4299,7 +4356,7 @@ gda.newRowDisplay = function(iChart, dEl) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
     gda.charts[iChart].dElid = dElP.id;
 
-    gda.log(3,"rowChart " + chtObj.sChartGroup);
+    gda.log(4,"rowChart " + chtObj.sChartGroup);
     var ftX = dc.rowChart("#"+chtObj.dElid,chtObj.sChartGroup)
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
@@ -4357,13 +4414,13 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
 
     if (dDims.length>0) {
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    //gda.log(3,"gda nCD: _id " + dElP.id + " i " + iChart );
+    //gda.log(4,"gda nCD: _id " + dElP.id + " i " + iChart );
     
 	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
     //addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[1], chtObj.sChartGroup);   // add the DC div etc
     gda.charts[iChart].dElid = dElP.id;
 
-    //gda.log(3,"add row for Row @ " + chtObj.dElid);
+    //gda.log(4,"add row for Row @ " + chtObj.dElid);
     var ftX = dc.geoChoroplethChart("#"+chtObj.dElid,chtObj.sChartGroup);
     chtObj.chart = ftX;        // for now. hold ref
     ftX.gdca_chart = chtObj;
@@ -4378,7 +4435,7 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
         d3.json(ds.dataprovider+ds.datafile,  // need to changeup manageInputSource/etc to take callback.
 		   	function( statesJson) {
 				if (statesJson) {
-					gda.log(3,"GeoJSON loaded, " + statesJson);
+					gda.log(4,"GeoJSON loaded, " + statesJson);
 					ftX.colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
 						.colorDomain([0, 200])
 						.colorCalculator(function (d) { return d ? ftX.colors()(d) : '#555'; })
@@ -4395,7 +4452,7 @@ gda.newChoroplethDisplay = function(iChart, dEl) {
 											return d[chtObj.overrides.GeoJSON_Property_Accessor][chtObj.overrides[sCname]];
 										})
 					}); // during Edit, ftX._groupName is undefined here.
-					gda.log(3,"renderALL GeoJSON");
+					gda.log(4,"renderALL GeoJSON");
 					dc.renderAll(chtObj.sChartGroup);   // might be overkill. chtObj.render()?
 				}
         });
@@ -4474,7 +4531,7 @@ gda.newHistDisplay = function(iChart, dEl) {
 
     {//if (!chtObj.dElid) { //}   // workaround until div creation vs layout resolved
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        //gda.log(3,"gda nHD: _id " + dElP.id + " i " + iChart );
+        //gda.log(4,"gda nHD: _id " + dElP.id + " i " + iChart );
         
 		//addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         addDCdiv(dElP, "charts", iChart, cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
@@ -4544,14 +4601,14 @@ if (false) {
                         return Math.abs(end - start);
                     });
     var uF = ftHistX.xUnits();
-    //gda.log(3,"xUnits " + uF(xmin, xmax) + " xmin " + xmin + " xmax " + xmax);
+    //gda.log(4,"xUnits " + uF(xmin, xmax) + " xmin " + xmin + " xmax " + xmax);
 
     ftHistX.xAxis().tickFormat( function(v,i) { 
                     var vm = (+xmax - +xmin) / uF(xmin, xmax);
                     var vr = ftHistX.xAxis().ticks() - 1;
                     var xr = ftHistX.xAxis().scale().range();
                     vr = vr / (xr[1]-xr[0]);
-                    gda.log(3,"v " + +v + " i " + i + " vm " + vm + " sum " + (+xmin + (+v)*vm) );//-1 + 
+                    gda.log(4,"v " + +v + " i " + i + " vm " + vm + " sum " + (+xmin + (+v)*vm) );//-1 + 
                     return chtObj.numberFormat(+xmin + i*vr); });//-1 + 
 }
 
@@ -4571,7 +4628,7 @@ gda.newYHistDisplay = function(iChart, dEl) {
 
     {//}if (!chtObj.dElid) {    // workaround until div creation vs layout resolved
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-        //gda.log(3,"gda nYHD: _id " + dElP.id + " i " + iChart );
+        //gda.log(4,"gda nYHD: _id " + dElP.id + " i " + iChart );
         
 		//addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         addDCdiv(dElP, "charts", iChart, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
@@ -4579,7 +4636,7 @@ gda.newYHistDisplay = function(iChart, dEl) {
     }
 
 
-    //gda.log(3,"add bar for YHst @ " + chtObj.dElid);
+    //gda.log(4,"add bar for YHst @ " + chtObj.dElid);
     var ftHistY = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup);//"#ftHistYEl",chtObj.sChartGroup;
     chtObj.chart = ftHistY;        // for now. hold ref
     ftHistY.gdca_chart = chtObj;
@@ -4601,7 +4658,7 @@ gda.newYHistDisplay = function(iChart, dEl) {
     .xAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[0] +" (binned) <= "+chtObj.numberFormat(ymax))
         .group(chtObj.dGrps[0])
         .renderlet(function(c) {
-          gda.log(3,"YHist renderlet");
+          gda.log(4,"YHist renderlet");
           c.svg().select('g').attr("transform","rotate(270," + (0.65*chtObj.hChart) + "," + (0.35*chtObj.wChart) + ")")});//200,172
     ftHistY
         .xAxis().ticks(6);
@@ -4719,7 +4776,7 @@ gda.newScatterDisplay = function(iChart, dEl) {
     });
 
     var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
-    //gda.log(3,"gda nSD: _id " + dElP.id + " i " + iChart );
+    //gda.log(4,"gda nSD: _id " + dElP.id + " i " + iChart );
 
 	addDCdiv(dElP, "charts", iChart, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
     //addDCdiv(dElP, "charts", iChart, cname, chtObj.sChartGroup);   // add the DC div etc
@@ -4729,7 +4786,7 @@ gda.newScatterDisplay = function(iChart, dEl) {
 // load chart setups
 
     // need to 'create' the div
-    //gda.log(3,"add scatter @ " + dElP.id);
+    //gda.log(4,"add scatter @ " + dElP.id);
     var scatterChart = dc.scatterPlot("#"+dElP.id, chtObj.sChartGroup )
         .width(chtObj.wChart)
         .height(chtObj.hChart)
@@ -4820,8 +4877,15 @@ gda.scatterDomains = function(chtObj, bInitial){
         ymax = +ymax + 0.1 * +ymax;//0;
     }
     else if (ymin === ymax) {
-        ymin = ymin*0.9;
-        ymax = ymax*1.1;
+        if (ymin === 0) {
+            ymin = -0.1;
+            ymax = 1;
+        }
+        else
+        {
+            ymin = ymin*0.9;
+            ymax = ymax*1.1;
+        }
     }
     gda.log(3,"scatterD: a ymin,ymax " + ymin + "," + ymax);
 
@@ -4874,18 +4938,35 @@ gda.scatterDomains = function(chtObj, bInitial){
     if (dDims[0].isDate) {
         xLabelFormat = gda.dateFormat;
     }
+    var xl = dDims[0].isDate ?
+              (xmin.toLocaleString() + " - " + xmax.toLocaleString()) :
+              (xmin+" => "+ chtObj.cnameArray[0] +" <= "+xmax);
     if (bInitial) {
-        if (dDims[0].isDate) {
+        if (dDims[0].isDate && chtObj.overrides["timefield"]) {
             chtObj.chart
+                // needs to be keyed from the override for axis resolution
                 .xAxis().ticks(d3.time.months,chtObj.overrides["xAxis ticks"]);// 6;   // add override for 6, months
         }
+        else 
+            if (dDims[0].isDate && !chtObj.overrides["timefield"]) {
+                chtObj.chart
+                    // the '3' or whatever doesn't have
+                    // impact when elasticX is used
+                    .xAxis().ticks(d3.time.minutes,3);//chtObj.overrides["xAxis ticks"]);// 6;   // add override for 6, months
+            }
         chtObj.chart
             .x(xs)
             .xUnits(xu)
             .y(ys)//.y(d3.scale.linear().domain(ydomain)) //.nice() // to use nice, need to adjust histograms
-            .xAxisLabel(xmin+" => "+ chtObj.cnameArray[0] +" <= "+xmax)
+            .xAxisLabel(xl)
             //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
-            .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
+            .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax))
+            .xAxis().tickFormat(function (s) {
+                if (dDims[0].isDate && !chtObj.overrides["timefield"])
+                    return s.toLocaleTimeString();
+                else
+                    return s;
+            });
     }
     else
     {
@@ -4893,7 +4974,8 @@ gda.scatterDomains = function(chtObj, bInitial){
         .x(xs)
         .y(ys)
         //.y(d3.scale.linear().domain(ydomain)) //.nice() // to use nice, need to adjust histograms
-        .xAxisLabel(xmin+" => "+ chtObj.cnameArray[0] +" <= "+xmax)
+        // could use a time formatter that is user specifiable.
+        .xAxisLabel(xl)
         //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
         .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
     chtObj.chart.render();//redraw();
@@ -4904,10 +4986,10 @@ function expandDomain(adomain, exCoef) {
     if (adomain.length===2) {
         var r = adomain[1]-adomain[0];
         var exV = r * exCoef;
-        //gda.log(3,"expDom b r " + r + " exV " + exV + " ad[0],[1] " + adomain[0] + "," + adomain[1]);
+        //gda.log(4,"expDom b r " + r + " exV " + exV + " ad[0],[1] " + adomain[0] + "," + adomain[1]);
         adomain[0] = +adomain[0] - exV;
         adomain[1] = +adomain[1] + exV;
-        //gda.log(3,"expDom a r " + r + " exV " + exV + " ad[0],[1] " + adomain[0] + "," + adomain[1]);
+        //gda.log(4,"expDom a r " + r + " exV " + exV + " ad[0],[1] " + adomain[0] + "," + adomain[1]);
     }
     return adomain;
 }; 
@@ -4979,7 +5061,7 @@ gda.newTableDisplay = function(dEl, iChart) {
         var dTbl = gda.addElement(dEl0,"table");
         dTbl.setAttribute("class","table table-hover dc-"+sDcData+"-table"); // need to specialize this for each one
 
-    //gda.log(3,"add table @ " + sDcData);//chtObj.dElid;
+    //gda.log(4,"add table @ " + sDcData);//chtObj.dElid;
 
     dc.dataCount(".dc-"+sDcData+"-count", chtObj.sChartGroup)
     .dimension(chtObj.cf)
@@ -4994,9 +5076,9 @@ gda.newTableDisplay = function(dEl, iChart) {
 
     var sC = selCols.csetupSortTableCols;
     if (sC && sC.length>0) {
-    gda.log(3,"cT: sorting by "); 
-    (sC && sC.length>0) ? gda.log(3," col " + sC[0]) :gda.log(3," by date d.dd");
-    //(chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ? gda.log(3,"col " + chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]) :gda.log(3,"by date d.dd");
+    gda.log(4,"cT: sorting by "); 
+    (sC && sC.length>0) ? gda.log(4," col " + sC[0]) :gda.log(4," by date d.dd");
+    //(chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ? gda.log(4,"col " + chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]) :gda.log(4,"by date d.dd");
     var ftT = dc.dataTable(".dc-"+sDcData+"-table", chtObj.sChartGroup)
     // dDims[0] sets the table macro sort order. .sort specifies the order within groups
     .dimension(chtObj.dDims[0])//dateDim        // cf2 might balk at null here
@@ -5006,7 +5088,7 @@ gda.newTableDisplay = function(dEl, iChart) {
         var format = d3.format("02d");
         var r = 1;
         if (d && d[ sC[0] ] && gda.isDate(sC[0]) ){
-        //gda.log(3,"d.dd " + d.dd);
+        //gda.log(4,"d.dd " + d.dd);
         r = d[sC[0]].getFullYear() + "/" + format((d[sC[0]].getMonth() + 1));
         }
         return r;
@@ -5048,7 +5130,7 @@ gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, b
     var iTable = gda.tables.length;
     gda.tables.push( chtObj );
 
-    gda.log(3,"cT: # " + iTable + " cols " + JSON.stringify(columns));
+    gda.log(4,"cT: # " + iTable + " cols " + JSON.stringify(columns));
 
     chtObj.colAccessor = [];
     if (bShowLinksInTable || bShowPicturesInTable) { // only use if requested, overhead
@@ -5182,7 +5264,7 @@ function executeFunctionByName(functionName, context /*, args */) {
 
 gda.saveState = function (d,i) { // or ? https://code.google.com/p/google-gson/
 
-        gda.log(3,"saveState: d,i " + d + "," + i);
+        gda.log(4,"saveState: d,i " + d + "," + i);
         var slidesAsTxt = gda.slideRegistry.asText();
         var dataSourcesAsTxt = gda.dataSources.asText();
         var metaSourcesAsTxt = gda.metaSources.asText();
@@ -5239,7 +5321,7 @@ gda.saveState = function (d,i) { // or ? https://code.google.com/p/google-gson/
 // or an indirection (a.b.c = dataob.field, and use a.b.c in a chart); then just include desired charts.
 
 gda.restoreStateDeferred = function(error, qR, oR, bDashOnly) {
-    gda.log(3,"restoreStateDeferred e(" +
+    gda.log(4,"restoreStateDeferred e(" +
            (error ?
                 (error.message ? 
                     error.message
@@ -5250,14 +5332,14 @@ gda.restoreStateDeferred = function(error, qR, oR, bDashOnly) {
     }
     else
     {
-    gda.log(3,"rSD allDataLoaded in " + JSON.stringify(oR).substring(0,120)+"...");
+    gda.log(4,"rSD allDataLoaded in " + JSON.stringify(oR).substring(0,120)+"...");
     // this could use a JSON.parse to check validity. SplitTest isn't loading in a composite.
     gda.restoreStateFromObject(oR, qR, bDashOnly);
     if (gda.deferredHash !== undefined && gda.deferredHash !== null) {
         // or perhaps in restoreStateFromObject?
         var lH = gda.deferredHash;
-        gda.log(3,"deferred Hash " + lH);
-        gda.log(3,"deferred Hash " + JSON.stringify(lH));
+        gda.log(4,"deferred Hash " + lH);
+        gda.log(4,"deferred Hash " + JSON.stringify(lH));
         gda.deferredHash = null;
         window.location.hash = lH;
     }
@@ -5266,7 +5348,7 @@ gda.restoreStateDeferred = function(error, qR, oR, bDashOnly) {
 
 // restoreState as a depth-first loader, using queue.
 gda.restoreStateFromObject = function(o, qR, bDashOnly) {
-    gda.log(3,"rSFO: bDO " + bDashOnly);
+    gda.log(4,"rSFO: bDO " + bDashOnly);
 // place one for each item. it will be executed in order.
     _.each(o, function(opt, key) {
         switch (key.toLowerCase()) {
@@ -5275,10 +5357,10 @@ gda.restoreStateFromObject = function(o, qR, bDashOnly) {
         case "branch":
         case "version":
         case "minor":
-                gda.log(3,"key, opt = " + key + ", " + opt);
+                gda.log(4,"key, opt = " + key + ", " + opt);
                 break;
         case "slideRefs".toLowerCase():                             // immediately load all slides referenced
-                gda.log(3,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
+                gda.log(4,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
                 _.each(opt, function(aSlideRef) {
                     if (!bDashOnly || (gda.utils.fieldExists(aSlideRef.bDashInclude) && aSlideRef.bDashInclude)) {
                     var filepath = aSlideRef.dataprovider;
@@ -5304,13 +5386,13 @@ gda.restoreStateFromObject = function(o, qR, bDashOnly) {
 };
 
 gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
-    gda.log(3,"rIFS: ",key.toLowerCase());
+    gda.log(4,"rIFS: ",key.toLowerCase());
     switch (key.toLowerCase()) {
         case "view":
                 // defer
-                gda.log(3,">>> defer    view action");
+                gda.log(4,">>> defer    view action");
                 qR.defer( function(callback) {
-                    gda.log(3,">>> deferred view action");
+                    gda.log(4,">>> deferred view action");
                     gda.view.redraw();
                     callback(null, {});
                 });
@@ -5320,19 +5402,19 @@ gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
         case "branch":
         case "version":
         case "minor":
-                gda.log(3,"key, opt = " + key + ", " + opt);
-                gda.log(3,"alert! should not happen");
+                gda.log(4,"key, opt = " + key + ", " + opt);
+                gda.log(4,"alert! should not happen");
                 break;
         case "slideRefs".toLowerCase():
-                gda.log(3,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
-                gda.log(3,"alert! should not happen");
+                gda.log(4,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
+                gda.log(4,"alert! should not happen");
                 break;
         case "dataSources".toLowerCase():
-                gda.log(3,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
+                gda.log(4,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
                 // defer
-                gda.log(3,">>  defer    dataSource action");
+                gda.log(4,">>  defer    dataSource action");
                 qR.defer( function(callback) {
-                    gda.log(3,">>  deferred dataSource action");
+                    gda.log(4,">>  deferred dataSource action");
                     gda.dataSources.restore(opt);
                     _.each(gda.dataSources.map, function(ds) {
                         // workaround, some existing slides may have ds's bLoaded set
@@ -5342,17 +5424,17 @@ gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
                 });
                 break;
         case "metaSources".toLowerCase():
-                gda.log(3,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
+                gda.log(4,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
                 // defer
-                gda.log(3,">   defer    metaSource action");
+                gda.log(4,">   defer    metaSource action");
                 qR.defer( function(callback) {
-                    gda.log(3,">   deferred metaSource action");
+                    gda.log(4,">   deferred metaSource action");
                     gda.metaSources.restore(opt);
                     callback(null, {});
                 });
                 break;
         case "slides":
-                gda.log(3,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
+                gda.log(4,"key      = " + key + "("+_.size(opt)+")",JSON.stringify(opt).substring(0,120)+"..." );
                 // defer
                 qR.defer( function(callback) {
                      gda.slidesSources.restore(opt, bDashOnly);
@@ -5360,8 +5442,8 @@ gda.restoreItemFromState = function(qR, key, opt, bDashOnly) {
                 });
                 break;
         default:
-                gda.log(3,"default hit!");
-                gda.log(3,"key, opt = " + key + ", " + opt,JSON.stringify(opt).substring(0,120)+"..." );
+                gda.log(4,"default hit!");
+                gda.log(4,"key, opt = " + key + ", " + opt,JSON.stringify(opt).substring(0,120)+"..." );
                 break;
     };
 };
@@ -5407,7 +5489,7 @@ gda.slidesSources.restore = function(opt, bDashOnly) {
             // workaround for a few slides/ets.
             gda.utils.moveField("columns",      restoredSlide, gda.dataSources.map[restoredSlide.dataSource] );
 
-            gda.log(3,"fix: slide has dataSource " + restoredSlide.dataSource);
+            gda.log(4,"fix: slide has dataSource " + restoredSlide.dataSource);
             tempConversionDSname = restoredSlide.dataSource;
             delete restoredSlide.dataSource;
         }
@@ -5501,7 +5583,7 @@ if (gda.utils.fieldExists(recOld[field])) {
 };
 
 gda.restoreState = function(text) {
-    gda.log(3,"rS:");
+    gda.log(4,"rS:");
     if (text) {
         var o = tryParseJSON(text);
         if (o) {
@@ -5513,18 +5595,18 @@ gda.restoreState = function(text) {
             var qR = queue(1);    // serial. parallel=2+, or no parameter for infinite.
             gda.restoreStateFromObject(o, qR, false);
             qR.awaitAll(function(error, results) {
-                            gda.log(3,"restoreState e(" +
+                            gda.log(4,"restoreState e(" +
                                    (error ?
                                         (error.message ? 
                                             error.message
                                             :error.statusText)
                                         :"no error")+")");
                             if (error) {// (|| !results || results.length<1)
-                                gda.log(3,"restoreState: error!");
+                                gda.log(4,"restoreState: error!");
                             }
                             else
-                                gda.log(3,"restoreState: complete");
-                                gda.log(3,"rS: ",JSON.stringify(results));
+                                gda.log(4,"restoreState: complete");
+                                gda.log(4,"rS: ",JSON.stringify(results));
             });
         }
     else alert("Unable to parse file");
@@ -5542,7 +5624,7 @@ function tryParseJSON (jsonString){
             return o;
         }
     }
-    catch (e) { gda.log(3,"tryParseJSON: not JSON (" + jsonString + ")"); }
+    catch (e) { gda.log(4,"tryParseJSON: not JSON (" + jsonString + ")"); }
 
     return false;
 };
@@ -5565,11 +5647,11 @@ function fileReaderMethod(uiObject,callback) {
   uiObject.addEventListener("change", handleFiles, false);  
   function handleFiles() {
     var file = this.files[0];
-    gda.log(3,"==================File Load=====================");
-    gda.log(3,"methodFR file name " + file.name);
-    gda.log(3,"methodFR file lmd  " + file.lastModifiedDate);
+    gda.log(4,"==================File Load=====================");
+    gda.log(4,"methodFR file name " + file.name);
+    gda.log(4,"methodFR file lmd  " + file.lastModifiedDate);
     var filetype = gda.isDataFileTypeSupported(file.name);
-    gda.log(3,"filetype " + filetype);
+    gda.log(4,"filetype " + filetype);
     if (!filetype) {
         alert("File is not a supported Data file type (.csv, .xml). " + file.name);
         return false;
@@ -5613,9 +5695,9 @@ function slideReaderMethod(uiObject,callback) {
   uiObject.addEventListener("change", handleFiles, false);  
   function handleFiles() {
     var file = this.files[0];
-    gda.log(3,"==================File Load=====================");
-    gda.log(3,"methodFR file name " + file.name);
-    gda.log(3,"methodFR file lmd  " + file.lastModifiedDate);
+    gda.log(4,"==================File Load=====================");
+    gda.log(4,"methodFR file name " + file.name);
+    gda.log(4,"methodFR file lmd  " + file.lastModifiedDate);
     var filetype = gda.isSlideFileTypeSupported(file.name);
     if (!filetype) {
         alert("File is not a supported Slide file type (.json, .txt). " + file.name);
@@ -5634,15 +5716,15 @@ function slideReaderMethod(uiObject,callback) {
 // For a standard single CSV, use the subsequent code block
 var iUid = 0;
 gda.dataReady = function(data) { //    from Input button handler
-    gda.log(3,"dataReady data "+ data && data.length>0 ?data.substring(0,120):"<none?>");
+    gda.log(4,"dataReady data "+ data && data.length>0 ?data.substring(0,120):"<none?>");
     var dR = [];
     // special case for JSON 'set' as string, convert to array
     if (data[0] === "{") {
-        gda.log(3,"dataReady JSON");
+        gda.log(4,"dataReady JSON");
         var o = JSON.parse(data);
         if (o) {
         dR = _.values(o);
-        gda.log(3,"new " + JSON.stringify(dR));
+        gda.log(4,"new " + JSON.stringify(dR));
         }
     }
     else
@@ -5682,9 +5764,9 @@ gda.dataToCrossfilter = function(dS,dR) {
 gda.dataNativeReady = function(dS,dR) {
     if (gda.bFirstRowsOnly && dR.length>gda.nFirstRows)
         dR = _.first(dR, gda.nFirstRows);
-    gda.log(3,"dataNativeReady Lin ", dR.length);
-    //gda.log(3,"dataNativeReady "+dR);
-    //gda.log(3,"dataNativeReady "+JSON.stringify(dR));
+    gda.log(4,"dataNativeReady Lin ", dR.length);
+    //gda.log(4,"dataNativeReady "+dR);
+    //gda.log(4,"dataNativeReady "+JSON.stringify(dR));
 
     var ds = gda.metaSources.map[dS];
     if (!ds) ds = gda.dataSources.map[dS];
@@ -5692,7 +5774,7 @@ gda.dataNativeReady = function(dS,dR) {
 // xxx prop comes from the metaS for the cf
 // actually, could use one for the cf, and one for 'column' aggregation
     if (ds.bAggregate) {
-        gda.log(3,"bAggregate, retain columns ",ds.columns);
+        gda.log(4,"bAggregate, retain columns ",ds.columns);
     }
     else {  // the columns and keymaps should only be adjusted during edit,
             // or upon load of data with newly (since last edit) added columns, some of which may need a keymap
@@ -5753,14 +5835,14 @@ gda.dataFilterKeymapTransform = function(dS, dR) {
                     columns.push(key);
             });
         if (_.size(keymap)>0) {
-            gda.log(3,"dFKmT: " + JSON.stringify(keymap));
+            gda.log(4,"dFKmT: " + JSON.stringify(keymap));
             ds.keymap  = keymap;
         }
         ds.columns = columns;
-        //gda.log(3,"dataFilterKeymapTranform columns " + gda._slide().columns);
+        //gda.log(4,"dataFilterKeymapTranform columns " + gda._slide().columns);
         }
         else
-            gda.log(3,"dFKmT: "+dS+" undefined ds");
+            gda.log(4,"dFKmT: "+dS+" undefined ds");
     }
 }
 
@@ -5770,9 +5852,9 @@ gda.dataFilterKeymapTransform = function(dS, dR) {
 gda.dataKeymapAdd = function(dS,dR) { //columns,dR {
 
     if (dR && dR.length>0) {
-        gda.log(3,"dataKeymapAdd, "+dS);
-        //gda.log(3,"dataKeymapAdd b4 " + dR);
-        //gda.log(3,"dataKeymapAdd b4 " + JSON.stringify(dR));
+        gda.log(4,"dataKeymapAdd, "+dS);
+        //gda.log(4,"dataKeymapAdd b4 " + dR);
+        //gda.log(4,"dataKeymapAdd b4 " + JSON.stringify(dR));
         var ds = gda.metaSources.map[dS];
         if(!ds) ds = gda.dataSources.map[dS];
         if (ds && gda.utils.fieldExists(ds.keymap))
@@ -5789,7 +5871,7 @@ gda.dataKeymapAdd = function(dS,dR) { //columns,dR {
 }
 
 gda.slidesLoadImmediate = function(slidespath, bDashOnly) {
-    gda.log(3,"sLI:");
+    gda.log(4,"sLI:");
     if (slidespath && slidespath.length>0) {
         gda._slidefile = slidespath;    // store path
         var qR = queue(1);  // qR for restored elements of slides  // serial. parallel=2+, or no parameter for infinite.
@@ -5808,25 +5890,25 @@ gda.slidesLoadFinish = function(qR) {
     }
     else
     qR.awaitAll(function(error, results) {  // then initiate the qR await
-            gda.log(3,"sLI qR e(" +
+            gda.log(4,"sLI qR e(" +
                    (error ?
                         (error.message ? 
                             error.message
                             :error.statusText)
                         :"no error")+")");
             if (error) {// (|| !results || results.length<1)
-                gda.log(3,"sLI: error!");
+                gda.log(4,"sLI: error!");
             }
             else
-                gda.log(3,"sLI: complete");
-                gda.log(3,"sLI: ",JSON.stringify(results));
+                gda.log(4,"sLI: complete");
+                gda.log(4,"sLI: ",JSON.stringify(results));
     });
 };
 
 // need to refactor this to use the 'data file' framework, but with specialized callbacks
 // for the data
 gda.slideFileLoad = function (slidespath, callback) {
-    gda.log(3,"sFL: " + slidespath);
+    gda.log(4,"sFL: " + slidespath);
     if (slidespath && slidespath.length>0) {
             //var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
             //qF.defer(d3.json,slidespath);                       // this should not be queued xxx
@@ -5909,9 +5991,10 @@ gda.fileLoadImmediate = function(bForce) {
 				return false;
 				}
 				gda.log(2,"selFile " + filepath );
-                if (!isHttp(filepath))
+                if (!isHttp(filepath)) // originally used to override caching.
+		//if (!ds.bLocalFile && gda.bPollTimer)	// might need 'overrideCache' attribute
 				    filepath = filepath + "?q="+Math.random();	// override caching by randomly changing the request path
-				gda.log(3,"selFile " + filepath + " type " + filetype);
+				gda.log(4,"selFile " + filepath + " type " + filetype);
                 var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
                 // need to associate the dataSource with the timer... just the 'active' one for now
                 //var dS = gda.sEdS; // gda._slide().dataSource;   // needs to be specified per dataSource
@@ -5978,9 +6061,9 @@ gda.fileLoadImmediate = function(bForce) {
 
 // how to use other handlers with json.
 //var xhr = d3.json(url)
-//    .on("progress", function() { gda.log(3,"progress", d3.event.loaded); })
-//    .on("load", function(json) { gda.log(3,"success!", json); })
-//    .on("error", function(error) { gda.log(3,"failure!", error); })
+//    .on("progress", function() { gda.log(4,"progress", d3.event.loaded); })
+//    .on("load", function(json) { gda.log(4,"success!", json); })
+//    .on("error", function(error) { gda.log(4,"failure!", error); })
 //    .get();
 // For using with queueo
 //queue().defer(d3.json("file1.json")
@@ -5992,7 +6075,7 @@ gda.fileLoadImmediate = function(bForce) {
 var tfiletype = null;   // working values, refactor into mIS
 var tfilepath = null;
 gda.manageInputSource  = function() {
-    gda.log(3,"gda.manageInputSource: created ===========================1");
+    gda.log(4,"gda.manageInputSource: created ===========================1");
     return {
         clear: function() {
             gda.log(1,"mIS clear:   =======================    ");
@@ -6041,12 +6124,12 @@ gda.manageInputSource  = function() {
         }
     };
     gda.manageInputSource.clear(); // initialize upon first use
-    gda.log(3,"gda.manageInputSource: ready =============================2");
+    gda.log(4,"gda.manageInputSource: ready =============================2");
 }();
 
 function xmlDataLoaded(error, xml) {
-    gda.log(3,"xml " + xml);
-    gda.log(3,"xml " + JSON.stringify(xml));
+    gda.log(4,"xml " + xml);
+    gda.log(4,"xml " + JSON.stringify(xml));
 };
 
 function errorCheck(sName, error) {
@@ -6063,25 +6146,25 @@ function dataArrayReady(dS, dataArray) {    // error   [ [{},{}] , ... ]
     var ds = gda.metaSources.map[dS];
     if(!ds) ds = gda.dataSources.map[dS];
     if (ds) {
-    gda.log(3,"bListOfMany " + ds.bListOfMany);
+    gda.log(4,"bListOfMany " + ds.bListOfMany);
     if (!error && dataArray && dataArray.length>0)  {
-        gda.log(3,"dataArrayReady e(" + error+") Lin ", dataArray.length);
-        gda.log(3,"dataArrayReady "+JSON.stringify(dataArray) );
+        gda.log(4,"dataArrayReady e(" + error+") Lin ", dataArray.length);
+        gda.log(4,"dataArrayReady "+JSON.stringify(dataArray) );
 
         // load each deferred via queue
         var qA = queue(1);    // serial. parallel=2+, or no parameter for infinite.
-        gda.log(3,"dataArrayReady len " + dataArray.length);
+        gda.log(4,"dataArrayReady len " + dataArray.length);
 
         gda.cf[sFileChartGroup].remove();    // but to filters, so might need to
         var cf2 = gda.new_crossfilter(sFileChartGroup);
 
-        gda.log(3,"dAR: File Table dimension ***=-=-=-=-=-=-=-=-=-=-=-=***");
+        gda.log(4,"dAR: File Table dimension ***=-=-=-=-=-=-=-=-=-=-=-=***");
         var dateDimension2 = cf2.dimension(function (d) { return d.dd; });
         var iTable2 = gda.createTable(cf2, dateDimension2, ["Tests"], sFileChartGroup);// needs it's own group
         var s9 = document.getElementById('FileTable');
         gda.newTableDisplay(s9,iTable2);//, ".dc-list-table", ".dc-list-count");
         gda.addChartGroup(sFileChartGroup);
-        gda.log(3,"renderALL dataArrayReady ");
+        gda.log(4,"renderALL dataArrayReady ");
         dc.renderAll(sFileChartGroup);
         for (var iDA=0;iDA<dataArray.length;iDA++){
             // add dataArray[iDA] to a dataTable with group sChartGroupList
@@ -6092,11 +6175,11 @@ function dataArrayReady(dS, dataArray) {    // error   [ [{},{}] , ... ]
             _.each(dataArray[iDA], function(dAvalue, iInDA) {
                 var dA = dAvalue;//dataArray[iDA];
             _.each(dA, function(value, key) {    // just (key) if parseRows is used.
-                gda.log(3," defer key " + key + " v " + JSON.stringify(value));
+                gda.log(4," defer key " + key + " v " + JSON.stringify(value));
                 var p = value;    // eliminate?
                 if (p) {        // eliminate?
                     var p1 = p.replace(/\\/g,"/");
-                    gda.log(3," p " + p + " becomes " + p1);
+                    gda.log(4," p " + p + " becomes " + p1);
                     p = p1;
                     qA.defer(d3.csv, p );   // could specify the DCcsvFilter by row here, as third param
                 }
@@ -6129,25 +6212,25 @@ function ingestArray(dS, testArray) {
     if (testArray.length === 1 &&
         gda.utils.fieldExists(testArray[0]["1"]) &&
         gda.utils.fieldExists(testArray[0]["1"].DeviceID)) {
-        gda.log(3,"ingestArray JSON");  // special case for now, Almond+
+        gda.log(4,"ingestArray JSON");  // special case for now, Almond+
         var o = testArray[0];
         if (o) {
         testArray = [_.values(o)];
-        gda.log(3,"new " + JSON.stringify(o));
+        gda.log(4,"new " + JSON.stringify(o));
         }
         else
             testArray = []; // not valid
         
     }
     if (testArray.length>0)
-        gda.log(3,"ingestArray in " + JSON.stringify(testArray[0]).substring(0,120) + "... <==========");
+        gda.log(4,"ingestArray in " + JSON.stringify(testArray[0]).substring(0,120) + "... <==========");
     if (testArray && testArray.length>0) {// && testArray[0] // relaxed 10/4/2014 && testArray[0].length>0
 
         // don't do most/all of this on a joined dataSource. already performed on the pieces.
         // unless there is some benefit to have another user filter on the result...
 
         for (var i=0;i<testArray.length && (i<gda.nFirstRows || !gda.bFirstRowsOnly) ;i++){   // 1+. 0 is column headings
-            gda.log(3,"ingestArray: filtering " + (i+1) + " of " + testArray.length);
+            gda.log(4,"ingestArray: filtering " + (i+1) + " of " + testArray.length);
             dR = testArray[i];
             if (gda.bFirstRowsOnly && dR.length>gda.nFirstRows)
                 dR = _.first(dR, gda.nFirstRows);
@@ -6162,7 +6245,7 @@ function ingestArray(dS, testArray) {
             testArray[i] = dR;
         }
 
-        gda.log(3,"ingestArray Lin " + testArray.length );
+        gda.log(4,"ingestArray Lin " + testArray.length );
 
         if ((gda.bPollTimer || // && gda.bPollAggregate ||
              ds.bAggregate === true) && gda.cf[dS]) {   // was dS
@@ -6173,11 +6256,13 @@ function ingestArray(dS, testArray) {
             gda.new_crossfilter(dS);
 
         for (var i=0;i<testArray.length && (i<gda.nFirstRows || !gda.bFirstRowsOnly) ;i++){   // 1+. 0 is column headings
-            gda.log(3,"ingestArray dataKeymapAdd ");
+            gda.log(4,"ingestArray dataKeymapAdd ");
             var dR = testArray[i];
-            gda.dataKeymapAdd(dS,dR);
-            dR.clear();
-            //testArray[i] = dR;
+            if (dR instanceof Array) {
+                gda.dataKeymapAdd(dS,dR);
+                dR.clear();
+                //testArray[i] = dR;
+            }
         }
         testArray.clear();
     }
@@ -6187,19 +6272,19 @@ function ingestArray(dS, testArray) {
     gda.dataComplete(dS);
     }
     else
-        gda.log(3,"ingestArray: dS " + dS + " undefined");
+        gda.log(4,"ingestArray: dS " + dS + " undefined");
 }
 
 function dataAdd(dS, data) {
-    gda.log(3,"dataAdd, " + dS + ", data " + JSON.stringify(data).substring(0,120) + "...");
+    gda.log(4,"dataAdd, " + dS + ", data " + JSON.stringify(data).substring(0,120) + "...");
     gda.cf[dS].add(data);
-    //gda.log(3,"dataAdd data " + JSON.stringify(data));
-    gda.log(3,"dataAdd cf("+dS+") now at "+ gda.cf[dS].size());
+    //gda.log(4,"dataAdd data " + JSON.stringify(data));
+    gda.log(4,"dataAdd cf("+dS+") now at "+ gda.cf[dS].size());
 }
 
 // placeholder for user override
 gda.dataFilter = function(data) {
-    gda.log(3,"gda.dataFilter");
+    gda.log(4,"gda.dataFilter");
     return data;
 }
 
@@ -6219,7 +6304,7 @@ function trimColName(cname) {
     }
     //cname = capitalize(cname); // preferred, but not the right way/place
     if (cnameOrig !== cname)
-        gda.log(3,"Cleaned Column Name: from '" + cnameOrig + "' to " + cname );
+        gda.log(4,"Cleaned Column Name: from '" + cnameOrig + "' to " + cname );
     return cname;
 }
 
