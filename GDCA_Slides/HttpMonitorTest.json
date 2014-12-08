@@ -1,0 +1,43 @@
+{
+    "version": "0.099",
+    "minor": "103",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "NameMe": {
+            "dataprovider": "https://mysafeinfo.com/api/data?list=alcoholicbeverages&format=csv&token=6LgjHC91cI3dB1bFyXWve1pXk4QVxsFV",
+            "datafile": "",
+            "bLocalFile": false,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "bSparseData": false,
+            "bTimestamp": true,
+            "_idCounter": 0,
+            "keymap": {},
+            "columns": [
+                "Timestamp"
+            ],
+            "Timestamp_get": "2014-12-07T22:54:55.291Z",
+            "Timestamp_complete": "2014-12-07T22:54:55.485Z"
+        }
+    },
+    "slides": [
+        {
+            "title": "Blank1",
+            "columns": [],
+            "filters": {},
+            "myCols": {},
+            "charts": [],
+            "tables": [],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": true,
+            "bPollAggregate": false,
+            "nPollTimerMS": 15000,
+            "bAllowOverrideChanges": true,
+            "bAccessOverrides": false,
+            "myId": 0
+        }
+    ]
+}
+

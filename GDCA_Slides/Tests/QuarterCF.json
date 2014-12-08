@@ -46,7 +46,7 @@
     },
     "slides": [
         {
-            "title": "Blank1",
+            "title": "Test, Normalize one dimension (qty per time unit using Start Date) by another (qty per time unit using End Date)",
             "columns": [],
             "filters": {},
             "myCols": {
@@ -56,7 +56,7 @@
             },
             "charts": [
                 {
-                    "Title": "Line; 3,4,4,2 in Q1..4",
+                    "Title": "Line; Start; 3,4,4,2 in Q1..4",
                     "myCols": {
                         "csetupChartCols": [
                             "StartQuarter",
@@ -70,7 +70,21 @@
                     }
                 },
                 {
-                    "Title": "Hist; 3,4,4,2 in Q1..4",
+                    "Title": "Line; End; 6,2,5 in Q2..4",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "EndQuarter",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Line",
+                    "sChartGroup": "DateSample",
+                    "overrides":{
+                        "hChart":"200"
+                    }
+                },
+                {
+                    "Title": "Hist; Start; 3,4,4,2 in Q1..4",
                     "myCols": {
                         "csetupChartCols": [
                             "StartQuarter",
@@ -84,14 +98,14 @@
                     }
                 },
                 {
-                    "Title": "Scatter; 1's",
+                    "Title": "Hist; End; 6,2,5 in Q2..4",
                     "myCols": {
                         "csetupChartCols": [
-                            "StartQuarter",
+                            "EndQuarter",
                             "_qty"
                         ]
                     },
-                    "type": "Scatter",
+                    "type": "Hist",
                     "sChartGroup": "DateSample",
                     "overrides":{
                         "hChart":"200"
@@ -111,7 +125,7 @@
                         "hChart":"200",
                         "elasticX":false,
                         "timefield":"StartQuarter",
-                        "axisresolution":"quarters"
+                        "xAxisResolution":"quarters"
                     }
                 },
                 {
@@ -128,11 +142,11 @@
                         "hChart":"200",
                         "elasticX":false,
                         "timefield":"EndQuarter",
-                        "axisresolution":"quarters"
+                        "xAxisResolution":"quarters"
                     }
                 },
                 {
-                    "Title": "Timeline, Start/End; 0.66,2,0.4 in Q2..4",
+                    "Title": "Timeline, Start/End, raw; 0.66,2,0.4 in Q2..4",
                     "myCols": {
                         "csetupChartCols": [
                             "StartQuarter",
@@ -145,12 +159,12 @@
                         "hChart":"200",
                         "elasticX":false,
                         "timefield":"StartQuarter",
-                        "axisresolution":"quarters",
+                        "xAxisResolution":"quarters",
                         "normalize":"byEnd"
                     }
                 },
                 {
-                    "Title": "Timeline, Start/End, min 1; 1,2,1 in Q2..4",
+                    "Title": "Timeline, KPI, Start/End, min 1; 1,2,1 in Q2..4",
                     "myCols": {
                         "csetupChartCols": [
                             "StartQuarter",
@@ -163,7 +177,7 @@
                         "hChart":"200",
                         "elasticX":false,
                         "timefield":"StartQuarter",
-                        "axisresolution":"quarters",
+                        "xAxisResolution":"quarters",
                         "normalize":"byEnd",
                         "min":"1"
                     }
@@ -180,7 +194,7 @@
                     "csetupSortTableCols": [
                         "StartQuarter"
                     ],
-                    "csetupHiddenTableCols": [],
+                    "csetupHiddenTableCols": ["End","EndQuarter","Start","StartQuarter","_qty","_counter","cumFileUnits"],
                     "dataSource": "DateSample",
                     "sChartGroup": "DateSample"
                 }
@@ -190,7 +204,7 @@
             "bPollTimer": false,
             "bPollAggregate": false,
             "nPollTimerMS": 5000,
-            "bAllowOverrideChanges": false,
+            "bAllowOverrideChanges": true,
             "bAccessOverrides": false,
             "myId": 0
         }

@@ -17,6 +17,7 @@ Tests,"Single chart, no Nav",FreeFlow,/GDCA_Html/SimpleChart.html,SLIDcES:/GDCA_
 Samples,Auto Leases,,/GDCA_Html/Leases2014Jul.html,SLIDcES:/GDCA_Slides/Leases201407.json
 Samples,Auto Leases,,/GDCA_Html/Leases2014Aug.html,SLIDcES:/GDCA_Slides/Leases201408.json
 Samples,Auto Leases,,/GDCA_Html/AllLeases.html,SLIDcES:/GDCA_Slides/AllLeases.json
+Samples,Autos,Volts,/GDCA_Html/Volts.html,SLIDcES:/GDCA_Slides/Volts.json
 Samples,Almond+ Sensors,"Live, requires an Almond+",/GDCA_Html/AlmondPlus.html,SLIDcES:/GDCA_Slides/AlmondPlus.json
 Samples,Almond+ Sensors,"Static, from file",/GDCA_Html/AlmondPlusSample.html,SLIDcES:/GDCA_Slides/AlmondPlusSample.json
 Samples,US Venture Capital Landscape 2011,,/GDCA_Html/USVentureCapital.html,SLIDcES:/GDCA_Slides/USVentureCapitalLandscape2011.json
