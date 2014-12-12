@@ -701,6 +701,7 @@
     return value == null ? propertyNull : typeof value === "function" ? propertyFunction : propertyConstant;
   }
   d3_selectionPrototype.text = function(value) {
+    var t = true;
     return arguments.length ? this.each(typeof value === "function" ? function() {
       var v = value.apply(this, arguments);
       this.textContent = v == null ? "" : v;
@@ -708,7 +709,11 @@
       this.textContent = "";
     } : function() {
       this.textContent = value;
-    }) : this.node().textContent;
+    }) : 
+        (this.node() ? this.node().textContent
+         :
+           t = null)
+         ;
   };
   d3_selectionPrototype.html = function(value) {
     return arguments.length ? this.each(typeof value === "function" ? function() {
