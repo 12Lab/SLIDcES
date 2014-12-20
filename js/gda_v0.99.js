@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "104",
+    minor:   "105",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -194,6 +194,123 @@ var gda = {
     bAny : false,
     diag : 0        // 0='get' time, 1= +tick+progress, 2= +file, 3= +scatterD, 4= +all
 };
+
+
+gda.spinner = function(config) {
+  var _iLevels = 0;
+  var _config = {innerRad: 0.4, outerRad: 0.9,
+                 endRad: 1.15, startRad: 0.35,// C
+                 width: 50, height: 50,
+                 container: "#Spinner", id: "spinner"};
+  var _levelsArc = [];
+  var _bkg = [];
+  var tau = 2 * Math.PI;
+  var _svg = null;
+  var bOnceOnly = true;
+
+    function spin(selection, duration) {
+        if (_iLevels>1 || bOnceOnly) {
+        selection.transition()
+            .ease("linear")
+            .duration(duration)
+            .attrTween("transform", function() {
+                return d3.interpolateString("rotate(0)", "rotate(360)");
+            });
+
+        setTimeout(function() { spin(selection, duration); }, duration);
+        }
+    }
+
+    function transitionFunction(path) {
+        path.transition()
+            .duration(7500)
+            .attrTween("stroke-dasharray", tweenDash)
+            .each("end", function() { d3.select(this).call(transition); });
+    }
+
+  return {
+    create: function() {
+        if (config) _config = config;
+        _config.radius = Math.min(_config.width, _config.height) / 2;
+
+
+        gda.log(0,"spin0 ",_iLevels);
+        gda.log(0,"arcs ",_levelsArc.length);
+    },
+    start: function() {
+        _iLevels++;
+        if (_iLevels===1) {
+            var arc = d3.svg.arc()
+                    .innerRadius(_config.radius* _config.innerRad)
+                    .outerRadius(_config.radius* _config.outerRad)
+                    .startAngle(_config.startRad*tau);
+            _levelsArc.push(arc);
+
+            _svg = d3.select(_config.container).append("svg")
+                .attr("id", _config.id)
+                .attr("width", _config.width)
+                .attr("height", _config.height)
+              .append("g")
+                .attr("transform", "translate(" + _config.width / 2 + "," + _config.height / 2 + ")")
+
+            _bkg.push( _svg.append("path")
+                    .datum({endAngle: _config.endRad*tau})
+                    .style("fill", "#4D4D4D")
+                    .attr("d", _levelsArc[0]) 
+                    //.call(spin, 1500)
+                    );
+            gda.log(0,"spin+ ",_iLevels);
+
+            if (bOnceOnly) {
+                _bkg[0]
+                    .call(spin, 1500);
+                bOnceOnly = false;
+            }
+        }
+        else if (_iLevels>1) {
+            var arcStrip = d3.svg.arc()
+                    .innerRadius(_config.radius* _config.innerRad *(1 + (1*_iLevels)/10))
+                    .outerRadius(_config.radius* _config.innerRad *(1 + (1*_iLevels+1)/10))
+                    .startAngle(0);//_config.startRad*tau);
+            _levelsArc.push(arcStrip);
+            _bkg.push( _svg.append("path")
+                    .datum({endAngle: 0.7*tau})//_config.endRad*tau
+                    .style("fill", "#00AD00")
+                    .attr("d", _levelsArc[_iLevels-1])
+                    .attr("id", "spin"+_iLevels)
+                    );
+            _bkg[_iLevels-1].call(spin,1000);
+        }
+        gda.log(0,"arcs ",_levelsArc.length);
+    },
+    stop: function() {
+        if (_iLevels>0) {
+           _levelsArc.pop();
+           _bkg.pop();
+            d3.select(_config.container).select('svg').select('g').select('path#spin'+_iLevels).remove();
+            _iLevels--;
+        }
+        else {
+            gda.log(0,"attempted extra stop");
+        }
+        if (_iLevels === 0) {
+            _svg.selectAll("*").remove();
+            d3.select(_config.container).select('svg').remove();
+        }
+        gda.log(0,"spin- ",_iLevels);
+        gda.log(0,"arcs ",_levelsArc.length);
+    }
+
+  };
+
+}
+
+gda.spinnerDef = {innerRad: 0.4, outerRad: 0.9,
+                  endRad: 1.15, startRad: 0.35,// C
+                  width: 50, height: 50,
+                  container: "#Spinner", id: "spinner"};
+gda.mySpinner = document.getElementById(gda.spinnerDef.container.substring(1)) ? gda.spinner(gda.spinnerDef) : null;
+
 
 gda.numberFormat = d3.format(gda.numFormats[gda.defFormat]);
 gda.dateFormat = d3.time.format(gda.numFormats[1]);  // hmm not great
@@ -305,7 +422,7 @@ gda.metaSources.restore = function(metaSourceMap) {
 }
 
 gda.log = function(L,a,b,c) {
-    console.log("DO: ",gda.bDashOnly);
+    //console.log("DO: ",gda.bDashOnly);
     if (L<=gda.diag)
         if (c !== undefined)
             console.log(a,b,c);
@@ -443,6 +560,7 @@ gda.metaSources.restoreOne = function(dS, dsRecord) {
              dsRecord.type === "cf" ) ) {
                 switch(dsRecord.type) {
                     case "join":
+                        if (gda.mySpinner) gda.mySpinner.start();
                         // perform a join using the keys+, on includes dataSources+
                         // prior to handing off to crossfilter
                         var qF = queue(1);    // serial. parallel=2+, or no parameter for infinite.
@@ -582,6 +700,7 @@ gda.newSlideState = function() {
 gda.newChartState = function() {
     var _aChart = {};
     _aChart.Title = "Blank"+dc.utils.uniqueId();
+    //_aChart.Desc = "";
     _aChart.myCols = {              // selections, really just the current checkboxes selected in the control section.
         "csetupChartCols" : []      // which columns are used for chart creation
     };
@@ -610,8 +729,18 @@ gda.chart = function( _chart ) {    // used to decorate a chart definition for o
         aChart.Title =  text ? text : "Blank"+dc.utils.uniqueId();
         _aChart.Title = aChart.Title;
         // redraw anything?
-        if (aChart.titleEl) {
-            aChart.titleEl[gda.sTextHTML] = chtObj.Title;//"";	8/17/2014
+        if (_aChart.titleEl) {
+            _aChart.titleEl[gda.sTextHTML] = _aChart.Title;
+        }
+    };
+    _aChart.descCurrent = function(text) {
+        // update stored slide definition
+        var aChart = _.findWhere(gda._slide().charts, {Title: _aChart.Title, sChartGroup: _aChart.sChartGroup});
+        aChart.Desc =  text ? text : "Blank"+dc.utils.uniqueId();
+        _aChart.Desc = aChart.Desc;
+        // redraw anything?
+        if (_aChart.descEl) {
+            _aChart.descEl[gda.sTextHTML] = _aChart.Desc;
         }
     };
 
@@ -702,7 +831,7 @@ gda.setOverride = function( anObj, key, newVal ) {
         if (newVal === "false") newVal = false;     // otherwise "false" is 'true'
         else if (newVal === "true") newVal = true;  // for consistency
     }
-    anObj.overrides[key] = value;
+    anObj.overrides[key] = newVal;
 };
 gda.addOverride = function( anObj, key, value ) {
     if (!anObj.overrides) 
@@ -1079,7 +1208,7 @@ gda.addEditControls = function(_aChart, s4, bAllowDel) {
                                     if (_aChart.Title === sChart.Title)
                                         sChart.overrides = _aChart.overrides;	// update store.
                                 });
-                                gda.view.redraw();  // 8/21/2014 for override edit
+                    //            gda.view.redraw();  // 8/21/2014 for override edit
                     });
             if (bAllowDel)
                 gda.addButton(dTd, "deleteChart", "X", function() {      // but not for selector PieCharts
@@ -1093,6 +1222,17 @@ gda.addEditControls = function(_aChart, s4, bAllowDel) {
                                 //		sChart.overrides = _aChart.overrides;	// update store.
                                 //});
                                 gda.view.redraw();  // 8/21/2014 for override edit
+                    });
+        var dTr = gda.addElement(dTb,"tr");
+            var dTd = gda.addElement(dTr,"td");
+            gda.addTextEntry(dTd, "Desc", "Desc", _aChart.Desc ? _aChart.Desc : "",
+                    function(newVal, fieldName) {  // adopt same form as below  .Desc as a function
+                    _aChart.descCurrent(newVal);	// use for several side effects
+                                _.each(gda._slide().charts, function(sChart) {
+                                    if (_aChart.Title === sChart.Title)
+                                        sChart.overrides = _aChart.overrides;	// update store.
+                                });
+                    //            gda.view.redraw();  // 8/21/2014 for override edit
                     });
         var bWidth = false;
         var bHeight = false;
@@ -1539,7 +1679,9 @@ gda.dataCompleteAction = function(dS) {
         dc.redrawAll(dS);//sChartGroup;  // missed File Table
     }
     }
+    if (gda.mySpinner) gda.mySpinner.stop();
 }
+
 
 // presently updates #2 and calls regenerateTable for #3
             // 1. Use Table (shown in Editor)
@@ -1912,6 +2054,9 @@ gda.slides = function() {
     gda.slideRegistry.clear();
     gda._currentSlide = 0;
     gda.log(4,"gda.slides: ready ===============================1");
+    if (gda.mySpinner) gda.mySpinner.create();
+    //if (gda.mySpinner) gda.mySpinner.start();
+
     return {
         clear: function() {
             gda.slideRegistry.clear();
@@ -1919,6 +2064,7 @@ gda.slides = function() {
             gda.slides.append();
         },
         open: function(slidespath) {
+            if (gda.mySpinner) gda.mySpinner.start();
             gda.log(2,"click actions " + JSON.stringify(gda.clickModifiers));
 
             if (gda && gda.clickModifiers) {
@@ -1962,8 +2108,10 @@ gda.slides = function() {
             //    gda.log(4,"optFilters, gda.dH");
             //    gda.deferredHash = optFilters;
             //}
+            if (gda.mySpinner) gda.mySpinner.stop();
         },
         run: function(slidespath,dElN,dElS,optFilters) {
+            if (gda.mySpinner) gda.mySpinner.start();
             if (optFilters)
             gda.log(4,"optFilters: ",JSON.stringify(optFilters));
 
@@ -1995,14 +2143,17 @@ gda.slides = function() {
                 gda.view.redraw();
                 gda.view.redraw();  // workaround. Display not correct on first redraw
             }
+            if (gda.mySpinner) gda.mySpinner.stop();
         },
         edit: function(dElC,dElN,dElS) {   // control
+            if (gda.mySpinner) gda.mySpinner.start();
             gda._allowEdit = true;
             if (dElC) { gda._anchorEdit = dElC; }
             if (dElN) { gda._anchorNav = dElN; }
             if (dElS) { gda._anchorSlide = dElS; }
             if (gda.slides.list().length === 0)
                 gda.view.append();
+            if (gda.mySpinner) gda.mySpinner.stop();
         },
         // 'internal'
         list: function() {
@@ -2745,7 +2896,7 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
         if (!gda.utils.fieldExists(gda.dimensions[sChtGroup]))
             gda.dimensions[sChtGroup] = [];
         _.each(gda.availCharts, function(chartType) {
-            var chtObj = gda.newChart(cf, "Choice", columns, sChtGroup, chartType,
+            var chtObj = gda.newChart(cf, "Choice", "", columns, sChtGroup, chartType,
                                       {"nBins":"10",
                                        "wChart":"300",
                                        "hChart":"200"});  // gda overrides
@@ -2784,7 +2935,7 @@ gda.displayCharts = function() {
                 var dS = aChart.sChartGroup;
                 if (gda.cf[dS]) {   // during Edit, not loaded yet when called from slide.display
                 if (!gda.bDashOnly || (gda.utils.fieldExists(aChart.bDashInclude) && aChart.bDashInclude)) {
-                gda.newChart(gda.cf[dS], aChart.Title, (aChart.myCols? aChart.myCols.csetupChartCols:null),
+                gda.newChart(gda.cf[dS], aChart.Title, aChart.Desc, (aChart.myCols? aChart.myCols.csetupChartCols:null),
                              aChart.sChartGroup, aChart.type, aChart.overrides);
                 }
                 }
@@ -2795,7 +2946,7 @@ gda.addLastChart = function() {
     var aChart = gda._slide().charts[gda._slide().charts.length-1];
     var dS = aChart.sChartGroup;
     if (gda.cf[dS]) {
-        gda.newChart(gda.cf[dS], aChart.Title, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type);
+        gda.newChart(gda.cf[dS], aChart.Title, aChart.Desc, aChart.myCols.csetupChartCols, aChart.sChartGroup, aChart.type);
     }
 }
 
@@ -3011,11 +3162,12 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
 // above are the 'selector' charts/support
 // below are the 'informational display' charts/support
 
-gda.newChart = function(cf, cTitle, cnameArray, sChtGroup, chartType, chartOverrides) {
+gda.newChart = function(cf, cTitle, cDesc, cnameArray, sChtGroup, chartType, chartOverrides) {
     gda.log(4,"gda nC: " + sChtGroup + ", add '" + cTitle + "' " + chartType + " [" + cnameArray + "]" + (chartOverrides ? " overrides: " + JSON.stringify(chartOverrides):""));
 
     var chtObj = newBaseChart(cf, cnameArray, sChtGroup, chartType);
     chtObj.Title = cTitle;
+    chtObj.Desc = cDesc;
     if (chartOverrides) { // test 8/10/2014 
 		chtObj.overrides = chartOverrides;	// reference for editing, might rethink and keep at slide level
         _.each(chartOverrides, function(value, key) {
@@ -3579,9 +3731,9 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
                 dTd = gda.addElement(dTr,"td");
     }
 
-        var dStr = gda.addElement(dTd,gda.Htwo);
-            var dTitleEl = gda.addElementWithId(dStr,"div",dN.id+dc.utils.uniqueId());  // docEl
-            chtObj.titleEl = dTitleEl;
+        //var dStr = gda.addElement(dTd,gda.Htwo);// perhaps consider a css element, and default to charcoal grey
+            var dDescEl = gda.addElementWithId(dTd,"div",dN.id+dc.utils.uniqueId());  // docEl
+            chtObj.descEl = dDescEl;
         var dFilterEl = gda.addElementWithId(dTd,"div",dN.id+dc.utils.uniqueId());
         chtObj.filterEl = dFilterEl;
         //dFilterEl.setAttribute("class","filtered")
@@ -3593,7 +3745,8 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
 
     var bAddedChart = gda.newDisplayDispatch(iChart, chtObj.chartType, doChartEl);
     if (bAddedChart) {
-        gda.addElementWithId(doChartEl,"span",doChartEl.id+"title");
+        var dTitleEl = gda.addElementWithId(doChartEl,"span",doChartEl.id+"title");
+        chtObj.titleEl = dTitleEl;
 
         if (gda.allowOverrides() && callback && chtObj.bChooseable === true) {
             gda.addRadioB(doChartEl, chtObj.chartType, gda.chart(chtObj).__dc_flag__, 
@@ -3605,48 +3758,52 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
 
         gda.addChartGroup(chtObj.sChartGroup);
     }
+// is this going in by title function?
+//        if (chtObj.titleEl && chtObj.Title) {
+//            chtObj.titleEl[gda.sTextHTML] = chtObj.Title;
+//        }
+// convert to same method as title, using addDCdiv-like
+        if (chtObj.descEl && chtObj.Desc) {
+            chtObj.descEl[gda.sTextHTML] = chtObj.Desc;
+        }
   }
 }
 
 gda.newSubDisplayPackaging = function(chtObj, dEl) {
     if (true) {//chtObj.bChooseable
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+        chtObj.dElid = dElP.id;
         
-        // these below in an upper level, and dropped only when a composite chart element
+        // these belong in an upper level, and dropped only when a composite chart element
 		addDCdiv(dElP, "charts", chtObj, chtObj.cnameArray[0], chtObj.sChartGroup);   // add the DC div etc
-        // temp!
-        if (chtObj.overrides["slideRef"]) {
-            var dEla = gda.addElement(dElP,"a");
+    }
+}
+// included here to compare to newDCPack above
+function addDrilldiv(dEl, chtObj) {
+    if (chtObj.overrides["slideRef"]) {
+        var dCen = gda.addElement(dEl, "center");
+
+        var dEla = gda.addElement(dCen,"a");
                 var sRef = chtObj.overrides["slideRef"];
                 var slink = sRef.dataprovider + (sRef.bLocalFile ? sRef.datafile : "");
                 dEla.setAttribute("href","javascript:gda.slides.open('" + slink + "');");
                     var dTxtT = gda.addTextNode(dEla," (Drill)");
-            //var dTxtT = gda.addTextNode(dStr," ");
-        }
 
-        chtObj.dElid = dElP.id;
+        //var dElb = gda.addElement(dEl,"div");
+        //dElb.setAttribute("class","clearfix");
     }
 }
 gda.newDisplayPackaging = function(chtObj, dEl) {
     if (chtObj.bChooseable) {
         var dElP = gda.addElementWithId(dEl,"div",dEl.id+dc.utils.uniqueId());
+        chtObj.dElid = dElP.id;
         
-        // these below in an upper level, and dropped only when a composite chart element
+        // these belong in an upper level, and dropped only when a composite chart element
 		addDCdiv(dElP, "charts", chtObj, chtObj.Title, chtObj.sChartGroup);   // add the DC div etc
         // below used for Hist,YHist previously
         //                              cnameArray[0]
 
-        // temp!
-        if (chtObj.overrides["slideRef"]) {
-            var dEla = gda.addElement(dElP,"a");
-                var sRef = chtObj.overrides["slideRef"];
-                var slink = sRef.dataprovider + (sRef.bLocalFile ? sRef.datafile : "");
-                dEla.setAttribute("href","javascript:gda.slides.open('" + slink + "');");
-                    var dTxtT = gda.addTextNode(dEla," (Drill)");
-            //var dTxtT = gda.addTextNode(dStr," ");
-        }
-
-        chtObj.dElid = dElP.id;
+        addDrilldiv(dElP, chtObj);
     }
 }
 
@@ -5963,6 +6120,7 @@ gda.dataReady = function(data) { //    from Input button handler
 }
 
 gda.dataToCrossfilter = function(dS,dR) {
+    gda.log(0,"dataToCrossfilter");
     var ds = gda.metaSources.map[dS];
     if(!ds) ds = gda.dataSources.map[dS];
     if (ds) {
@@ -6222,6 +6380,9 @@ gda.fileLoadImmediate = function(bForce) {
 				alert("Unsupported file type: " + filepath);
 				return false;
 				}
+
+                if (gda.mySpinner) gda.mySpinner.start();
+
 				gda.log(2,"selFile " + filepath );
                 if (!isHttp(filepath)) // originally used to override caching.
 		//if (!ds.bLocalFile && gda.bPollTimer)	// might need 'overrideCache' attribute
@@ -6450,6 +6611,7 @@ function allDataLoaded(dS, testArray) {
 };
 
 function ingestArray(dS, testArray) {
+    gda.log(0,"ingestArray");
     var ds = gda.metaSources.map[dS];
     if (!ds) ds = gda.dataSources.map[dS];
     if (ds) {
@@ -6459,6 +6621,7 @@ function ingestArray(dS, testArray) {
     // so if already loaded, skip.
     if (ds.bLoaded && !gda.bPollTimer) {
         gda.log(2,"ingestArray, skipping " + dS + ", already loaded. Requires design improvement");
+        if (gda.mySpinner) gda.mySpinner.stop();
     }
     else
     {
@@ -6567,6 +6730,7 @@ function trimColName(cname) {
     var cnameOrig = cname;
     if (cname.trim().length===0) cname = "blank"+(++iUid);
     else {
+        cname = cname.replace(/\?/g,"_");    // replace QuestionMark
         cname = cname.replace(/\&/g,"_");    // replace ampersands
         cname = cname.replace(/\./g,"_");    // replace periods
         cname = cname.replace(/\n/g,"_");    // replace newline
@@ -6688,8 +6852,7 @@ gda.addSlideOpen = function(dElHost, theValue) {
     return gda;
 }
 
-gda.addTextEntry = function(dElHost, fieldname, sTitle, defV, callback) {
-    // slide title
+gda.addTextEntry = function(dElHost, fieldname, sText, defV, callback) {
     var inputT = document.createElement("input");
     inputT.type = "text";
     inputT.id = "C"+fieldname.replace(/ /g,"_").replace(/:/g,"_");	
@@ -6697,7 +6860,7 @@ gda.addTextEntry = function(dElHost, fieldname, sTitle, defV, callback) {
     inputT.value = defV;
     var Luse = document.createElement("label");
     Luse.htmlFor = inputT;
-    Luse.appendChild(document.createTextNode(sTitle+':'));
+    Luse.appendChild(document.createTextNode(sText+':'));
     dElHost.appendChild(Luse);
     dElHost.appendChild(inputT);
     d3.selectAll("input[id="+inputT.id+"]")
@@ -6782,6 +6945,5 @@ function indexOfNonMatch (str1, str2) {
             return 0;
         });
     };
-
 
 return gda; })();

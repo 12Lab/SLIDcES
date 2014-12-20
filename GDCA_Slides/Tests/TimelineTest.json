@@ -56,7 +56,8 @@
                     "overrides": {
                         "reduce": false,
                         "timefield": "Month",
-                        "axisresolution": "years",
+                        "xAxisResolution": "years",
+                        "xAxis rotate labels": true,
                         "hChart": "250",
                         "wChart": "800"
                     }

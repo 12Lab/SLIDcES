@@ -9,12 +9,6 @@
 <title>If you see this, upgrade to IE11, Firefox, Chrome or another HTML5 compatible browser</title>
 </head>
 <body>
-    <h3>Requires an Almond+ Wifi/Router with Sensors
-    </h3>
-
-
-<div id="Spinner">
-</div>
 <div id="Nav">
 </div>
 <div id="Slide">
@@ -84,18 +78,14 @@
 
 // these could go into a shared js file, rather than the .html
 gda.dataFilter = function(data) {
+    console.log("EP dataFilter");
     data = siteSpecific.selectAndFilter(data);
     return data;
 }
 
-var sDefaultSlideFile = "/GDCA_Slides/AlmondPlus.json";    // enter a csv file path here to auto-load
-
 var ss = gda.slides;
 
-gda.mySpinner.start(); // keep alive
-
-gda.bSparseColumns = true;
-//gda.bPollTimer = true;
+var sDefaultSlideFile = "/GDCA_Slides/Tests/QuarterCF.json";    // enter a csv file path here to auto-load
 ss.run(sDefaultSlideFile,document.getElementById('Nav'), document.getElementById('Slide'));// where to show the edit controls and slide
 
 </script>

@@ -1,4 +1,6 @@
 Manufacturer,Model,Level,States,Model Year,Resale Year,Resale,"Warranty (Drive, Year)","Warranty (Drive, Miles)",HP,Torque,CoD,0-30mph sec,30-50mph sec,50-70mph sec,0-60mph sec,MPGe,Charger,kWh,Range (electric),Weight,Length,Width,Height,Wheelbase,Turning Circle,Cargo (seats down),Cargo (seats up),Comparisons
+Ford,Ranger EV,EV West,All,2003,,,,,,,,,,,8,,5,45,120,,,,,,,,,
+Ford,Ranger EV,Albany NY,All,2000,2014,8500,,,,,,,,,,,,30,65,,,,,,,,,
 Cadillac,ELR,Base,All,2014,2014,75000,,,,,,,,,,,3.3,16.5,37,,,,,,,,,
 Morgan,Plus E,Base,UK,2015,,,,,94,280,,,,,6,,,,,2756,158,69,48,,,,,
 ZelectricMotors,ZE Beetle,Base,All,1958-1966,2014,45000,0,0,100,110,,,,,,,,22,90,2400,,,,,,,,
@@ -35,7 +37,7 @@ Honda,Fit,EV,,2013,2014,37415,,,123,189,,3.1,3.2,5.3,8.5,98,6.6,20,52,3230,162,6
 Lit Motors,C1,Base,,2015,2014,24000,,,,,,,,,6,,,10,200,800,112,40,55,,,,,
 Mitsubishi,iMiev,Base,All,2014,2014,22995,,,,,,,,,,,3.3,16,62,,,,,,,,,
 Mercedes,B-Class,Base,All,2014,2014,41000,,,,,,,,,,,10,28,85,,,,,,,,,
-Toyota,RAV4,Base,All,2014,2014,49800,,,,,,,,,,,10,41.8,103,,,,,,,,,
+Toyota,RAV4,Base,All,2014,2014,49800,,,,,,,,,18,,10,41.8,103,,,,,,,,,
 Porsche,Panamera,S E-Hybrid,All,2014,2014,99000,,,,,,,,,,,3.3,9.4,22,,,,,,,,,
 Tesla,Model X,Base,All,2015,2015,70000,,,,,,,,,,,20,60,210,,,,,,,,,
 Tesla,Model X,Base,All,2015,2015,70000,,,,,,,,,,,20,85,270,,,,,,,,,
