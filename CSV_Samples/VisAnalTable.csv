@@ -1,4 +1,5 @@
 Information,Type,Description,Privacy,Licensing,Pricing Model,Package URL,Notes
+Tuts,Example,"Mashup D3,Python,BigQuery",,,Free,http://code.tutsplus.com/series/data-visualization-app-using-gae-python-d3js-and-google-bigquery--cms-720,
 Splunk,Data Framework,Machine Data solutions,,,,http://www.splunk.com/,Large footprint 112Mb
 "Bostock, D3 related Projects",Author,"Data Driven Documents, aka D3; Author's project section. Scroll up or dig around for examples.",,,Free,http://bost.ocks.org/mike/#Projects,
 "Bostock, NYT",Author,"Author, NYT published (principle employment is graphics)",,,Free,http://carpetbagger.blogs.nytimes.com/author/mike-bostock/,

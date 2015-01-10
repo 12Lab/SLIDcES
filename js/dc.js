@@ -4297,14 +4297,23 @@ dc.dataStats = function(parent, chartGroup) {
         var tI = _chart.group().top(Infinity);
         if (tI.length === 1) {  // if > 1, need table form then, stats per group key.
         var vStats = tI[0].value;
+        if (vStats.count)
         _chart.selectAll(".count-stat").text(vStats.count);
-        _chart.selectAll(".mean-stat").text(_formatNumber(vStats.avg));
+        if (vStats.sum)
+        _chart.selectAll(".sum-stat").text(_formatNumber(vStats.sum));
+        if (vStats.avg)
+        _chart.selectAll(".avg-stat").text(_formatNumber(vStats.avg));
+        if (vStats.std)
         _chart.selectAll(".std-stat").text(_formatNumber(vStats.std));
+        if (vStats.max)
         _chart.selectAll(".max-stat").text(_formatNumber(vStats.max));
+        if (vStats.min)
         _chart.selectAll(".min-stat").text(_formatNumber(vStats.min));
+        if (vStats.avg && vStats.std) {
         _chart.selectAll(".pNsigma-stat").text(_formatNumber(vStats.avg+_sigma*vStats.std));
         _chart.selectAll(".mNsigma-stat").text(_formatNumber(vStats.avg-_sigma*vStats.std));
         _chart.selectAll(".Nsigma-stat").text((_sigma));
+        }
         }
 
         return _chart;

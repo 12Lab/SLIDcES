@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "105",
+    minor:   "105e",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -668,6 +668,7 @@ gda.accessOverrides = function() {
 gda.newSlideState = function() {
     var _aSlide = {};
     _aSlide.title = "Blank"+dc.utils.uniqueId();
+    _aSlide.comment = "";
 
     // data source as applied on this slide
     _aSlide.columns = [];   // columns available, from previously loaded data
@@ -830,6 +831,10 @@ gda.setOverride = function( anObj, key, newVal ) {
     if (typeof(newVal)==="string") {
         if (newVal === "false") newVal = false;     // otherwise "false" is 'true'
         else if (newVal === "true") newVal = true;  // for consistency
+        else if (newVal.substring(0,1) === "[")
+            newVal = JSON.parse(newVal);
+        else if (newVal.indexOf(",")>-1)            // assume convert to array
+            newVal = newVal.split(',');
     }
     anObj.overrides[key] = newVal;
 };
@@ -837,6 +842,14 @@ gda.addOverride = function( anObj, key, value ) {
     if (!anObj.overrides) 
         anObj.overrides = {};
     if (!gda.utils.fieldExists(anObj.overrides[key])) { // Timeline bar issue if removed
+        if (value === true)
+        anObj.overrides[key] = true;
+        else if (value === false)
+        anObj.overrides[key] = false;
+        else if (typeof(value)==="array") {
+            anObj.overrides[key] = JSON.stringify(value);
+        }
+        else
         anObj.overrides[key] = value;
     }
 };
@@ -990,6 +1003,10 @@ gda.slide = function( _slide ) {
 
             var dEl = gda.addElement(dHostEl,gda.Hone);
                 var dTxtT = gda.addTextNode(dEl,_aSlide.title);
+            if (_aSlide.comment && _aSlide.comment.length>0) {
+            var dEl = gda.addElement(dHostEl,gda.Htwo);
+                var dTxtT = gda.addTextNode(dEl,_aSlide.comment);
+            }
 
             var dEl = gda.addElement(dHostEl,"div");
             dEl.setAttribute("class","row");
@@ -1275,7 +1292,11 @@ gda.addEditControls = function(_aChart, s4, bAllowDel) {
             _.each(_aChart.overrides, function(value, key) {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
-                    gda.addTextEntry(dTd, key, key, value,
+                        var textV = value;
+                        if (typeof(value)==="array" || typeof(value)==="object") {
+                            textV = JSON.stringify(value);
+                        }
+                    gda.addTextEntry(dTd, key, key, textV,
                             function(newVal, fieldName) {
                                 gda.setOverride(_aChart,fieldName,newVal);
 
@@ -1962,8 +1983,7 @@ gda.Controls = function() {
             var dEl = gda.addElement(dHostEl,"br");
 
             // slide Title
-            var doChartEl = gda.addElementWithId(dHostEl,"div","slideTitleEntry");
-
+            gda.addElementWithId(dHostEl,"div","slideTitleEntry");
             var dEl = gda.addElement(dHostEl,"br");
 
             // one of 3 sections of table support.
@@ -2043,7 +2063,7 @@ gda.Controls = function() {
             }
 
             // Control location where table controls will be added
-            var doChartEl = gda.addElementWithId(dHostEl,"div","setupTable");
+            gda.addElementWithId(dHostEl,"div","setupTable");
             // temp, use Nav anchor to show on slide, until table construction software is completed.
         }
     };
@@ -2163,10 +2183,14 @@ gda.slides = function() {
         //  //if (gda._currentSlide<gda.slides.length)
         //    return gda.slideRegistry.list()[gda._currentSlide];
         //},
+        commentCurrent: function(text) {
+            gda._slide().comment = text ? text : "Blank";
+            gda.view.showList();    // force comment redisplay as side effect
+        },
         titleCurrent: function(text) {
             gda._slide().title = text ? text : "Blank";
             document.title = gda._slide().title;
-            gda.view.showList();    // update navigation buttons
+            gda.view.showList();    // force title redisplay as side effect
         },
 
         ///////////////////////////////////////////////////////////////////
@@ -2702,6 +2726,8 @@ gda.view = function() {
                             if (i=== -1) i=9;
                         }
                         var bLabel = s.title.substring(0,i);
+                        if (bLabel.substring(bLabel.length-1) === ",")
+                            bLabel = bLabel.substring(0, bLabel.length-1);
                         sl[sNo-1].myId = sNo-1;   // workaround
                         gda.addButton(docEl, "showSlide"+(sNo-1), bLabel,
                             function(thisB) {
@@ -2734,6 +2760,11 @@ gda.view = function() {
                     gda.addTextEntry(dElTE, "SlideTitle", "Slide Title", gda._slide().title,
                             function(newVal) {  // adopt same form as below  .title as a function
                             gda.slides.titleCurrent(newVal); // was _name =
+                            gda.view.redraw();
+                            });
+                    gda.addTextEntry(dElTE, "SlideComment", "Slide Comment", gda._slide().comment,
+                            function(newVal) {  // adopt same form as below  .title as a function
+                            gda.slides.commentCurrent(newVal); // was _name =
                             gda.view.redraw();
                             });
 
@@ -3306,6 +3337,7 @@ gda.saDateTypes = [ "Year","Quarter","Month","Week","Day" ];
 gda.isDate = function (cname) {
     var bRet = false; // need more sophisticated method, breaks ServiceInst. 
     var saDateStrings = [
+                                                                //_        _
         "Date","Timestamp","Year","Quarter","Month","Week","Day","_Start","_Complete" ];
     //if (cname.indexOf("date")>=0 || cname.indexOf("Date")>=0 || cname.indexOf("Year")>=0 || cname.indexOf("Quarter")>=0 || cname.indexOf("Month")>=0 || cname.indexOf("Week")>=0 || cname.indexOf("Day")===0 || cname.indexOf("Start")>=0 || cname.indexOf("_Complete")>=0 
     if (_.contains(_.map(saDateStrings, function(s) { return (cname.indexOf(s)>=0); }), true) ||
@@ -3326,7 +3358,14 @@ gda.newLineChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"elasticY",true);
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
+    gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
+    gda.addOverride(chtObj,"stats",false);//['avg','min','max','pNsigma','mNsigma']);
+
     if (chtObj.cnameArray.length>1) {
+    if (chtObj.overrides.stats) {
+        gda.addStatsToChart(chtObj, _.rest(chtObj.cnameArray,1));
+    }
+
         gda.addOverride(chtObj,"nFixed",null);	// field, but don't use.
                                 
         var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf, true, chtObj.overrides["nFixed"]);
@@ -3433,6 +3472,7 @@ gda.newTimelineChart = function(chtObj, cf) {
         gda.addOverride(chtObj,"min",false);
         gda.addOverride(chtObj,"xAxis rotate labels",false);
                                                     // or change normalization to be done in a separate dimension?
+        gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
 
             xDimension = gda.dimensionByCol(
                                 chtObj.sChartGroup,
@@ -3551,8 +3591,20 @@ gda.newChoroplethChart = function(chtObj, cf) {
         return d[chtObj.cnameArray[0]];	// swapped 0 and 1, this is the value to chart
     });
     chtObj.dGrps.push(dXGrp);
-    gda.addOverride(chtObj,"GeoJSON","");//../JSON_Samples/geo_us-states.json";	// need a JSON viewer/selector
+    gda.addOverride(chtObj,"GeoJSON","");//../JSON_Samples/geo_us-states.json";	
     gda.addOverride(chtObj,"GeoJSON_Property_Accessor","");
+    gda.addOverride(chtObj,"United States",true);
+    if (chtObj.overrides["United States"]) {
+        gda.addOverride(chtObj,"Scale","1000");
+        gda.addOverride(chtObj,"Translate",[480,250]);
+    }
+    else
+    {
+        gda.addOverride(chtObj,"Scale","1000");
+        gda.addOverride(chtObj,"Center",[0,0]);
+        gda.addOverride(chtObj,"Translate",[0,0]);
+        gda.addOverride(chtObj,"Rotation",[0,0]);
+    }
 
     _.each(_.rest(chtObj.cnameArray,1), function(sCname) {
         gda.addOverride(chtObj,sCname,"");
@@ -3560,17 +3612,23 @@ gda.newChoroplethChart = function(chtObj, cf) {
     }
 }
 
-gda.newStatsChart = function(chtObj, cf) {
+gda.newStatsChart = function(chtObj) { // not used, cf
     var cnameArray = chtObj.cnameArray;
-    if (cnameArray.length>0) {
-        gda.addOverride(chtObj,"format",".2s");
-        gda.addOverride(chtObj,"sigma","3");
-
+    gda.addOverride(chtObj,"stats",['count','sum','avg','std','min','max','pNsigma','mNsigma','Nsigma']);
+    if (chtObj.overrides.stats) {
         var xDimension = gda.dimensionByCol(chtObj.sChartGroup, cnameArray[0],chtObj.cf,true);
         chtObj.dDims.push(xDimension);
 
         //if (gda.isDate(chtObj.cnameArray[0]))
         //    xDimension.isDate = true;
+        gda.addStatsToChart(chtObj, chtObj.cnameArray);
+    }
+}
+
+gda.addStatsToChart = function(chtObj, cnameArray) {
+    if (cnameArray.length>0) {
+        gda.addOverride(chtObj,"sigma","3");
+        gda.addOverride(chtObj,"format",".2s");
 
     // scatterplot dim/grp
     if (cnameArray.length>1) {    // if 2nd attribute selected, use it for a dimension, for multiple stats sets
@@ -3590,19 +3648,23 @@ gda.newStatsChart = function(chtObj, cf) {
     gda.dimensions[chtObj.sChartGroup].push({dName: ("stats."+chtObj.cnameArray[cnameArray.length>1?1:0]), dFilter: true, dFixed: undefined, dDim: chtObj.statsDimension});
     chtObj.statsGroup = chtObj.statsDimension.group();//.reduce();
     var reducer;
-    reducer = reductio()
-                .count(true)
-                .sum(function(d)
-                        { return +d[cnameArray[0]]; })
-                .avg(function(d)
-                        { return +d[cnameArray[0]]; })
-                .std(function(d)
-                        { return +d[cnameArray[0]]; })
-                .max(function(d)
-                        { return +d[cnameArray[0]]; })
-                .min(function(d)
-                        { return +d[cnameArray[0]]; })
-                ;
+    reducer = reductio();
+    _.each(chtObj.overrides.stats, function(s) {
+        switch (s) {
+        case "count":
+                reducer.count(true);
+                break;
+        case "sum":
+        case "avg":
+        case "std":
+        case "min":
+        case "max":
+                reducer[s](function(d) { return  +d[cnameArray[0]]; });
+                break;
+        default:
+                break;
+        }
+    });
     chtObj.reducer = reducer;
     reducer(chtObj.statsGroup);
     }
@@ -3739,7 +3801,7 @@ gda.addDisplayChart = function(docEl, iChart, callback) {
         //dFilterEl.setAttribute("class","filtered")
         var doChartEl = gda.addElementWithId(dTd,"div",dN.id+dc.utils.uniqueId()); // might need to use chart title instead of uniqueId, to support 'closing' the edit.
 
-    if (chtObj.chartType !== "ScatterHist") {
+    if (chtObj.chartType !== "ScatterHist" && chtObj.chartType !== "Stats") {
         gda.newDisplayPackaging(chtObj, doChartEl);
     }
 
@@ -3780,7 +3842,7 @@ gda.newSubDisplayPackaging = function(chtObj, dEl) {
 }
 // included here to compare to newDCPack above
 function addDrilldiv(dEl, chtObj) {
-    if (chtObj.overrides["slideRef"]) {
+    if (chtObj.overrides && chtObj.overrides["slideRef"]) {
         var dCen = gda.addElement(dEl, "center");
 
         var dEla = gda.addElement(dCen,"a");
@@ -3834,12 +3896,44 @@ gda.newLineDisplay = function(chtObj) {
                 gr = chtObj.dGrps[0];
         }
 
-        //gda.log(4,"add line for Line @ " + chtObj.dElid);
-        var ftX = dc.lineChart("#"+chtObj.dElid,chtObj.sChartGroup)
-        chtObj.chart = ftX;        // for now. hold ref
-        ftX.gdca_chart = chtObj;
+        var ftX = null;
+        var composite = null;
+        var lc = null;
+        if(false){//chtObj.overrides["nominal"]) 
+            var cDim = chtObj.cf.dimension(function(d) {return +(chtObj.overrides["nominal"]); });
+            var cGrp = cDim.group();
+            composite = dc.compositeChart("#"+chtObj.dElid,chtObj.sChartGroup)
+                        .dimension(cDim)
+                        .group(cGrp);
+            ftX = dc.lineChart(composite,chtObj.sChartGroup);
+            ftX.gdca_chart = chtObj;
+            chtObj.chart = ftX;//composite;
+            lc = dc.lineChart(composite,chtObj.sChartGroup)
+                            .dimension(cd)
+                            .group(cGrp)//noopGroup(chtObj.overrides["nominal"]))
+                            .valueAccessor(function(d){
+                                return +(chtObj.overrides["nominal"])
+                            })
+                            .colors(['blue']);
+        }
+        else {
+            ftX = dc.lineChart("#"+chtObj.dElid,chtObj.sChartGroup)
+            chtObj.chart = ftX;        // for now. hold ref
+            ftX.gdca_chart = chtObj;
+        }
 
         gda.lineDomains(chtObj,true);
+
+        
+        if(false) {//chtObj.overrides["nominal"])
+            composite
+                .width(chtObj.wChart)
+                .height(chtObj.hChart)
+                .x(ftX.x())
+                .xUnits(ftX.xUnits())
+                .compose([ftX,
+                         lc]);
+        }
 
         ftX
             .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
@@ -3907,6 +4001,85 @@ gda.newLineDisplay = function(chtObj) {
                         })
                     .style("text-anchor", "end");
         });
+        }
+        if(chtObj.overrides["nominal"]) {
+        ftX
+        .renderlet(function(c) {
+            console.log("nom ");
+            c.svg().append("line")
+                        .attr("x1", c.margins().left + c.x()( c.x().domain()[0] ))
+                        .attr("x2", c.margins().left + c.x()( c.x().domain()[1] ))
+                        .attr("y1", c.margins().top + c.y()( +(chtObj.overrides["nominal"]) ))
+                        .attr("y2", c.margins().top + c.y()( +(chtObj.overrides["nominal"]) ))
+                        .attr("stroke-width",2)
+                        .attr("stroke","green")
+                        .attr("stroke-dasharray","10,10");
+        });
+        }
+        if(chtObj.overrides["UCL"]) {
+        ftX
+        .renderlet(function(c) {
+            console.log("nom ");
+            c.svg().append("line")
+                        .attr("x1", c.margins().left + c.x()( c.x().domain()[0] ))
+                        .attr("x2", c.margins().left + c.x()( c.x().domain()[1] ))
+                        .attr("y1", c.margins().top + c.y()( +(chtObj.overrides["UCL"]) ))
+                        .attr("y2", c.margins().top + c.y()( +(chtObj.overrides["UCL"]) ))
+                        .attr("stroke-width",2)
+                        .attr("stroke","red")
+                        .attr("stroke-dasharray","10,10");
+        });
+        }
+        if (false) { //chtObj.overrides.stats) 
+            var tI = chtObj.statsGroup.top(Infinity);
+            if (tI.length ===1) {
+                var vStats = tI[0].value;
+                _.each(chtObj.overrides.stats, function(s) {
+                    var sColor = "red";
+                    var bDash = false;
+                    var v = 0;
+                    switch (s) {
+                    case "avg":
+                            sColor = "blue";
+                            v = vStats.avg;
+                            break;
+                    case "min":
+                            sColor = "blue";
+                            v = vStats.min;
+                            break;
+                    case "max":
+                            sColor = "blue";
+                            v = vStats.max;
+                            break;
+                    case "pNsigma":
+                            sColor = "orange";
+                            v = vStats.avg + vStats.std * 3;
+                            bDash = true;
+                            break;
+                    case "mNsigma":
+                            sColor = "orange";
+                            v = vStats.avg - vStats.std * 3;    // _sigma
+                            bDash = true;
+                            break;
+                    default:
+                            bDash = true;
+                            break;
+                    }
+                    ftX
+                    .renderlet(function(c) {
+                        console.log(s);
+                        var l = c.svg().append("line")
+                                    .attr("x1", c.margins().left + c.x()( c.x().domain()[0] ))
+                                    .attr("x2", c.margins().left + c.x()( c.x().domain()[1] ))
+                                    .attr("y1", c.margins().top + c.y()( v ))
+                                    .attr("y2", c.margins().top + c.y()( v ))
+                                    .attr("stroke-width",2)
+                                    .attr("stroke",sColor);
+                        if (bDash)
+                                   l.attr("stroke-dasharray","10,10");
+                    });
+                });
+            }
         }
         if (chtObj.overrides["legend"])
             ftX
@@ -4025,17 +4198,32 @@ gda.newTimelineDisplay = function(chtObj) {
 
     if (dDims.length>0 && chtObj.cnameArray.length>1) {
 
-    var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
+    var ftX = null;
+    var composite = null;
+    if(chtObj.overrides["nominal"]) {
+        composite = dc.compositeChart("#"+chtObj.dElid,chtObj.sChartGroup);
+        chtObj.chart = composite;
+        ftX = dc.barChart(composite,chtObj.sChartGroup);
+        var lc = dc.lineChart(composite,chtObj.sChartGroup)
+                        .group(noopGroup(chtObj.overrides["nominal"]))
+                        .valueAccessor(function(d){
+                            return +(chtObj.overrides["nominal"])
+                        })
+                        .colors(['blue']);
+    }
+    else {
+        ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
         .width(chtObj.wChart)
         .height(chtObj.hChart);
+        chtObj.chart = ftX;
+        ftX.gdca_chart = chtObj;
+    }
+
     ftX.stdMarginBottom = ftX.margins().bottom;
     ftX.margins().bottom = ftX.stdMarginBottom + 30;    // temp workaround. provide margin override
     // setting that in the renderlet is 'too late' ? not working.
     ftX.stdMarginLeft = ftX.margins().left;
     ftX.margins().left = ftX.stdMarginLeft + 30;    // temp workaround. provide margin override
-
-    chtObj.chart = ftX;        // for now. hold ref
-    ftX.gdca_chart = chtObj;
 
     var v0 = null;
     var xmin = null;
@@ -4260,6 +4448,7 @@ gda.newTimelineDisplay = function(chtObj) {
                 }
             });
         }
+
         if (chtObj.overrides["legend"])
             ftX
                 .legend(dc.legend());
@@ -4422,11 +4611,7 @@ gda.newBarDisplay = function(chtObj) {
 }
 
 // create a composite, starting with a bar chart, add the cumulative percentage
-// this probably needs a specific DC implementation, to get the line and bar
-// sample to 'synchronize'. best I have so far is the samples synchronized, but
-// the 'line' drawn is in the original sample order (thus looks wrong).
 gda.newParetoDisplay = function(chtObj) {
-    //gda.newBarDisplay(chtObj); // set up the base chart, bars
     var dDims = chtObj.dDims;
 
     if (dDims.length>0) {
@@ -4687,22 +4872,40 @@ gda.newChoroplethDisplay = function(chtObj) {
 
     if (dDims.length>0) {
     var ftX = dc.geoChoroplethChart("#"+chtObj.dElid,chtObj.sChartGroup);
-    chtObj.chart = ftX;        // for now. hold ref
+    chtObj.chart = ftX;
     ftX.gdca_chart = chtObj;
-    ftX.width(chtObj.wChart)//  900 //chtObj.wChart    // same as scatterChart
-        .height(chtObj.hChart)	//	500 //chtObj.hChart        // not nearly as high
-        .dimension(dDims[0]) //states 
-        .group(chtObj.dGrps[0]); //stateRaisedSum; 
+    ftX.width(chtObj.wChart)
+        .height(chtObj.hChart)
+        .dimension(dDims[0])
+        .group(chtObj.dGrps[0]);
+    ftX.colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]));
+
+    if (chtObj.overrides["United States"]) {
+        ftX
+            .projection(d3.geo.albersUsa()
+            .scale(chtObj.overrides.Scale)
+            .translate(chtObj.overrides.Translate))
+            .colorDomain([0, 200]);
+    }
+    else {
+        ftX
+            .projection(d3.geo.mercator()
+            .center(chtObj.overrides.Center)
+            .scale(chtObj.overrides.Scale)//26778
+            .rotate(chtObj.overrides.Rotation)
+            .translate(chtObj.overrides.Translate))//[8227, 3207]
+            .colorDomain([0, 2000]);
+    }
+    
 
 	var p = gda.utils.fieldExists( chtObj.overrides.GeoJSON) ? chtObj.overrides.GeoJSON : null;	// might want to use '.privproperties.' instead
     if (p) {    // why doesn't this work for Edit mode ?
         var ds = gda.dataSources.map[p];
         d3.json(ds.dataprovider+ds.datafile,  // need to changeup manageInputSource/etc to take callback.
-		   	function( statesJson) {
-				if (statesJson) {
-					gda.log(4,"GeoJSON loaded, " + statesJson);
-					ftX.colors(d3.scale.quantize().range(["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
-						.colorDomain([0, 200])
+		   	function( geoJson) {
+				if (geoJson) {
+					gda.log(4,"GeoJSON loaded, " + geoJson);
+                    ftX
 						.colorCalculator(function (d) { return d ? ftX.colors()(d) : '#555'; })
 						.title(function (d) {
 										//return "State: " + d.key + "\nTotal Amount Raised: " + gda.numberFormat(d.value ? d.value : 0) + "M";
@@ -4712,7 +4915,7 @@ gda.newChoroplethDisplay = function(chtObj) {
 					_.each(_.rest(chtObj.cnameArray,1), function(sCname) {
 					//var sCname = chtObj.cnameArray[1];
 						ftX
-							.overlayGeoJson(statesJson.features, sCname, function (d) { //"State", 
+							.overlayGeoJson(geoJson.features, sCname, function (d) { //"State", 
 											//return d["properties"]["name"];
 											return d[chtObj.overrides.GeoJSON_Property_Accessor][chtObj.overrides[sCname]];
 										})
@@ -4930,52 +5133,14 @@ gda.newStatsDisplay = function(chtObj, dEl) {
 
                     dEl1.setAttribute("class","dc-"+sDcData+"-stats");
                     var dTb = gda.addElement(dEl1,"table");
+                        _.each(chtObj.overrides.stats, function(s) {
                         var dTr = gda.addElement(dTb,"tr");
                             var dTd = gda.addElement(dTr,"td");
                                 var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","count-stat");
+                                dSpan.setAttribute("class",s+"-stat");
                             var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," count ");
-                        var dTr = gda.addElement(dTb,"tr");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","mean-stat");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," mean ");
-                        var dTr = gda.addElement(dTb,"tr");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","std-stat");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," std ");
-                        var dTr = gda.addElement(dTb,"tr");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","max-stat");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," max ");
-                        var dTr = gda.addElement(dTb,"tr");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","min-stat");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," min ");
-                        var dTr = gda.addElement(dTb,"tr");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","pNsigma-stat");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," +Nsigma ");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," Nsigma=");
-                                var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","Nsigma-stat");
-                        var dTr = gda.addElement(dTb,"tr");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dSpan = gda.addElement(dTd,"span");
-                                dSpan.setAttribute("class","mNsigma-stat");
-                            var dTd = gda.addElement(dTr,"td");
-                                var dTxtT = gda.addTextNode(dTd," -Nsigma ");
+                                var dTxtT = gda.addTextNode(dTd," "+s+" ");
+                        });
 
     chtObj.dElid = dEl0.id;
     
@@ -5284,18 +5449,19 @@ gda.scatterDomains = function(chtObj, bInitial){
                     //.xAxis().ticks(d3.time.minutes,3);//chtObj.overrides["xAxis ticks"]);// 6;   // add override for 6, months
                     .xAxis().ticks(d3.time[chtObj.overrides["xAxisResolution"]],chtObj.overrides["xAxis ticks"]);
             }
+        else
+            chtObj.chart.xAxis().ticks(chtObj.overrides["xAxis ticks"]);
         chtObj.chart
             .x(xs)
             .xUnits(xu)
             .y(ys)//.y(d3.scale.linear().domain(ydomain)) //.nice() // to use nice, need to adjust histograms
             .xAxisLabel(xl)
             //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
-            .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax))
+            .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
+        if (dDims[0].isDate && !chtObj.overrides["timefield"])
+            chtObj.chart
             .xAxis().tickFormat(function (s) {
-                if (dDims[0].isDate && !chtObj.overrides["timefield"])
                     return s.toLocaleTimeString();
-                else
-                    return s;
             });
     }
     else
@@ -6857,7 +7023,7 @@ gda.addTextEntry = function(dElHost, fieldname, sText, defV, callback) {
     inputT.type = "text";
     inputT.id = "C"+fieldname.replace(/ /g,"_").replace(/:/g,"_");	
     inputT.name = fieldname;//.replace(/ /g,"_").replace(/:/g,""); 08/16/2014 unneeded?	// was ,"_", causes fieldname to not match list
-    inputT.value = defV;
+    inputT.value = (defV === undefined ? "" : defV);
     var Luse = document.createElement("label");
     Luse.htmlFor = inputT;
     Luse.appendChild(document.createTextNode(sText+':'));
