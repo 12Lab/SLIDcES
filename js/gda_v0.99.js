@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "105e",
+    minor:   "105f",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -234,8 +234,8 @@ gda.spinner = function(config) {
         _config.radius = Math.min(_config.width, _config.height) / 2;
 
 
-        gda.log(0,"spin0 ",_iLevels);
-        gda.log(0,"arcs ",_levelsArc.length);
+        gda.log(2,"spin0 ",_iLevels);
+        gda.log(2,"arcs ",_levelsArc.length);
     },
     start: function() {
         _iLevels++;
@@ -259,7 +259,7 @@ gda.spinner = function(config) {
                     .attr("d", _levelsArc[0]) 
                     //.call(spin, 1500)
                     );
-            gda.log(0,"spin+ ",_iLevels);
+            gda.log(2,"spin+ ",_iLevels);
 
             if (bOnceOnly) {
                 _bkg[0]
@@ -281,7 +281,7 @@ gda.spinner = function(config) {
                     );
             _bkg[_iLevels-1].call(spin,1000);
         }
-        gda.log(0,"arcs ",_levelsArc.length);
+        gda.log(2,"arcs ",_levelsArc.length);
     },
     stop: function() {
         if (_iLevels>0) {
@@ -297,8 +297,8 @@ gda.spinner = function(config) {
             _svg.selectAll("*").remove();
             d3.select(_config.container).select('svg').remove();
         }
-        gda.log(0,"spin- ",_iLevels);
-        gda.log(0,"arcs ",_levelsArc.length);
+        gda.log(2,"spin- ",_iLevels);
+        gda.log(2,"arcs ",_levelsArc.length);
     }
 
   };
@@ -6575,7 +6575,7 @@ gda.fileLoadImmediate = function(bForce) {
                                     //.get, "error");
                         qF.awaitAll( function(error, dataArray) {
                             ds.Timestamp_complete = new Date();
-                            gda.log(0,"time(get,ms) = ",ds.Timestamp_complete - ds.Timestamp_get,filepath);
+                            gda.log(1,"time(get,ms) = ",ds.Timestamp_complete - ds.Timestamp_get,filepath);
                             if (gda.utils.fieldExists(gda.dataSources.map[gda.sTimingDS])) {
                                 var _aData = {};
                                 
@@ -6599,7 +6599,7 @@ gda.fileLoadImmediate = function(bForce) {
                         qF.defer(d3.csv,filepath);
                         qF.awaitAll(function(error, dataArray) {
                             ds.Timestamp_complete = new Date();
-                            gda.log(0,"time(get,ms) = ",ds.Timestamp_complete - ds.Timestamp_get,filepath);
+                            gda.log(1,"time(get,ms) = ",ds.Timestamp_complete - ds.Timestamp_get,filepath);
                             if (gda.utils.fieldExists(gda.dataSources.map[gda.sTimingDS])) {
                                 var _aData = {};
                                 
@@ -6706,6 +6706,7 @@ function xmlDataLoaded(error, xml) {
 };
 
 function errorCheck(sName, error) {
+    if (error && gda.mySpinner) gda.mySpinner.stop();
     gda.log(sName + " e(" +
            (error ?
                 (error.message ? 
@@ -6777,7 +6778,7 @@ function allDataLoaded(dS, testArray) {
 };
 
 function ingestArray(dS, testArray) {
-    gda.log(0,"ingestArray");
+    gda.log(1,"ingestArray");
     var ds = gda.metaSources.map[dS];
     if (!ds) ds = gda.dataSources.map[dS];
     if (ds) {

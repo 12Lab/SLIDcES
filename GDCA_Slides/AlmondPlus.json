@@ -212,7 +212,7 @@
                         "wChart": "500",
                         "elasticX": true,
                         "nFixed": true,
-                        "interpolate": "basis"
+                        "interpolate": "cardinal"
                     }
                 },
                 {
@@ -322,7 +322,7 @@
                         "wChart": "500",
                         "elasticX": true,
                         "nFixed": true,
-                        "interpolate": "basis"
+                        "interpolate": "cardinal"
                     }
                 },
                 {
