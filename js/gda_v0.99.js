@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "105f",
+    minor:   "106",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -835,7 +835,7 @@ gda.setOverride = function( anObj, key, newVal ) {
             newVal = JSON.parse(newVal);
         else if (newVal.indexOf(",")>-1)            // assume convert to array
             newVal = newVal.split(',');
-    }
+        }
     anObj.overrides[key] = newVal;
 };
 gda.addOverride = function( anObj, key, value ) {
@@ -1353,7 +1353,7 @@ gda.sortTabCheckboxChanged = function(t) {
     gda.editCols[c] = _.without(gda.editCols[c],col);
   }
     // if editing, update the slide defaults
-    if (gda._anchorEdit) {// gda.editinprogress
+    {//if (gda._anchorEdit)
         var dS = gda.activedataSource();
         //gda._slide().myCols[dS].csetupSortTableCols = gda.editCols.csetupSortTableCols;
         gda._slide().tables[0].csetupSortTableCols = gda.editCols.csetupSortTableCols;
@@ -1374,7 +1374,7 @@ gda.colTabCheckboxChanged = function(t) {
     gda.editCols[c] = _.without(gda.editCols[c],col);
   }
     // if editing, update the slide defaults
-    if (gda._anchorEdit) {// gda.editinprogress
+    {//if (gda._anchorEdit)
         var dS = gda.activedataSource();
         //gda._slide().myCols[dS].csetupHiddenTableCols = gda.editCols.csetupHiddenTableCols;
         gda._slide().tables[0].csetupHiddenTableCols = gda.editCols.csetupHiddenTableCols;
@@ -3297,6 +3297,7 @@ gda.newHistChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
     gda.addOverride(chtObj,"xAxis ticks",6);
+    gda.addOverride(chtObj,"xAxisResolution","months");
 
     var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf,
                                         true);    // want sortable numbers (otherwise 9000 is < 10000)
@@ -3333,7 +3334,7 @@ gda.newYHistChart = function(chtObj, cf) {
     chtObj.bChooseable = false; // YHist never...
 }
 
-gda.saDateTypes = [ "Year","Quarter","Month","Week","Day" ];
+gda.saDateTypes = [ "year","quarter","month","week","day" ];
 gda.isDate = function (cname) {
     var bRet = false; // need more sophisticated method, breaks ServiceInst. 
     var saDateStrings = [
@@ -3350,7 +3351,7 @@ gda.isDate = function (cname) {
 
 // start with one dimension, then expand to several (paired/triples/etc bars, or stacked).
 gda.newLineChart = function(chtObj, cf) {
-    gda.addOverride(chtObj,"timefield","Month");
+    //gda.addOverride(chtObj,"timefield","Month");    // arbitrary, and may be "ClosedMonth" etc.
     gda.addOverride(chtObj,"xAxisResolution","months");
     gda.addOverride(chtObj,"xAxis rotate labels",false);
     gda.addOverride(chtObj,"interpolate",false);
@@ -3466,17 +3467,20 @@ gda.newTimelineChart = function(chtObj, cf) {
         gda.addOverride(chtObj,"onFilteredChart",false);  // workaround until can observe a crossfilter for filter change
         if (gda.isDate(chtObj.cnameArray[0])) {
         gda.addOverride(chtObj,"reduce",false);
-        gda.addOverride(chtObj,"timefield","Month");
+        //gda.addOverride(chtObj,"timefield","Month");    // arbitrary, and may be "ClosedMonth" etc.
         gda.addOverride(chtObj,"xAxisResolution","months");
         gda.addOverride(chtObj,"normalize",false);
         gda.addOverride(chtObj,"min",false);
+        gda.addOverride(chtObj,"xAxis ticks",false);
+        gda.addOverride(chtObj,"xAxis gap",30);
         gda.addOverride(chtObj,"xAxis rotate labels",false);
                                                     // or change normalization to be done in a separate dimension?
         gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
 
             xDimension = gda.dimensionByCol(
                                 chtObj.sChartGroup,
-                                chtObj.overrides["timefield"] ? chtObj.overrides["timefield"]:chtObj.cnameArray[0],
+                                //chtObj.overrides["timefield"] ? chtObj.overrides["timefield"]:chtObj.cnameArray[0],
+                                chtObj.cnameArray[0],
                                 chtObj.cf);
             xDimension.isDate = true;
 
@@ -3574,6 +3578,7 @@ gda.newRowChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"top",false);
     gda.addOverride(chtObj,"dropOthers",false)
     gda.addOverride(chtObj,"ordering",false)
+    gda.addOverride(chtObj,"xAxis ticks",6)
     var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf);
     chtObj.dDims.push(xDimension);
     var dXGrp;
@@ -3682,8 +3687,9 @@ gda.newScatterChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
     gda.addOverride(chtObj,"yMax",false);
+    gda.addOverride(chtObj,"xAxis rotate labels",false);
     gda.addOverride(chtObj,"xAxis ticks",6);
-    gda.addOverride(chtObj,"timefield","Month");
+    //gda.addOverride(chtObj,"timefield","Month");    // arbitrary, and may be "ClosedMonth" etc.
     gda.addOverride(chtObj,"xAxisResolution","months");
     if (chtObj.cnameArray.length>1) {
         var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf,true);
@@ -3846,10 +3852,10 @@ function addDrilldiv(dEl, chtObj) {
         var dCen = gda.addElement(dEl, "center");
 
         var dEla = gda.addElement(dCen,"a");
-                var sRef = chtObj.overrides["slideRef"];
-                var slink = sRef.dataprovider + (sRef.bLocalFile ? sRef.datafile : "");
-                dEla.setAttribute("href","javascript:gda.slides.open('" + slink + "');");
-                    var dTxtT = gda.addTextNode(dEla," (Drill)");
+            var sRef = chtObj.overrides["slideRef"];
+            var slink = sRef.dataprovider + (sRef.bLocalFile ? sRef.datafile : "");
+        dEla.setAttribute("href","javascript:gda.slides.open('" + slink + "');");
+        var dTxtT = gda.addTextNode(dEla,"(Drill)");
 
         //var dElb = gda.addElement(dEl,"div");
         //dElb.setAttribute("class","clearfix");
@@ -3876,6 +3882,14 @@ gda.newDisplayDispatch = function(i, chartType, dEl) {
         return gda[fn](chtObj, dEl); // dEl still needed for a few // chart specific setup
     }
     return false;
+}
+
+function noopGroup(nom) {
+    return {
+        all: function() {
+            return true;
+        }
+    };
 }
 
 // start with one dimension, expand to more later
@@ -4213,14 +4227,16 @@ gda.newTimelineDisplay = function(chtObj) {
     }
     else {
         ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
-        .width(chtObj.wChart)
-        .height(chtObj.hChart);
+            .width(chtObj.wChart)
+            .height(chtObj.hChart);
         chtObj.chart = ftX;
         ftX.gdca_chart = chtObj;
     }
 
+    if (chtObj.overrides["xAxis rotate labels"]) {
     ftX.stdMarginBottom = ftX.margins().bottom;
     ftX.margins().bottom = ftX.stdMarginBottom + 30;    // temp workaround. provide margin override
+    }
     // setting that in the renderlet is 'too late' ? not working.
     ftX.stdMarginLeft = ftX.margins().left;
     ftX.margins().left = ftX.stdMarginLeft + 30;    // temp workaround. provide margin override
@@ -4238,10 +4254,7 @@ gda.newTimelineDisplay = function(chtObj) {
         if (isNaN(xmax)) xmax = 0;
     } else
     {
-        if(chtObj.overrides["timefield"])
-        v0 = chtObj.overrides["timefield"];
-        else
-            v0 = chtObj.cnameArray[0];
+        v0 = chtObj.cnameArray[0];
         xmin = dDims[0].bottom(1)[0][v0];
         xmax = dDims[0].top   (1)[0][v0];
         if (xmin === undefined) xmin = new Date();
@@ -4252,16 +4265,20 @@ gda.newTimelineDisplay = function(chtObj) {
     }
 
     ftX
-        .gap(30);
+        .gap(chtObj.overrides["xAxis gap"]);
 
     var xu = dc.units.ordinal();
     var xe = null;  // default
     var xs = d3.scale.ordinal();
     if (dDims[0].isDate) {
         xe = d3.time.month;
-        if (chtObj.overrides["timefield"]) {
+        if (chtObj.overrides["xAxisResolution"]) {
             var r = chtObj.overrides["xAxisResolution"];
-            var p = chtObj.overrides["timefield"].toLowerCase();
+            var p = r.toLowerCase();
+            if (p.substring(p.length-1)==="s")  // trim off last char if s
+                p = p.substring(0,p.length-1);
+            console.log("p ", p);
+            //var p = chtObj.overrides["timefield"].toLowerCase();
 // hack, use gda.saDateTypes 
 	    if (!_.contains(gda.saDateTypes,p)) {
 		_.each(gda.saDateTypes, function(s) {
@@ -4377,7 +4394,7 @@ gda.newTimelineDisplay = function(chtObj) {
               ftX
               .round(xe.round);
             }
-          ftX .xAxis().ticks(xu,1);//d3.time.months,1;
+          ftX .xAxis().ticks(xu,chtObj.overrides["xAxis ticks"]);//d3.time.months,1;
         }
     }
 
@@ -4406,44 +4423,50 @@ gda.newTimelineDisplay = function(chtObj) {
     // this and another chart. assume for now these two are 0,1 or 1,0
         if (chtObj.overrides["onFilteredChart"]) {
             var oFCname = chtObj.overrides["onFilteredChart"];
-            var oFCchart = _.findWhere(gda.charts, {Title: oFCname});  // Title must be unique in a slide!
-            chtObj.chart.gdca_toFilter = oFCchart;
+            chtObj.chart.gdca_toFilter = oFCname;
             ftX.renderlet(function (chart) {
                 if (chart.gdca_toFilter) {
+                var cFilter = chart.filter();
                 gda.log(4,"period renderlet");
         // why was this being removed? ohloh ex https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=renderlet%20select(%22g.y%22).style(%22display%22%2C%20%22none%22)
 		//	    chart.select("g.y").style("display", "none");
-                if (chart.filter() && chart.filter().length>0)
-			    chart.gdca_toFilter.chart.filter(chart.filter()); // need method to specify [0]
-                else if (chart.gdca_toFilter.chart)
-                    chart.gdca_toFilter.chart.filterAll();
+                _.each(chart.gdca_toFilter, function(cname) {
+                    var oFCchart = _.findWhere(gda.charts, {Title: cname});  // Title must be unique in a slide!
+                    if (cFilter && cFilter.length>0)
+                        oFCchart.chart.filter(cFilter); // need method to specify [0]
+                    else if (oFCchart.chart)
+                        oFCchart.chart.filterAll();
                                                 // possibly dropdown of charts except this one
                                                 // or all charts except this one and Selectors
+                });
                 }
 			})
 			.on("filtered", function (chart) {
                 if (chart.gdca_toFilter) {
                 gda.log(4,"period trigger");
 			    dc.events.trigger(function () {
-                if (chart.gdca_toFilter.chart.focus) {
-                    gda.log(4,"period triggered");
-              // this is a test, to try to get scatter y axis to elasticY 
-              // next up try reapplying the new domain to Y's axis
-                    _.each(gda.charts, function(lchtObj) {
-                        if (lchtObj.sChartGroup === chtObj.sChartGroup &&
-                            lchtObj.chartType === "Scatter") {
-                            gda.scatterDomains(lchtObj,false); // update
-                            //lchtObj.chart.render();
-                            lchtObj.chart.redraw();
-                        }
-                        else if (lchtObj.sChartGroup === chtObj.sChartGroup && 
-                            lchtObj.chartType === "Line") {
-                            gda.lineDomains(lchtObj,false); // update
-                            lchtObj.chart.redraw();
-                        }
-                    });
-                    chart.gdca_toFilter.chart.focus(chart.filter());
-                }
+                    _.each(chart.gdca_toFilter, function(cname) {
+                        var oFCchart = _.findWhere(gda.charts, {Title: cname});  // Title must be unique in a slide!
+                    if (oFCchart.chart.focus) {
+                        gda.log(4,"period triggered");
+                  // this is a test, to try to get scatter y axis to elasticY 
+                  // next up try reapplying the new domain to Y's axis
+                        _.each(gda.charts, function(lchtObj) {
+                            if (lchtObj.sChartGroup === chtObj.sChartGroup &&
+                                lchtObj.chartType === "Scatter") {
+                                gda.scatterDomains(lchtObj,false); // update
+                                //lchtObj.chart.render();
+                                lchtObj.chart.redraw();
+                            }
+                            else if (lchtObj.sChartGroup === chtObj.sChartGroup && 
+                                lchtObj.chartType === "Line") {
+                                gda.lineDomains(lchtObj,false); // update
+                                lchtObj.chart.redraw();
+                            }
+                        });
+                        oFCchart.chart.focus(chart.filter());
+                    }
+                });
 			    });
                 }
             });
@@ -4679,17 +4702,13 @@ gda.newParetoDisplay = function(chtObj) {
         .margins({top: composite.margins()["top"],
                 right: composite.margins()["right"],
                 bottom: botMi + composite.margins()["bottom"],
-                left: composite.margins()["left"]});
+                left: 30 + composite.margins()["left"]});
 
             bc
                 
                         .centerBar(true)
                         .barPadding(0.1)    // without this there is bar overlap!
-                        //.gap(5)    // no impact?
-                        //.outerPadding(0.5)
                         .colors('blue')
-                        //.label(gda.utils.labelFunction)
-                        //.title(gda.utils.titleFunction)
                         .valueAccessor(function(d){
                                         return d.value;
                                     })
@@ -4831,10 +4850,8 @@ gda.newRowDisplay = function(chtObj) {
         // brush is off, as scale needs to be corrected manually
         //.brushOn(false)
         .dimension(dDims[0])
-//    .yAxisLabel("Samples per Bin")
-//    .xAxisLabel(chtObj.cnameArray[0])
         .group(chtObj.dGrps[0]);
-    ftX .xAxis().ticks(6);
+    ftX .xAxis().ticks(chtObj.overrides["xAxis ticks"]);
     if (chtObj.Title === "Escalation Status" && gda.utils.fieldExists(statusColors)) {
         ftX.colors(statusColors);
     }
@@ -5025,9 +5042,7 @@ gda.newHistDisplay = function(chtObj) {
         .centerBar(true)
         //.barPadding(0.2)  // these two don't seem to work right in 2.0
         //.gap(10)
-//    .yAxisLabel("Samples per Bin")
     .xAxisLabel(chtObj.numberFormat(xmin)+" => "+ chtObj.cnameArray[0] +" (binned) <= "+chtObj.numberFormat(xmax));
-    //.xAxisLabel(xmin+" => "+ chtObj.cnameArray[0] +" (binned) <= "+xmax)
 
     if (chtObj.overrides["log"]) {
         ftHistX
@@ -5043,9 +5058,10 @@ gda.newHistDisplay = function(chtObj) {
     }
 
         if (dDims[0].isDate)
-            ftHistX .xAxis().ticks(d3.time.months,chtObj.overrides["xAxis ticks"]);   // 6 months should be a setting
+            ftHistX .xAxis().ticks(d3.time[ chtObj.overrides["xAxisResolution"] ] ,chtObj.overrides["xAxis ticks"]);   // 6 months should be a setting
+                
         else
-            ftHistX .xAxis().ticks(4);
+            ftHistX .xAxis().ticks(chtObj.overrides["xAxis ticks"]);
         if (chtObj.overrides["legend"])
             ftHistX
                 .legend(dc.legend());
@@ -5189,6 +5205,13 @@ gda.newScatterDisplay = function(chtObj) {
 
     gda.scatterDomains(chtObj,true);
 
+    if (chtObj.overrides["xAxis rotate labels"]) {
+        scatterChart.stdMarginBottom = scatterChart.margins().bottom;
+        scatterChart.margins().bottom = scatterChart.stdMarginBottom + 30;    // temp workaround. provide margin override
+    }
+    scatterChart.stdMarginLeft = scatterChart.margins().left;
+    scatterChart.margins().left = scatterChart.stdMarginLeft + 20;    // temp workaround. provide margin override
+
     scatterChart
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
         .elasticX(chtObj.overrides["elasticX"]);   // not sure of this until fully tested
@@ -5203,12 +5226,25 @@ gda.newScatterDisplay = function(chtObj) {
     //.xAxisPadding(0.11)        // fix ! hmm, percentage of full range
     //.yAxisPadding(0.11)
     .renderVerticalGridLines(true)
-    .renderHorizontalGridLines(true)
+    .renderHorizontalGridLines(true);
     //.valueAccessor(function(d) {
     //    return d[chtObj.cnameArray[1]];
     //})
+        if (chtObj.overrides["xAxis rotate labels"]) {
+        scatterChart
+        .renderlet(function(c) {
+            //if (c.xAxis().ticks()>6)
+                c.svg().select('g').select('.axis.x').selectAll('.tick').select('text')
+                    .attr("dx", "-.8em")                    // -.8
+                    .attr("dy", "-.50em")    // .35          // .15
+                    .attr("transform", function(d) {        // -45
+                            return "rotate(-90)";
+                        })
+                    .style("text-anchor", "end");
+        });
+        }
         if (chtObj.overrides["legend"])
-            scatterChart
+           scatterChart 
                 .legend(dc.legend());
 
 // try something similar for scatter, since Y doesn't appear to be properly elastic.
@@ -5436,10 +5472,13 @@ gda.scatterDomains = function(chtObj, bInitial){
               (xmin.toLocaleString() + " - " + xmax.toLocaleString()) :
               (xmin+" => "+ chtObj.cnameArray[0] +" <= "+xmax);
     if (bInitial) {
-        if (dDims[0].isDate && chtObj.overrides["timefield"]) {
+        if (dDims[0].isDate && chtObj.overrides["xAxis ticks"] &&
+            chtObj.overrides["xAxisResolution"] ) {
             chtObj.chart
                 // needs to be keyed from the override for axis resolution
-                .xAxis().ticks(d3.time.months,chtObj.overrides["xAxis ticks"]);// 6;   // add override for 6, months
+                //.xAxis().ticks(d3.time.months,chtObj.overrides["xAxis ticks"] );// 6;   // add override for 6, months
+                .xAxis().ticks(d3.time[ chtObj.overrides["xAxisResolution"] ],
+                               chtObj.overrides["xAxis ticks"] );// 6;   // add override for 6, months
         }
         else 
             if (dDims[0].isDate && chtObj.overrides["xAxisResolution"] && chtObj.overrides["xAxis ticks"]) {
@@ -5449,7 +5488,7 @@ gda.scatterDomains = function(chtObj, bInitial){
                     //.xAxis().ticks(d3.time.minutes,3);//chtObj.overrides["xAxis ticks"]);// 6;   // add override for 6, months
                     .xAxis().ticks(d3.time[chtObj.overrides["xAxisResolution"]],chtObj.overrides["xAxis ticks"]);
             }
-        else
+        else if (chtObj.overrides["xAxis ticks"])
             chtObj.chart.xAxis().ticks(chtObj.overrides["xAxis ticks"]);
         chtObj.chart
             .x(xs)
@@ -5458,7 +5497,7 @@ gda.scatterDomains = function(chtObj, bInitial){
             .xAxisLabel(xl)
             //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
             .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
-        if (dDims[0].isDate && !chtObj.overrides["timefield"])
+        if (dDims[0].isDate && !chtObj.overrides["xAxis ticks"])
             chtObj.chart
             .xAxis().tickFormat(function (s) {
                     return s.toLocaleTimeString();
