@@ -93,6 +93,13 @@ siteSpecific.almondPlus = function(data) {
                         newEntries["asVal"] = +newEntries["asVal"] + (newEntries["TAMPER"]==="false"? 0.1 : 0.5);
                         newEntries["TAMPER"] = newEntries["TAMPER"]==="false"? "Okay" : "TAMPERED";
                         break;
+                    case "4":
+                        var finalEntries = {};
+                        finalEntries["Lamp State"] = newEntries["SWITCH BINARY"]==="false"? "Off" : "On";
+                        finalEntries["Lamp Level"] = (100* +newEntries["SWITCH MULTILEVEL"])/255;
+                        finalEntries["asVal"] = finalEntries["Lamp Level"];
+                        newEntries = finalEntries;
+                        break;
                     case "22":
                         var finalEntries = {};
                         finalEntries["asVal"] = newEntries["asVal"];
