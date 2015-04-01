@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "106",
+    minor:   "107",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -694,6 +694,7 @@ gda.newSlideState = function() {
 
     _aSlide.bAllowOverrideChanges = false;
     _aSlide.bAccessOverrides = false;
+    _aSlide.bAccessSelectors = false;
     return _aSlide;
 };
 
@@ -1497,7 +1498,7 @@ gda.redrawDimCharts = function() {
         docEl.setAttribute("class","container");
         var dEl = gda.addElementWithId(docEl,"div",docEl.id+dc.utils.uniqueId() );
             dEl.setAttribute("class","row");
-    gda.addSelectorCharts(dEl, gda.accessOverrides() ? gda.addEditsToSelectedSelChart  : false);
+    gda.addSelectorCharts(dEl, gda.accessOverrides() ? gda.addEditsToSelectedSelChart  : gda._slide().bAccessOverrides);//false;
 }
 
 gda.showFilters = function() {
@@ -1762,13 +1763,17 @@ gda.showTable = function() {
                         var ds = gda.dataSources.map[dS];
                         ds.bLoaded = false;
                     });
-                    gda.fileLoadImmediate();
+                    gda.fileLoadImmediate(true);
                     gda.showTable();
                     }
                 } );
         gda.addTextEntry(s3, "nFirstRows", ", 'n' = ", gda.nFirstRows,
                 function(newVal) {
-                gda.nFirstRows = parseInt(newVal);
+                    if (gda.activeChartGroups().length>0) {
+                    gda.nFirstRows = parseInt(newVal);
+                    gda.fileLoadImmediate(true);
+                    gda.showTable();
+                    }
                 });
         var dEl = gda.addElement(s3,"br");
         gda.addCheckB(s3, "useOverrides", "Allow Overrides", 'objmember',
@@ -2055,6 +2060,19 @@ gda.Controls = function() {
                             gda._slide().bAccessOverrides = t.checked;
                             gda.view.redraw();
                         });
+                gda.addCheckB(dElb, "accessSelectors", "Access Selectors", 'objmember',
+                        gda._slide().bAccessSelectors,
+                        function (t) {
+                            gda._slide().bAccessSelectors = t.checked;
+                            gda.view.redraw();
+                        });
+                if (gda._slide().bAccessSelectors) {
+                    var dEl = gda.addElement(dElb, "br");
+
+                    var dEl = gda.addElement(dElb, "strong");
+                    var dTxtT = gda.addTextNode(dEl,"Choose Dimension Selectors");
+                    var dElt = gda.addElementWithId(dElb,"div","setupDimsCols");
+                }
                 }
             // dElb here may not work as expected in all cases. dElS however is outside the div and
             // causes next line. div is used for the checkbox bootstrap css.
@@ -3360,6 +3378,7 @@ gda.newLineChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
     gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
+    gda.addOverride(chtObj,"UCL",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
     gda.addOverride(chtObj,"stats",false);//['avg','min','max','pNsigma','mNsigma']);
 
     if (chtObj.cnameArray.length>1) {
@@ -3368,6 +3387,9 @@ gda.newLineChart = function(chtObj, cf) {
     }
 
         gda.addOverride(chtObj,"nFixed",null);	// field, but don't use.
+
+//        if (chtObj.overrides["nominal"] || chtObj.overrides["UCL"])
+//            chtObj.overrides["elasticY"] = false;
                                 
         var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf, true, chtObj.overrides["nFixed"]);
         if (gda.isDate(chtObj.cnameArray[0]))
@@ -4016,32 +4038,37 @@ gda.newLineDisplay = function(chtObj) {
                     .style("text-anchor", "end");
         });
         }
-        if(chtObj.overrides["nominal"]) {
+        if( chtObj.overrides["nominal"] ||
+            chtObj.overrides["UCL"]) {
         ftX
         .renderlet(function(c) {
-            console.log("nom ");
-            c.svg().append("line")
+            c.svg().selectAll('line').remove();
+            if( chtObj.overrides["nominal"]) {
+                console.log("nom ");
+                var yv = c.y()( +(chtObj.overrides["nominal"]) ); 
+                if (yv>=0)
+                    c.svg().append("line")
                         .attr("x1", c.margins().left + c.x()( c.x().domain()[0] ))
                         .attr("x2", c.margins().left + c.x()( c.x().domain()[1] ))
-                        .attr("y1", c.margins().top + c.y()( +(chtObj.overrides["nominal"]) ))
-                        .attr("y2", c.margins().top + c.y()( +(chtObj.overrides["nominal"]) ))
+                        .attr("y1", c.margins().top + yv )
+                        .attr("y2", c.margins().top + yv )
                         .attr("stroke-width",2)
                         .attr("stroke","green")
                         .attr("stroke-dasharray","10,10");
-        });
-        }
-        if(chtObj.overrides["UCL"]) {
-        ftX
-        .renderlet(function(c) {
-            console.log("nom ");
-            c.svg().append("line")
+            }
+            if(chtObj.overrides["UCL"]) {
+                console.log("UCL ");
+                var yv = c.y()( +(chtObj.overrides["UCL"]) ); 
+                if (yv>=0)
+                    c.svg().append("line")
                         .attr("x1", c.margins().left + c.x()( c.x().domain()[0] ))
                         .attr("x2", c.margins().left + c.x()( c.x().domain()[1] ))
-                        .attr("y1", c.margins().top + c.y()( +(chtObj.overrides["UCL"]) ))
-                        .attr("y2", c.margins().top + c.y()( +(chtObj.overrides["UCL"]) ))
+                        .attr("y1", c.margins().top + yv )
+                        .attr("y2", c.margins().top + yv )
                         .attr("stroke-width",2)
                         .attr("stroke","red")
                         .attr("stroke-dasharray","10,10");
+            }
         });
         }
         if (false) { //chtObj.overrides.stats) 
@@ -4427,18 +4454,22 @@ gda.newTimelineDisplay = function(chtObj) {
             ftX.renderlet(function (chart) {
                 if (chart.gdca_toFilter) {
                 var cFilter = chart.filter();
+                if (cFilter) {
                 gda.log(4,"period renderlet");
         // why was this being removed? ohloh ex https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=renderlet%20select(%22g.y%22).style(%22display%22%2C%20%22none%22)
 		//	    chart.select("g.y").style("display", "none");
                 _.each(chart.gdca_toFilter, function(cname) {
                     var oFCchart = _.findWhere(gda.charts, {Title: cname});  // Title must be unique in a slide!
+                    if (oFCchart) {
                     if (cFilter && cFilter.length>0)
                         oFCchart.chart.filter(cFilter); // need method to specify [0]
                     else if (oFCchart.chart)
                         oFCchart.chart.filterAll();
+                    }
                                                 // possibly dropdown of charts except this one
                                                 // or all charts except this one and Selectors
                 });
+                }
                 }
 			})
 			.on("filtered", function (chart) {
@@ -4559,8 +4590,15 @@ gda.newBarDisplay = function(chtObj) {
     var botMi = maxL>0 ? (maxL-1)*5 : 0;
 
     //gda.log(4,"add bar for Bar @ " + chtObj.dElid);
-    var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup)
-        .dimension(dDims[0])
+    var ftX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup);
+            if ( chtObj.overrides["top"] )
+                ftX
+                    .dimension(chtObj.dDims[0].top(chtObj.overrides["top"]));
+            else
+                ftX
+                    .dimension(chtObj.dDims[0]);
+    ftX
+        //.dimension(dDims[0])
         .group(chtObj.dGrps[0]);
     var maxBarHeight;
     var pixPerUnit;

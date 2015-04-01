@@ -5,6 +5,15 @@ siteSpecific.selectAndFilter = function(data) {
     if (data && data.length>0) {
         if (data[0].DeviceValues)
             data = siteSpecific.almondPlus(data);
+        else if (data[0].Head_Inches) {
+            var notenthFormat = d3.format(".0f");
+            _.each(data, function(d) {
+                if (d.Watts)
+                    d.Efficiency = notenthFormat(d.GPH / d.Watts);
+                if (d.Price)
+                    d.Price = d.Price.substring(1);
+            });
+        }
         else if (data[0]["N-Cream"]) {
             _.each(data, function(d) {
                 d["N-Cream"] = +d["N-Cream"]

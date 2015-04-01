@@ -1,0 +1,257 @@
+{
+    "version": "0.099",
+    "minor": "106a",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "AAPpumpSpecs": {
+            "dataprovider": "/CSV_Samples/",
+            "datafile": "AAPpumpSpecs.csv",
+            "bLocalFile": true,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "bSparseData": false,
+            "bTimestamp": false,
+            "_idCounter": 112,
+            "keymap": {
+                "Variable flow": "Variable_flow"
+            },
+            "columns": [
+                "Pump",
+                "GPH",
+                "Head_Inches",
+                "Head_Feet",
+                "Head_CM",
+                "Inline",
+                "Input",
+                "Output",
+                "Dims",
+                "Watts",
+                "Variable_flow",
+                "Price",
+                "_qty",
+                "_counter",
+                "cumFileUnits",
+                "Efficiency"
+            ],
+            "dataLastModifiedDate": "2015-04-01T18:59:35.000Z",
+            "Timestamp_get": "2015-04-01T19:51:56.366Z",
+            "Timestamp_complete": "2015-04-01T19:51:56.391Z"
+        }
+    },
+    "slides": [
+        {
+            "title": "Pump Specs",
+            "comment": "courtesy AAP",
+            "columns": [],
+            "filters": {
+            },
+            "myCols": {
+                "AAPpumpSpecs": {
+                    "csetupDimsCols": [
+                        "Input",
+                        "Output",
+                        "Inline",
+                        "Variable_flow"
+                    ]
+                }
+            },
+            "charts": [
+                {
+                    "Title": "Efficiency",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "GPH",
+                            "Watts"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "AAPpumpSpecs",
+                    "overrides": {
+                        "legend": false,
+                        "elasticX": false,
+                        "elasticY": false,
+                        "brushOn": true,
+                        "mouseZoomable": true,
+                        "log": false,
+                        "yMin": false,
+                        "yMax": false,
+                        "xAxis rotate labels": false,
+                        "xAxis ticks": 6,
+                        "xAxisResolution": "months",
+                        "hChart": "300"
+                    }
+                },
+                {
+                    "Title": "Cost of Efficiency",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Efficiency",
+                            "Price"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "AAPpumpSpecs",
+                    "overrides": {
+                        "legend": false,
+                        "elasticX": false,
+                        "elasticY": false,
+                        "brushOn": true,
+                        "mouseZoomable": false,
+                        "log": false,
+                        "yMin": false,
+                        "yMax": false,
+                        "xAxis rotate labels": false,
+                        "xAxis ticks": 6,
+                        "xAxisResolution": "months",
+                        "hChart": "300"
+                    }
+                },
+                {
+                    "Title": "Volume Efficiency",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Efficiency",
+                            "GPH"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "AAPpumpSpecs",
+                    "overrides": {
+                        "legend": false,
+                        "elasticX": false,
+                        "elasticY": false,
+                        "brushOn": true,
+                        "mouseZoomable": false,
+                        "log": false,
+                        "yMin": false,
+                        "yMax": false,
+                        "xAxis rotate labels": false,
+                        "xAxis ticks": 6,
+                        "xAxisResolution": "months",
+                        "hChart": "300"
+                    }
+                },
+                {
+                    "Title": "Head vs Volume",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Head_Feet",
+                            "GPH"
+                        ]
+                    },
+                    "type": "Scatter",
+                    "sChartGroup": "AAPpumpSpecs",
+                    "overrides": {
+                        "legend": false,
+                        "elasticX": false,
+                        "elasticY": false,
+                        "brushOn": true,
+                        "mouseZoomable": false,
+                        "log": false,
+                        "yMin": false,
+                        "yMax": false,
+                        "xAxis rotate labels": false,
+                        "xAxis ticks": 6,
+                        "xAxisResolution": "months",
+                        "hChart": "300"
+                    }
+                },
+                {
+                    "Title": "Output Size",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Output"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "AAPpumpSpecs",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "",
+                        "top": false,
+                        "dropOthers": false,
+                        "ordering": false,
+                        "xAxis ticks": 6,
+                        "hChart": "300"
+                    }
+                },
+                {
+                    "Title": "Input Size",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Input"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "AAPpumpSpecs",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "",
+                        "top": false,
+                        "dropOthers": false,
+                        "ordering": false,
+                        "xAxis ticks": 6,
+                        "hChart": "300"
+                    }
+                },
+                {
+                    "Title": "Efficiency Histogram GPHpW",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Efficiency"
+                        ]
+                    },
+                    "type": "Hist",
+                    "sChartGroup": "AAPpumpSpecs",
+                    "overrides": {
+                        "elasticX": false,
+                        "legend": false,
+                        "log": false,
+                        "yMin": false,
+                        "xAxis ticks": 6,
+                        "xAxisResolution": "months",
+                        "nBins": "20",
+                        "hChart": "200"
+                    }
+                }
+            ],
+            "tables": [
+                {
+                    "bUseTable": true,
+                    "bHideShowTable": false,
+                    "bShowTable": true,
+                    "bShowLinksInTable": false,
+                    "bShowPicturesInTable": false,
+                    "bShowTableColumnSelectors": false,
+                    "csetupSortTableCols": [
+                        "GPH"
+                    ],
+                    "csetupHiddenTableCols": [
+                        "cumFileUnits",
+                        "_counter",
+                        "_qty",
+                        "Head_Inches",
+                        "Head_CM"
+                    ],
+                    "dataSource": "AAPpumpSpecs",
+                    "sChartGroup": "AAPpumpSpecs"
+                }
+            ],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": 5000,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": true,
+            "bAccessSelectors": false,
+            "myId": 0
+        }
+    ]
+}
+
