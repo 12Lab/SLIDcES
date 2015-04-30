@@ -1,0 +1,157 @@
+{
+    "version": "0.099",
+    "minor": "107d",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "Comparison_of_network_monitoring_systems": {
+            "dataprovider": "/CSV_Samples/",
+            "datafile": "Comparison_of_network_monitoring_systems.csv",
+            "bLocalFile": true,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "bSparseData": false,
+            "bTimestamp": false,
+            "_idCounter": 62,
+            "keymap": {
+                "IP SLA Reports": "IP_SLA_Reports",
+                "Logical Grouping": "Logical_Grouping",
+                "Trend Prediction": "Trend_Prediction",
+                "Auto Discovery": "Auto_Discovery",
+                "Triggers / Alerts": "Triggers___Alerts",
+                "Distributed Monitoring": "Distributed_Monitoring",
+                "Data Storage Method": "Data_Storage_Method",
+                "Access Control": "Access_Control",
+                "Latest release date": "Latest_release_date",
+                "Latest release version": "Latest_release_version"
+            },
+            "columns": [
+                "Name",
+                "IP_SLA_Reports",
+                "Logical_Grouping",
+                "Trending",
+                "Trend_Prediction",
+                "Auto_Discovery",
+                "Agentless",
+                "SNMP",
+                "Syslog",
+                "Plugins",
+                "Triggers___Alerts",
+                "WebApp",
+                "Distributed_Monitoring",
+                "Inventory",
+                "Platform",
+                "Data_Storage_Method",
+                "License",
+                "Maps",
+                "Access_Control",
+                "IPv6",
+                "Latest_release_date",
+                "Latest_release_version",
+                "_qty",
+                "_counter",
+                "cumFileUnits"
+            ],
+            "dataLastModifiedDate": "2015-04-25T15:56:19.000Z",
+            "trimmed": []
+        }
+    },
+    "slides": [
+        {
+            "title": "Blank1",
+            "comment": "",
+            "columns": [],
+            "filters": {
+                "Trending": [
+                    "Yes"
+                ],
+                "Auto_Discovery": [
+                    "Yes"
+                ],
+                "Plugins": [
+                    "Yes"
+                ],
+                "Triggers___Alerts": [
+                    "Yes"
+                ],
+                "Distributed_Monitoring": [
+                    "Yes"
+                ],
+                "WebApp": [
+                    "Viewing, Acknowledging, Reporting",
+                    "Full Control"
+                ]
+            },
+            "myCols": {
+                "Comparison_of_network_monitoring_systems": {
+                    "csetupDimsCols": [
+                        "Trend_Prediction",
+                        "Trending",
+                        "Auto_Discovery",
+                        "Agentless",
+                        "SNMP",
+                        "Plugins",
+                        "Triggers___Alerts",
+                        "Distributed_Monitoring",
+                        "WebApp",
+                        "Platform"
+                    ]
+                }
+            },
+            "charts": [
+                {
+                    "Title": "Blank427",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Name"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "Comparison_of_network_monitoring_systems",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "",
+                        "top": false,
+                        "dropOthers": false,
+                        "ordering": false,
+                        "xAxis ticks": 6,
+                        "wChart": "300",
+                        "hChart": "1200"
+                    }
+                }
+            ],
+            "tables": [
+                {
+                    "bUseTable": true,
+                    "bHideShowTable": false,
+                    "bShowTable": true,
+                    "bShowLinksInTable": false,
+                    "bShowPicturesInTable": false,
+                    "bShowTableColumnSelectors": false,
+                    "csetupSortTableCols": [
+                        "Name"
+                    ],
+                    "csetupHiddenTableCols": [
+                        "cumFileUnits",
+                        "_counter",
+                        "_qty"
+                    ],
+                    "dataSource": "Comparison_of_network_monitoring_systems",
+                    "sChartGroup": "Comparison_of_network_monitoring_systems"
+                }
+            ],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": 5000,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": false,
+            "bAccessSelectors": false,
+            "myId": 0
+        }
+    ]
+}
+

@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "107",
+    minor:   "108",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -134,6 +134,8 @@ var gda = {
 
     cf : {},              // data is aggregated in crossfilter
     dimensions : {},
+    // common variables, valuated at load time. // slides also have their own.
+    variables : {},       // { "variablename" : { "value": v, "test": fn, "parse": fn } }
     sChartGroups : [],
     sEdS : null,             // dS used for editing
     sEmS : null,             // mS used for editing
@@ -269,9 +271,9 @@ gda.spinner = function(config) {
         }
         else if (_iLevels>1) {
             var arcStrip = d3.svg.arc()
-                    .innerRadius(_config.radius* _config.innerRad *(1 + (1*_iLevels)/10))
-                    .outerRadius(_config.radius* _config.innerRad *(1 + (1*_iLevels+1)/10))
-                    .startAngle(0);//_config.startRad*tau);
+                    .innerRadius(_config.radius* _config.innerRad *(1 + (1*_iLevels)/20))
+                    .outerRadius(_config.radius* _config.innerRad *(1 + (1*_iLevels+1)/20))
+                    .startAngle(0);//_config.startRad*tau;
             _levelsArc.push(arcStrip);
             _bkg.push( _svg.append("path")
                     .datum({endAngle: 0.7*tau})//_config.endRad*tau
@@ -323,6 +325,7 @@ gda.newTableState = function() {
     _aTable.bHideShowTable = false;
     _aTable.bShowTable = true;
     _aTable.bShowLinksInTable = false;
+    _aTable.maxSize = 500;
     _aTable.bShowPicturesInTable = false;
     _aTable.bShowTableColumnSelectors = false;
 
@@ -355,7 +358,7 @@ gda.newDataSourceState = function() {
     _aDatasource.bTimestamp = false;
     _aDatasource._idCounter = 0;
     _aDatasource.keymap = {};
-    _aDatasource.columns = [];  // ? was {}
+    _aDatasource.columns = [];
 
 
     return _aDatasource;
@@ -399,7 +402,7 @@ gda.metaSources.map = {};
 gda.metaSources.asText = function() {
     var dss = gda.metaSources.map;
     var t = JSON.stringify(dss);
-    t = t.replace(/{\"/g,'{\r\n\"');
+    t = t.replace(/{\"/g,'{\r\n\"');     // } // }  // {
     t = t.replace(/},\"/g,'\},\r\n\"');
     return t;
 };
@@ -457,6 +460,31 @@ gda.dataSources.updateColumns = function() {
     }
 };
 
+gda.dataSources.autoTrim = function(dS,ds) {
+    // ignore any already trimmed. iterate through remaining, do a
+    // crossfilter dimension, check results, if just one, then trim
+    var iDL = 0;
+    _.each(_.difference(ds.columns,ds.trimmed), function(cname) {
+        if (cname !== "_qty") {
+            gda.log(0,"autoTrim: " + cname);
+            //cname
+            var aDim = gda.dimensionByCol(dS, cname, gda.cf[dS]);
+            if (aDim) {
+                if (iDL == 0) iDL = aDim.top(Infinity).length;
+                if (iDL>1) {
+                    var dGrp = aDim.group();
+                    var iGL = dGrp.top(Infinity).length;
+                    if (iGL < 2) {
+                        ds.trimmed.push(cname);
+                    }
+                }
+            }
+            //gda.cf[dS].groupAll();
+            aDim.remove();
+        }
+    });
+};
+
 // from: https://groups.google.com/forum/#!topic/dc-js-user-group/rBEViYG8bBE
 // alternative, but just for one key (at least this example):
 //      You don't need to join the data fully prior to passing it to crossfilter,
@@ -480,8 +508,8 @@ gda.dataSources.asText = function() {
         delete ds.bLoaded;
     });
     var t = JSON.stringify(dss);
-    t = t.replace(/{\"/g,'{\r\n\"');
-    t = t.replace(/\"keymap\"/g,'\r\n\"keymap\"');
+    t = t.replace(/{\"/g,'{\r\n\"'); // } // }
+    t = t.replace(/\"keymap\"/g,'\r\n\"keymap\"');  // {
     t = t.replace(/},\"/g,'\},\r\n\"');
     return t;
 };
@@ -795,6 +823,9 @@ gda.utils.addDateOption = function(d,base,just) {
 		case "qoy":
 			insHere[base+j ] = 1+Math.floor(d3.time.month(d[base]).getMonth()/3); // this one isn't supported by D3 (yet).
 			break;
+		case "months":
+			insHere[base+j ] = d3.time.months(d[base]);
+			break;
 		case "month":
 			insHere[base+j ] = d3.time.month(d[base]);
 			break;
@@ -1044,7 +1075,7 @@ gda.slide = function( _slide ) {
     var dElTd = gda.addElementWithId(dHostEl,"div","cfData");
         dElTd.setAttribute("class","span10");
             var dElBr = gda.addElement(dElTd,"br");
-            var dTxtT = gda.addTextNode(dElTd,"Version " +gda.version+"."+gda.minor + " " + gda.branch);// + ", DOM(" + _.size(document.getElementsByTagName('*')) + ")"); // a count of all DOM elements
+            var dTxtT = gda.addTextNode(dElTd,"Version " +gda.version+"."+gda.minor + " " + gda.branch);// + ", DOM(" + _.size(document.getElementsByTagName('*')) + ")" // a count of all DOM elements
 
         if (gda && gda.cf && 1<=gda.diag) {
             var i = 0;
@@ -1613,7 +1644,7 @@ gda.regenerateTable = function() {
     }
     var iTable = gda.createTable(gda.cf[dS], gda.dateDimension, diff, dS, dt.bShowLinksInTable,
                                  dt.bShowPicturesInTable, JSON.parse(JSON.stringify(editCols))  );// editCols changes, need to retain state
-    gda.newTableDisplay(s8,iTable);
+    gda.newTableDisplay(s8,iTable, dt.maxSize);
     var chtObj=gda.tables[iTable];
     gda.addChartGroup(chtObj.sChartGroup);
     }
@@ -2363,24 +2394,33 @@ gda.slides = function() {
                         var dEl = gda.addElementWithId(dTd,"span","dataFilenameDisplay");
                 }
 
+                var dS = gda.sEdS;
+                var ds = gda.dataSources.map[dS];
+                if (ds) {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
-                        gda.addCheckB(dTd, "trimcols", "Edit Trimmed Unnecessary Columns", 'objmember', gda.bEditTrimmed, 
+                        gda.addCheckB(dTd, "trimcols", "Edit Trimmed Columns", 'objmember', gda.bEditTrimmed, 
                                 function (t) {
                                     gda.bEditTrimmed = t.checked;
                                     gda.view.redraw();
                         });
+                        gda.addButton(dTd,"autoTrim", "Auto Trim", 
+                                function (t) {
+                                if (!gda.bEditTrimmed) {
+                                    gda.bEditTrimmed = true;
+                                    gda.view.redraw();
+                                }
+                                gda.dataSources.autoTrim(dS,ds);
+                                gda.view.redraw();
+                        });
                         if (gda.bEditTrimmed) {
-                            var dS = gda.sEdS;
-                            var ds = gda.dataSources.map[dS];
-                            if (ds) {
-                                if (!gda.utils.fieldExists(ds.trimmed))
-                                    ds.trimmed = [];
-                                var dCEl = gda.addElementWithId(dTd,"div","trimmedCols");
-                                gda.showColumnChoices(ds.columns,dCEl,dS,
-                                    ds.trimmed, gda.trimcolCheckboxChanged ); // www
-                            }
+                            if (!gda.utils.fieldExists(ds.trimmed))
+                                ds.trimmed = [];
+                            var dCEl = gda.addElementWithId(dTd,"div","trimmedCols");
+                            gda.showColumnChoices(ds.columns,dCEl,dS,
+                                ds.trimmed, gda.trimcolCheckboxChanged );
                         }
+                    }
                   }
               }
             },
@@ -2802,7 +2842,7 @@ gda.view = function() {
                                     }
                                     if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) {
                                     if (!(endsWith(newVal,"/") || endsWith(newVal,"\\")))
-                                        newVal = newVal + "\\";  // preserve form?
+                                        newVal = newVal + "/";  // preserve form?
                                     }
                                     ds.dataprovider = newVal;
                                     gda.view.redraw();
@@ -2839,7 +2879,7 @@ gda.view = function() {
             if (gda._anchorEdit) {
                 gda._anchorEdit[gda.sTextHTML] = "";  // call operators
                 gda.Controls.addEditGUI();
-          {//if (gda._allowEdit) {
+          {//if (gda._allowEdit)
                 gda.slides.createContentDataSource(gda._anchorEdit);
                 gda.slides.createContentMetaSource(gda._anchorEdit);
           }
@@ -2933,13 +2973,14 @@ gda.chooseFromAvailCharts = function(docEl,cf,columns,callback) {
                                         // can't use "avail" for the chartgroup as some code is expecting
                                         // to use chartgroup for dS.
 
-    gda.charts =
-    _.filter(gda.charts, function(chtObj) {
-        //if (chtObj.sChartGroup !== sChtGroup)
-    //    if (gda.utils.fieldExists(chtObj.AvailChoices))
-    //        dc.deregisterChart(chtObj.chart, chtObj.sChartGroup);
-        return (!gda.utils.fieldExists(chtObj.AvailChoices));//chtObj.sChartGroup !== sChtGroup;
-    });
+    if (columns && columns.length>0)
+        gda.charts = []; // 4/22/15 was filtered, but this caused slide chart list for dS to be included in Avail Choice list when adding charts.
+//  _.filter(gda.charts, function(chtObj) {
+//      //if (chtObj.sChartGroup !== sChtGroup)
+//  //    if (gda.utils.fieldExists(chtObj.AvailChoices))
+//  //        dc.deregisterChart(chtObj.chart, chtObj.sChartGroup);
+//      return (!gda.utils.fieldExists(chtObj.AvailChoices));//chtObj.sChartGroup !== sChtGroup;
+//  });
 
     if (columns && columns.length>0) {
         if (!gda.utils.fieldExists(gda.dimensions[sChtGroup]))
@@ -2968,7 +3009,7 @@ gda.displayTables = function() {
 
 gda.displayCharts = function() {
     // changed from chartgroup order to chart order
-    //_.each(gda.sChartGroups, function(dS) {
+    //_.each(gda.sChartGroups, function(dS) 
         // need data to be loaded by this point, so instead of having gda.cf become an interface that hides driving
         // a load, instead drive the load of any referenced dS/mS on the current slide when it is selected?
         // The issue is the creation of the charts needs to have the data fully loaded in order to establish
@@ -2978,7 +3019,7 @@ gda.displayCharts = function() {
         // 'fix' is to gda.view.redraw after the final data load occurs. It could be performed after each load
         // completes. A renderAll(sChartGroup=dS/mS) could occur, if the gda stuff becomes registered appropriately
         // in DC. Since it isn't yet... must brute force it.
-     //   if (gda.cf[dS]) {   // during Edit, not loaded yet when called from slide.display
+     //   if (gda.cf[dS])    // during Edit, not loaded yet when called from slide.display
         gda.charts = [];    // workaround
             _.each(gda._slide().charts, function(aChart) {
                 var dS = aChart.sChartGroup;
@@ -3260,6 +3301,7 @@ gda.newBoxChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"legend",false);
     gda.addOverride(chtObj,"elasticX",true);
     gda.addOverride(chtObj,"elasticY",true);
+    gda.addOverride(chtObj,"wChart",200);
 
     var xDimension = chtObj.cnameArray.length === 2 ?
         chtObj.cf.dimension(function(d) {
@@ -3315,6 +3357,7 @@ gda.newHistChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
     gda.addOverride(chtObj,"xAxis ticks",6);
+    gda.addOverride(chtObj,"xAxis gap",30);
     gda.addOverride(chtObj,"xAxisResolution","months");
 
     var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf,
@@ -3369,22 +3412,22 @@ gda.isDate = function (cname) {
 
 // start with one dimension, then expand to several (paired/triples/etc bars, or stacked).
 gda.newLineChart = function(chtObj, cf) {
-    //gda.addOverride(chtObj,"timefield","Month");    // arbitrary, and may be "ClosedMonth" etc.
-    gda.addOverride(chtObj,"xAxisResolution","months");
-    gda.addOverride(chtObj,"xAxis rotate labels",false);
-    gda.addOverride(chtObj,"interpolate",false);
-    gda.addOverride(chtObj,"elasticX",false);
-    gda.addOverride(chtObj,"elasticY",true);
-    gda.addOverride(chtObj,"log",false);
-    gda.addOverride(chtObj,"yMin",false);
-    gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
-    gda.addOverride(chtObj,"UCL",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
-    gda.addOverride(chtObj,"stats",false);//['avg','min','max','pNsigma','mNsigma']);
-
     if (chtObj.cnameArray.length>1) {
-    if (chtObj.overrides.stats) {
-        gda.addStatsToChart(chtObj, _.rest(chtObj.cnameArray,1));
-    }
+        gda.addOverride(chtObj,"elasticX",false);
+        gda.addOverride(chtObj,"elasticY",true);
+        gda.addOverride(chtObj,"reduce",false);
+        gda.addOverride(chtObj,"xAxisResolution","months");
+        gda.addOverride(chtObj,"xAxis rotate labels",false);
+        gda.addOverride(chtObj,"interpolate",false);
+        gda.addOverride(chtObj,"log",false);
+        gda.addOverride(chtObj,"yMin",false);
+        gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
+        gda.addOverride(chtObj,"UCL",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
+        gda.addOverride(chtObj,"stats",false);//['avg','min','max','pNsigma','mNsigma']);
+
+        if (chtObj.overrides.stats) {
+            gda.addStatsToChart(chtObj, _.rest(chtObj.cnameArray,1));
+        }
 
         gda.addOverride(chtObj,"nFixed",null);	// field, but don't use.
 
@@ -3401,9 +3444,25 @@ gda.newLineChart = function(chtObj, cf) {
     if (!xDimension.isDate)
         dXGrp = xDimension.group();//.reduceCount();
     else
-     //   dXGrp = xDimension.group().reduceCount();
-        dXGrp = xDimension.group().reduceSum(function(d) {
-            return +d[chtObj.cnameArray[1]]; });//Count();  // 
+    {
+            // Temporary partial implementation of specifying reduce operators.
+            // Had been hardwired up to now.
+            var o = chtObj.overrides["reduce"];
+            if (o) {
+                    if (o.indexOf(';')<0)  { // assume just a field accessor
+                        var dF = new Function("d", 'return +d["' + chtObj.cnameArray[1] + '"];'); //"return +d." + o + ";"
+                        dXGrp = xDimension.group()["reduce"+o](dF);  // def=reduceCount. reduceSum, ...
+                    }
+                    else {
+                        alert('not implemented yet');
+                    }
+            }
+            else {
+                //dXGrp = xDimension.group().reduceCount(); // newTimelineChart uses this
+                dXGrp = xDimension.group().reduceSum(function(d) { // this was the default
+                    return +d[chtObj.cnameArray[1]]; });
+            }
+    }
 
     chtObj.dGrps.push(dXGrp);
     chtObj.lineDimension = chtObj.cf.dimension(function(d) {
@@ -3489,13 +3548,15 @@ gda.newTimelineChart = function(chtObj, cf) {
         gda.addOverride(chtObj,"onFilteredChart",false);  // workaround until can observe a crossfilter for filter change
         if (gda.isDate(chtObj.cnameArray[0])) {
         gda.addOverride(chtObj,"reduce",false);
-        //gda.addOverride(chtObj,"timefield","Month");    // arbitrary, and may be "ClosedMonth" etc.
         gda.addOverride(chtObj,"xAxisResolution","months");
-        gda.addOverride(chtObj,"normalize",false);
-        gda.addOverride(chtObj,"min",false);
+        gda.addOverride(chtObj,"xAxis rotate labels",false);
         gda.addOverride(chtObj,"xAxis ticks",false);
         gda.addOverride(chtObj,"xAxis gap",30);
-        gda.addOverride(chtObj,"xAxis rotate labels",false);
+        gda.addOverride(chtObj,"normalize",false);
+        gda.addOverride(chtObj,"min",false);
+        gda.addOverride(chtObj,"brushOn",true);
+        gda.addOverride(chtObj,"nominalX",false);
+        gda.addOverride(chtObj,"valueLabels",false);
                                                     // or change normalization to be done in a separate dimension?
         gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
 
@@ -3510,19 +3571,15 @@ gda.newTimelineChart = function(chtObj, cf) {
             // Had been hardwired up to now.
             var o = chtObj.overrides["reduce"];
             if (o) {
-                                            //return gda[fn](i, docEl);
-                                            // or perhaps supply some canned common reduce methods
                     if (o.indexOf(';')<0)  { // assume just a field accessor
-                        var dF = new Function("d", 'return +d["' + o + '"];'); //"return +d." + o + ";");
-                        //dXGrp = xDimension.group()["reduceSum"](dF);  //about the same speedwise
-                        dXGrp = xDimension.group().reduceSum(dF);
+                        var dF = new Function("d", 'return +d["' + chtObj.cnameArray[1] + '"];'); //"return +d." + o + ";"
+                        dXGrp = xDimension.group()["reduce"+o](dF);  // def=reduceCount. reduceSum, ...
                     }
                     else {
                         alert('not implemented yet');
                     }
             }
             else {
-                //dXGrp = xDimension.group()["reduceCount"]();
                 dXGrp = xDimension.group().reduceCount();
             }
         } else {
@@ -3541,8 +3598,42 @@ gda.newTimelineChart = function(chtObj, cf) {
             var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
             var cf = gda.cf[ms.dataSources[0]];
 	    if (cf) {	// if source is loaded, cf will exist
-            var dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[0],cf);
+
+        var dD;
+        var dG;
+        if (gda.isDate(chtObj.cnameArray[0])) {
+            // Temporary partial implementation of specifying reduce operators.
+            // Had been hardwired up to now.
+            if ( gda.utils.fieldExists(ms.overrides) &&  gda.utils.fieldExists(ms.overrides["reduce"]) && ms.overrides["reduce"]) {
+                var o = ms.overrides["reduce"];
+                    if (o.indexOf(';')<0)  { // assume just a field accessor
+                        dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[1], cf);
+                        var dF = new Function("d", 'return +d["' + ms.columns[1] + '"];'); //"return +d." + o + ";"
+                        dG = dD.group()["reduce"+o](dF);  // def=reduceCount. reduceSum, ...
+                        cf[ms.columns[1]] = dD;  // could 'name' the dimension in an object instead of numbering in an array, then add this in.
+                        cf['G'+ms.columns[1]] = dG;
+                    }
+                    else {
+                        alert('not implemented yet');
+                    }
+            }
+            else {
+                dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[0], cf);
+
+//              //dXGrp = xDimension.group().reduceCount(); // newTimelineChart uses this
+              dG = dD.group().reduceSum(function(d) { // this was the default
+                  return +d[chtObj.cnameArray[1]]; });
             cf[ms.columns[0]] = dD;  // could 'name' the dimension in an object instead of numbering in an array, then add this in.
+            cf['G'+ms.columns[0]] = dG;
+            }
+        } else {
+            dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[0], cf);
+            dG = dD.group();//.reduceCount();
+            cf[ms.columns[0]] = dD;  // could 'name' the dimension in an object instead of numbering in an array, then add this in.
+            cf['G'+ms.columns[0]] = dG;
+        }
+
+
             if (chtObj.overrides["onFilteredChart"]) {
     // ???
     // at the link below ethan recommends using one crossfilter with more complicated grouping
@@ -3554,6 +3645,8 @@ gda.newTimelineChart = function(chtObj, cf) {
 // same dimension (BU, BU) of course with identical meaning, but not necessarily the same exact
 // set of keys, could create a dim wrapper.
 // http://stackoverflow.com/questions/24225364/apply-filter-from-one-crossfilter-dataset-to-another-crossfilter
+
+// http://stackoverflow.com/questions/18941665/adding-filter-in-dc-js-from-another-dataset
         }
     }
 }
@@ -3662,7 +3755,7 @@ gda.addStatsToChart = function(chtObj, cnameArray) {
         chtObj.statsDimension = 
                 //gda.dimensionByCol(chtObj.sChartGroup, cnameArray[1],chtObj.cf,true);
                 chtObj.cf.dimension(function(d)
-                ////{ return cnameArray[1]; });
+                ////{ return cnameArray[1]; }
                 { return +d[cnameArray[1]]; });
     }
     else {
@@ -3713,6 +3806,7 @@ gda.newScatterChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"xAxis ticks",6);
     //gda.addOverride(chtObj,"timefield","Month");    // arbitrary, and may be "ClosedMonth" etc.
     gda.addOverride(chtObj,"xAxisResolution","months");
+    gda.addOverride(chtObj,"expand",1.03);
     if (chtObj.cnameArray.length>1) {
         var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf,true);
         var yDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[1],chtObj.cf,true);
@@ -3946,7 +4040,7 @@ gda.newLineDisplay = function(chtObj) {
             chtObj.chart = ftX;//composite;
             lc = dc.lineChart(composite,chtObj.sChartGroup)
                             .dimension(cd)
-                            .group(cGrp)//noopGroup(chtObj.overrides["nominal"]))
+                            .group(cGrp)//noopGroup(chtObj.overrides["nominal"])
                             .valueAccessor(function(d){
                                 return +(chtObj.overrides["nominal"])
                             })
@@ -3954,14 +4048,16 @@ gda.newLineDisplay = function(chtObj) {
         }
         else {
             ftX = dc.lineChart("#"+chtObj.dElid,chtObj.sChartGroup)
-            chtObj.chart = ftX;        // for now. hold ref
+                .width(chtObj.wChart)
+                .height(chtObj.hChart);
+            chtObj.chart = ftX;
             ftX.gdca_chart = chtObj;
         }
 
         gda.lineDomains(chtObj,true);
 
         
-        if(false) {//chtObj.overrides["nominal"])
+        if(false) {//chtObj.overrides["nominal"]
             composite
                 .width(chtObj.wChart)
                 .height(chtObj.hChart)
@@ -3973,8 +4069,6 @@ gda.newLineDisplay = function(chtObj) {
 
         ftX
             .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
-            .width(chtObj.wChart)    // same as scatterChart
-            .height(chtObj.hChart)
             .margins({top: 10, right: 50, bottom: 60, left: 60})
             .dimension(cd)
             .group(gr)
@@ -4006,7 +4100,17 @@ gda.newLineDisplay = function(chtObj) {
                 var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
                 var cf = gda.cf[ms.dataSources[0]];
 		if (cf) { // if source loaded cf will exist
-                var dD = cf[ms.columns[0]];
+;
+                var dD;
+                var dG;
+                if (ms.overrides && ms.overrides.reduce) {
+                    dD = cf[ms.columns[1]];
+                    dG = cf['G'+ms.columns[1]];
+                }
+                else {
+                    dD = cf[ms.columns[0]];
+                    dG = cf['G'+ms.columns[0]];
+                }
 		var fMin = chtObj.overrides["min"] !== false ? +(chtObj.overrides["min"]) : false ;
 
 
@@ -4044,7 +4148,7 @@ gda.newLineDisplay = function(chtObj) {
         .renderlet(function(c) {
             c.svg().selectAll('line').remove();
             if( chtObj.overrides["nominal"]) {
-                console.log("nom ");
+                //console.log("nom ");
                 var yv = c.y()( +(chtObj.overrides["nominal"]) ); 
                 if (yv>=0)
                     c.svg().append("line")
@@ -4056,8 +4160,9 @@ gda.newLineDisplay = function(chtObj) {
                         .attr("stroke","green")
                         .attr("stroke-dasharray","10,10");
             }
+// http://www.isixsigma.com/tools-templates/control-charts/a-guide-to-control-charts/
             if(chtObj.overrides["UCL"]) {
-                console.log("UCL ");
+                //console.log("UCL ");
                 var yv = c.y()( +(chtObj.overrides["UCL"]) ); 
                 if (yv>=0)
                     c.svg().append("line")
@@ -4071,7 +4176,7 @@ gda.newLineDisplay = function(chtObj) {
             }
         });
         }
-        if (false) { //chtObj.overrides.stats) 
+        if (false) { //chtObj.overrides.stats 
             var tI = chtObj.statsGroup.top(Infinity);
             if (tI.length ===1) {
                 var vStats = tI[0].value;
@@ -4272,26 +4377,38 @@ gda.newTimelineDisplay = function(chtObj) {
     var xmin = null;
     var xmax = null;
 
+    var b1 = dDims[0].bottom(1);
+    var t1 = dDims[0].top(1);
+    if (b1.length < 1 || t1.length < 1) // no data
+    {
+        xmin = 0;
+        xmax = 1;
+    }
+    else
+    {
+
     if (!dDims[0].isDate)
     {
         v0 = chtObj.cnameArray[0];
-        xmin = dDims[0].bottom(1)[0][v0];
-        xmax = dDims[0].top   (1)[0][v0];
+        xmin = b1[0][v0];
+        xmax = t1[0][v0];
         if (isNaN(xmin)) xmin = 0;
         if (isNaN(xmax)) xmax = 0;
     } else
     {
         v0 = chtObj.cnameArray[0];
-        xmin = dDims[0].bottom(1)[0][v0];
-        xmax = dDims[0].top   (1)[0][v0];
+        xmin = b1[0][v0];
+        xmax = t1[0][v0];
         if (xmin === undefined) xmin = new Date();
         if (xmax === undefined) {
             var Now = new Date();
             xmax = new Date(Now.getFullYear()+1,0,1);  //next year
         }
     }
+    }
 
     ftX
+        .brushOn(chtObj.overrides["brushOn"])
         .gap(chtObj.overrides["xAxis gap"]);
 
     var xu = dc.units.ordinal();
@@ -4304,7 +4421,7 @@ gda.newTimelineDisplay = function(chtObj) {
             var p = r.toLowerCase();
             if (p.substring(p.length-1)==="s")  // trim off last char if s
                 p = p.substring(0,p.length-1);
-            console.log("p ", p);
+            //console.log("p ", p);
             //var p = chtObj.overrides["timefield"].toLowerCase();
 // hack, use gda.saDateTypes 
 	    if (!_.contains(gda.saDateTypes,p)) {
@@ -4362,18 +4479,25 @@ gda.newTimelineDisplay = function(chtObj) {
         xs = d3.time.scale().domain([xmin,xmax]);   // think wrong. 'time', not.
     }
 
+    var exFac = 0.03;   // expansion factor, relax ends so min/max points have some relief
+    if (chtObj.overrides["expand"]) exFac = +(chtObj.overrides["expand"]) - 1.00;
+//    var xdomain = [xmin,xmax];
+//    xdomain = expandDomain(xdomain,exFac);
+//    xs.domain(xdomain);
+
+    ftX
+        .x(xs)
+        .xUnits(xu);
+
+
     ftX
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
         .dimension(dDims[0])
         .group(chtObj.dGrps[0]);
     ftX
-        .centerBar(dDims[0].isDate === false);//true);  or perhaps is ordinal?
+        .centerBar(dDims[0].isDate === false);//true  or perhaps is ordinal?
     
     ftX
-        .x(xs)//.nice()
-        .xUnits(xu)
-        //.elasticX(true) // MIGHT NEED FALSE!
-        //.elasticY(true)
         .elasticX(chtObj.overrides["elasticX"])
         .elasticY(chtObj.overrides["elasticY"])
         //.keyAccessor(function(d) {
@@ -4393,8 +4517,17 @@ gda.newTimelineDisplay = function(chtObj) {
                 var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
                 var cf = gda.cf[ms.dataSources[0]];
 		if (cf) { // if source loaded cf will exist
-                var dD = cf[ms.columns[0]];
-		var fMin = chtObj.overrides["min"] !== false ? +(chtObj.overrides["min"]) : false ;
+                var dD;
+                var dG;
+                if (ms.overrides && ms.overrides.reduce) {
+                    dD = cf[ms.columns[1]];
+                    dG = cf['G'+ms.columns[1]];
+                }
+                else {
+                    dD = cf[ms.columns[0]];
+                    dG = cf['G'+ms.columns[0]];
+                }
+                var fMin = chtObj.overrides["min"] !== false ? +(chtObj.overrides["min"]) : false ;
 
 
                 // need to register with crossfilter or via dc to receive filter changes that affect this cf.
@@ -4402,14 +4535,20 @@ gda.newTimelineDisplay = function(chtObj) {
                 // that here
             ftX
                 .valueAccessor(function(d){
-                        dD.filterExact(d.key);      // for this reason, it shouldn't be shared.
-                        var t = dD.top(Infinity).length;    // dGrp.value()?
-                        gda.log(5,"norm: "+ d.value + " " + t, t>0 ? gda.numberFormat(d.value/t) : 0, d.key);
-                        dD.filterAll();             // undo the filter, at the least while shared.
-			t = t>0 ? d.value/t : 0;
-			if (fMin !== false && t<fMin) t = fMin;
-                        return t;
-                })
+                        //dD.filterExact(d.key);      // for this reason, it shouldn't be shared.
+                        var t1 = dG.top(Infinity);
+                        var t2 = _.find(t1, function(o) {
+                                    return (o.key>=d.key && o.key<=d.key);  // t or f
+                                    });
+                        var n1 = 0;
+                        if (t2 && t2.value) n1 = t2.value;
+                        //var t = dD.top(Infinity).length;    // dGrp.value()?
+                        gda.log(5,"norm: "+ d.value + " " + t, t>0 ? gda.numberFormat(d.value/t) : 0, d.key, " t1 "+t1.length," n1 "+n1);
+                        //dD.filterAll();             // undo the filter, at the least while shared.
+                        t = n1>0 ? d.value/n1 : 0;
+                        if (fMin !== false && t<fMin) t = fMin;
+                        return gda.numberFormat(t);
+                });
 		}
         }
     //if (dDims[0].isDate)
@@ -4424,6 +4563,58 @@ gda.newTimelineDisplay = function(chtObj) {
           ftX .xAxis().ticks(xu,chtObj.overrides["xAxis ticks"]);//d3.time.months,1;
         }
     }
+
+    if (chtObj.overrides["valueLabels"]) {
+    var vLmode = chtObj.overrides["valueLabels"];
+    var vLuseAcc = false;
+    if (vLmode !== true) {
+    var iC1 = vLmode.indexOf(",");
+    if (iC1>0) {
+        vLuseAcc = vLmode.substring(iC1+1);
+        vLmode = vLmode.substring(0,iC1);
+    }
+    }
+    var vLcolor = 'white';
+    var vLoffset = 15;
+    if (vLmode==="above") { vLcolor = 'black'; vLoffset = -5; }
+    ftX
+        .renderlet(function (chart) {
+
+            //Check if labels exist
+            var gLabels = chart.select(".labels");
+            if (gLabels.empty()){
+                gLabels = chart.select(".chart-body").append('g').classed('labels', true);
+            }
+
+            var gLabelsData = gLabels.selectAll("text").data(chart.selectAll(".bar")[0]);
+
+            gLabelsData.exit().remove(); //Remove unused elements
+
+            gLabelsData.enter().append("text") //Add new elements
+
+            gLabelsData
+            .attr('text-anchor', 'middle')
+            .attr('fill', vLcolor);
+            if (vLuseAcc === "true")
+                gLabelsData
+                .text(function(d){
+                    return chart.valueAccessor()(d3.select(d).data()[0].data)
+                });
+            else
+                gLabelsData
+                    .text(function(d){ return d3.select(d).data()[0].data.value });
+            gLabelsData
+            .attr('x', function(d){
+                return +d.getAttribute('x') + (d.getAttribute('width')/2); 
+            })
+            .attr('y', function(d){ return +d.getAttribute('y') + vLoffset; })
+            .attr('style', function(d){
+                if (+d.getAttribute('height') < 18) return "display:none";
+            });
+
+        })
+    }
+
 
     if (chtObj.overrides["xAxis rotate labels"]) {
     ftX // new 8/25/2014
@@ -4506,6 +4697,42 @@ gda.newTimelineDisplay = function(chtObj) {
         if (chtObj.overrides["legend"])
             ftX
                 .legend(dc.legend());
+        if( chtObj.overrides["trend"] && gda.utils.fieldExists(science)) {
+            var loess = science.stats.loess().bandwidth(.2);
+            ftX
+            .renderlet(function(c) {
+                if( chtObj.overrides["trend"]) {
+                    var sFit = chtObj.overrides["trend"]; 
+                    if (sFit.localeCompare("linear")) {
+                        //var xVal = 
+                        //var loessData = loess(xVal, yVal);
+                    }
+                }
+            });
+        }
+        if( chtObj.overrides["nominalX"]) {
+        ftX
+        .renderlet(function(c) {
+            //c.svg().selectAll('line').remove();
+            if( chtObj.overrides["nominalX"]) {
+                var nX = chtObj.overrides["nominalX"]; 
+                var xv = 0;
+                if (nX.localeCompare("Now")==0)
+                    xv = new Date();
+                //else
+                    //xv = c.x()( +(nX) ); 
+                c.svg().append("line")
+                    .attr("x1", c.margins().left + c.x()( xv ))
+                    .attr("x2", c.margins().left + c.x()( xv ))
+                    .attr("y1", c.margins().top + c.y()( c.y().domain()[0] ))
+                    .attr("y2", c.margins().top + c.y()( c.y().domain()[1] ))
+                    .attr("stroke-width",2)
+                    .attr("stroke","blue")
+                    .attr("stroke-opacity","0.5")
+                    .attr("stroke-dasharray","10,10");
+            }
+        });
+        }
 
         return true;
     }
@@ -4602,7 +4829,7 @@ gda.newBarDisplay = function(chtObj) {
         .group(chtObj.dGrps[0]);
     var maxBarHeight;
     var pixPerUnit;
-    var logMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0; //{1.0;
+    var logMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0; //1.0;
     if (chtObj.overrides["log"]) {
         var ymax = ftX.yAxisMax();
         maxBarHeight = chtObj.hChart*.80;   // ugh. need to know the height of the text
@@ -4750,7 +4977,7 @@ gda.newParetoDisplay = function(chtObj) {
                         .valueAccessor(function(d){
                                         return d.value;
                                     })
-                        .group(gda.pareto.createTempOrderingGroup(), "Samples");//chtObj.dGrps[0], "Samples");
+                        .group(gda.pareto.createTempOrderingGroup(), "Samples");//chtObj.dGrps[0], "Samples"
 
         // add composited cumulative percentage
         composite
@@ -4823,7 +5050,7 @@ gda.pareto = (function() {
         getDomain: function() {
             return pareto.dom;   // could pluck the key, but the work was already done
         },
-        domain: function(dS, topI) { // grp {
+        domain: function(dS, topI) { // grp
             var all = gda.cf[dS].groupAll();
 
 
@@ -5065,6 +5292,9 @@ gda.newHistDisplay = function(chtObj) {
     }
 
     ftHistX
+        .gap(chtObj.overrides["xAxis gap"]);
+
+    ftHistX
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
         .width(chtObj.wChart)    // same as scatterChart
         .height(chtObj.hChart)        // not nearly as high
@@ -5284,6 +5514,192 @@ gda.newScatterDisplay = function(chtObj) {
         if (chtObj.overrides["legend"])
            scatterChart 
                 .legend(dc.legend());
+        if( chtObj.overrides["nominalX"]) {
+            //chtObj.overrides["UCL"]
+        scatterChart
+        .renderlet(function(c) {
+
+                var sColor = "blue";
+                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                var path = c.svg().selectAll('line'+sColorTerm);
+                path.remove();
+
+            if( chtObj.overrides["nominalX"]) {
+                var nX = chtObj.overrides["nominalX"]; 
+                var xv = 0;
+                if (nX.localeCompare("Now")==0)
+                    xv = new Date();
+                //else
+                    //xv = c.x()( +(nX) ); 
+                //if (yv>=0)
+                    c.svg().append("line")
+                        .attr("x1", c.margins().left + c.x()( xv ))
+                        .attr("x2", c.margins().left + c.x()( xv ))
+                        .attr("y1", c.margins().top + c.y()( c.y().domain()[0] ))
+                        .attr("y2", c.margins().top + c.y()( c.y().domain()[1] ))
+                        //.attr("x1", c.margins().left + c.x()( c.x().domain()[0] ))
+                        //.attr("x2", c.margins().left + c.x()( c.x().domain()[1] ))
+                        //.attr("y1", c.margins().top + yv )
+                        //.attr("y2", c.margins().top + yv )
+                        .attr("stroke-width",2)
+                        .attr("stroke",sColor)
+                        .attr("stroke-dasharray","10,10");
+            }
+        });
+        }
+        if( chtObj.overrides["circle"]) {
+        scatterChart
+        .renderlet(function(c) {
+            if( chtObj.overrides["circle"]) {
+                var nP = chtObj.overrides["circle"]; 
+                var sC = nP.split(",");
+                var nX = sC[0];
+                var nY = sC[1];
+                var nR = sC[2];
+                var sColor = sC[3];
+                if (!sColor || sColor.length === 0) sColor = "orange";
+
+                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                var path = c.svg().selectAll('circle'+sColorTerm);
+                path.remove();
+
+                if (nX.length>0 && nY.length>0 && nR.length>0 && sColor.length>0) {
+                    var yv = nY;
+                    var xv = nX;
+                    if (nX.substring(0,3).localeCompare("Now")==0) {
+                        xv = new Date();
+                        if (nX.length>3) {
+                            if (nX.substring(3).localeCompare("+Quarter")==0)
+                                xv = new Date(+xv + gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
+                        }
+                    }
+                    nR = Math.abs(c.x()( xv ) - c.x()( nR ));
+                }
+                //else
+                    //xv = c.x()( +(nX) ); 
+                //if (yv>=0)
+                    c.svg().append("circle")
+                        .attr("cx", c.margins().left + c.x()( xv ))
+                        .attr("cy", c.margins().top  + c.y()( yv ))
+                        .attr("r", nR)
+                        //.attr("x1", c.margins().left + c.x()( c.x().domain()[0] ))
+                        //.attr("x2", c.margins().left + c.x()( c.x().domain()[1] ))
+                        //.attr("y1", c.margins().top + yv )
+                        //.attr("y2", c.margins().top + yv )
+                        .attr("stroke-width",2)
+                        .attr("fill","none")
+                        .attr("stroke",sColor);
+                        //.attr("stroke-dasharray","10,10");
+            }
+        });
+        }
+        if( chtObj.overrides["ellipse"]) {
+        scatterChart
+        .renderlet(function(c) {
+            if( chtObj.overrides["ellipse"]) {
+                var nP = chtObj.overrides["ellipse"]; 
+                var sC = nP.split(",");
+                var nX = sC[0];
+                var nY = sC[1];
+                var nRx = sC[2];
+                var nRy = sC[3];
+                var sColor = sC[4];
+                if (!sColor || sColor.length === 0) sColor = "orange";
+
+                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                var path = c.svg().selectAll('ellipse'+sColorTerm);
+                path.remove();
+
+                if (nX.length>0 && nY.length>0 && nRx.length>0 && nRy.length>0 && sColor.length>0) {
+                    var yv = nY;
+                    var xv = nX;
+                    if (nX.substring(0,3).localeCompare("Now")==0) {
+                        xv = new Date();
+                        if (nX.length>3) {
+                            if (nX.substring(3).localeCompare("+Quarter")==0)
+                                xv = new Date(+xv + gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
+                        }
+                    }
+                    if (nRy.localeCompare("allY")==0)
+                        nRy = 0.50 * Math.abs( c.y()(c.y().domain()[0]) - c.y()(c.y().domain()[1]) ); 
+                    else
+                        nRy = Math.abs(c.y()(yv) - c.y()(nRy));
+                    nRx = Math.abs(c.x()(xv) - c.x()(nRx));
+                }
+                //else
+                    //xv = c.x()( +(nX) ); 
+                //if (yv>=0)
+                    c.svg().append("ellipse")
+                        .attr("cx", c.margins().left + c.x()( xv ))
+                        .attr("cy", c.margins().top  +
+                            (c.y()(c.y().domain()[0]) + c.y()(c.y().domain()[1]) )/2)
+                        .attr("rx", nRx)
+                        .attr("ry", nRy)
+                        .attr("stroke-width",2)
+                        .attr("fill","none")
+                        .attr("stroke",sColor);
+                        //.attr("stroke-dasharray","10,10");
+            }
+        });
+        }
+        if( chtObj.overrides["rect"]) {
+        scatterChart
+        .renderlet(function(c) {
+            if( true) { //chtObj.overrides["rect"] 
+              _.each(chtObj.overrides, function(value, key) {
+               if (key.substring(0,4).localeCompare("rect")==0 && !key.localeCompare("rect")==0) {
+                var nP = value;//chtObj.overrides["rect"];  // x range, y range, perimeter Color
+                var sC = nP.split(",");
+                var sXr = sC[0].split("..");
+                var sYr = sC[1].split("..");
+                var sColor = sC[2];
+                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                var path = c.svg().selectAll('rect'+sColorTerm);
+                path.remove();
+                if (sXr.length>0 && sYr.length>0 && sColor.length>0) {
+                    var xLeft = c.x().domain()[0];
+                    var xRight = c.x().domain()[1];
+                    if (sXr[0].localeCompare("xMin")==0) xLeft = c.x().domain()[0];
+                    else
+                    if (sXr[0].localeCompare("Now")==0) xLeft = new Date();
+                    else xLeft = sXr[0];
+                    if (sXr[1].substring(0,3).localeCompare("Now")==0) {
+                        var xRight = new Date();
+                        if (sXr[1].length>3) {
+                            if (sXr[1].substring(3).localeCompare("+Month")==0)
+                                xRight = new Date(+xRight + gda.TmonthIncMsecs + 2*gda.TdayIncMsecs);
+                            if (sXr[1].substring(3).localeCompare("-Day")==0)
+                                xRight = new Date(+xRight - gda.TdayIncMsecs);
+                        }
+                    } else
+                    if (sXr[1].localeCompare("xMax")==0) xRight = c.x().domain()[1];
+                    else xRight = sXr[1];
+                    var yBottom = 0;
+                    var yTop = c.y().domain()[1];
+                    if (sYr[0].localeCompare("yMin")==0) yBottom = c.y().domain()[0];
+                    else
+                        yBottom = sYr[0];
+                    if (sYr[1].localeCompare("yMax")==0) yTop = c.y().domain()[1];
+                    else
+                        yTop = sYr[1];
+                    c.svg().append("rect")
+                        .attr("x", c.margins().left + c.x()(xLeft))
+                        .attr("y", c.margins().top + c.y()(yTop) )
+                        //.attr("width", Math.abs( c.x()( -0*gda.TdayIncMsecs/2 +  +(new Date()) ) - c.x()(c.x().domain()[0]) ) )
+                        .attr("width",  Math.abs( c.x()( xRight ) - c.x()( xLeft) ) )
+                        .attr("height", Math.abs( c.y()( yBottom) - c.y()( yTop ) ) )
+                        .attr("stroke-width",2)
+                        .attr("fill","none")
+                        //.attr("fill-opacity","0.2")
+                        .attr("stroke-opacity","0.5")
+                        .attr("stroke-dasharray","5,5")
+                        .attr("stroke",sColor.toLowerCase());
+                }
+               }
+              });
+            }
+        });
+        }
 
 // try something similar for scatter, since Y doesn't appear to be properly elastic.
 //        var currentMax = 0,
@@ -5464,6 +5880,7 @@ gda.scatterDomains = function(chtObj, bInitial){
 
     var exFac = 0.03;   // expansion factor, relax ends so min/max points have some relief
                         // 10/4/2014 from 1 to 3%, make min/max points more visible against axis (partially cropped)
+    if (chtObj.overrides["expand"]) exFac = +(chtObj.overrides["expand"]) - 1.00;
     var xdomain = [xmin,xmax];
     var ydomain = [yMin,yMax];//ymin,ymax];
 
@@ -5493,10 +5910,10 @@ gda.scatterDomains = function(chtObj, bInitial){
         if (!chtObj.overrides["log"])
             ys = chtObj.chart.y();
     }
-    if (!dDims[0].isDate) {
+    //if (!dDims[0].isDate) {
         xdomain = expandDomain(xdomain,exFac);
-        ydomain = expandDomain(ydomain,exFac);
-    }
+    //}
+    ydomain = expandDomain(ydomain,exFac);  // 4/22/15 fixed was in clause above
 
     xs.domain(xdomain); // was d3.scale.linear().domain(xdomain)//.nice()
     if (!chtObj.overrides["log"])
@@ -5523,7 +5940,7 @@ gda.scatterDomains = function(chtObj, bInitial){
                 chtObj.chart
                     // the '3' or whatever doesn't have
                     // impact when elasticX is used
-                    //.xAxis().ticks(d3.time.minutes,3);//chtObj.overrides["xAxis ticks"]);// 6;   // add override for 6, months
+                    //.xAxis().ticks(d3.time.minutes,3);//chtObj.overrides["xAxis ticks"]// 6;   // add override for 6, months
                     .xAxis().ticks(d3.time[chtObj.overrides["xAxisResolution"]],chtObj.overrides["xAxis ticks"]);
             }
         else if (chtObj.overrides["xAxis ticks"])
@@ -5608,7 +6025,8 @@ gda.newScatterHistDisplay = function(chtObj, dEl) {
 // maybe push the column diffs here too? for same reason.
 // for that matter the sChartGroup would also be needed.
 // table-hover is from bootstrap
-gda.newTableDisplay = function(dEl, iChart) {
+gda.newTableDisplay = function(dEl, iChart, nMaxSize) {
+    if (!nMaxSize) nMaxSize = 500;
     // need to construct the doc ids, and the table.
     var chtObj=gda.tables[iChart];
     var chartType = "tables";
@@ -5646,6 +6064,7 @@ gda.newTableDisplay = function(dEl, iChart) {
     else
         selCols = chtObj.selCols;
 
+    if (selCols) {
     var sC = selCols.csetupSortTableCols;
     if (sC && sC.length>0) {
     gda.log(4,"cT: sorting by "); 
@@ -5666,7 +6085,7 @@ gda.newTableDisplay = function(dEl, iChart) {
         return r;
         } :
         gda.dateDimension))
-    .size(500)  // arbitrary. make selectable
+    .size(nMaxSize)  // arbitrary. make selectable
     .columns(chtObj.colAccessor)
     // sorts by available date first unless 2+ columns are chosen, then uses the last chosen, within the date grouper
     //.sortBy(function (d) { return (chtObj.selCols && chtObj.selCols.csetupChartCols && chtObj.selCols.csetupChartCols.length>1) ?+d[chtObj.selCols.csetupChartCols[chtObj.selCols.csetupChartCols.length-1]]:d.dd; })
@@ -5682,6 +6101,7 @@ gda.newTableDisplay = function(dEl, iChart) {
 
 
 //    dc.renderAll(sGroup);
+    }
     }
 }
 
@@ -5713,7 +6133,7 @@ gda.createTable = function(cf, dateDim, columns, sChtGroup, bShowLinksInTable, b
             if (bShowPicturesInTable && isPhoto(d[name]))
                 return createPhoto(d[name]);
             else if (bShowLinksInTable && isHttp(d[name]))
-            return createLink(d[name]);
+                return createLink(d[name]);
             else if (isSLIDcES(d[name]))
                 return createSLIDcESlink(d[name]);
             else
@@ -5804,7 +6224,7 @@ function addDCdiv(dEl, chartType, chtObj, cname, sChtGroup) {
         var dEla = gda.addElement(dCen,"a");
         //dEla.setAttribute("href","javascript:gda."+chartType+"["+i+"].chart.filterAll(sChartGroup);dc.redrawAll(sChartGroup);");
                                                                         //sChtGroup sChartGroup gda.charts[i]
-        dEla.setAttribute("href","javascript:gda."+chartType+"Reset("+chtObj.i+");");//, gda.charts);");
+        dEla.setAttribute("href","javascript:gda."+chartType+"Reset("+chtObj.i+");"); // ((//, gda.charts);");
         dEla.setAttribute("class","reset");
         dEla.setAttribute("style","display: none;");
         var dTxtT = gda.addTextNode(dEla,"reset");
@@ -5961,6 +6381,7 @@ gda.restoreStateFromObject = function(o, qR, bDashOnly, nSlideRef) {
                     gda.slideFileLoad(filepath, function(e,o) {
                                         gda.restoreStateDeferred(e,qR,o, bDashOnly, sRef );
                                         gda.SFwait--;
+                                        gda.view.redraw();  // added 2/2/2015, for deferred slideref datafile load, need to redraw to get the slide to paint.
                                     });
                     }
                 });
@@ -6255,6 +6676,7 @@ function tryParseJSON (jsonString){
 };
 
 
+// this is probably unused!
 // handle upload button
 gda.connect_upload_button = function(elULbutton) {
   var uploader = document.getElementById(elULbutton);  
@@ -6265,6 +6687,7 @@ gda.connect_upload_button = function(elULbutton) {
 function fileReaderMethod(uiObject,callback) {
   var reader = new FileReader();
   reader.onload = function(e) {
+    if (uiObject.files) console.log("file(s) ",uiObject.files);
     var contents = e.target.result;
     callback(contents);
   };
@@ -6475,7 +6898,7 @@ gda.dataFilterKeymapTransform = function(dS, dR) {
 // one array of data
 // filters to cleanup via keymap
 // adds to crossfilter
-gda.dataKeymapAdd = function(dS,dR) { //columns,dR {
+gda.dataKeymapAdd = function(dS,dR) {
 
     if (dR && dR.length>0) {
         gda.log(4,"dataKeymapAdd, "+dS);
@@ -6604,7 +7027,7 @@ gda.fileLoadImmediate = function(bForce) {
     // and drive the loads from them.
     // To optimize this further it could begin loading the current dS/mS selection first, which would
     // only benefit the Editor, so no dice for now.
-    //_.each(gda.charts, function(aChart) {
+    //_.each(gda.charts, function(aChart) {}
         //var dS = aChart.sChartGroup 
     _.each(gda.activeChartGroups(), function(dS) {
         var ds = gda.metaSources.map[dS];
@@ -6798,22 +7221,24 @@ function dataArrayReady(dS, dataArray) {    // error   [ [{},{}] , ... ]
     if(!ds) ds = gda.dataSources.map[dS];
     if (ds) {
     gda.log(4,"bListOfMany " + ds.bListOfMany);
-    if (!error && dataArray && dataArray.length>0)  {
-        gda.log(4,"dataArrayReady e(" + error+") Lin ", dataArray.length);
+    if (dataArray && dataArray.length>0)  {
+        gda.log(4,"dataArrayReady Lin ", dataArray.length);
         gda.log(4,"dataArrayReady "+JSON.stringify(dataArray) );
 
         // load each deferred via queue
         var qA = queue(1);    // serial. parallel=2+, or no parameter for infinite.
         gda.log(4,"dataArrayReady len " + dataArray.length);
 
-        gda.cf[sFileChartGroup].remove();    // but to filters, so might need to
+        if (gda.utils.fieldExists( gda.cf[sFileChartGroup])) {
+            gda.cf[sFileChartGroup].remove();    // but to filters, so might need to
+        }
         var cf2 = gda.new_crossfilter(sFileChartGroup);
 
         gda.log(4,"dAR: File Table dimension ***=-=-=-=-=-=-=-=-=-=-=-=***");
         var dateDimension2 = cf2.dimension(function (d) { return d.dd; });
         var iTable2 = gda.createTable(cf2, dateDimension2, ["Tests"], sFileChartGroup);// needs it's own group
         var s9 = document.getElementById('FileTable');
-        gda.newTableDisplay(s9,iTable2);//, ".dc-list-table", ".dc-list-count");
+        gda.newTableDisplay(s9,iTable2, 30);//, ".dc-list-table", ".dc-list-count"
         gda.addChartGroup(sFileChartGroup);
         gda.log(4,"renderALL dataArrayReady ");
         dc.renderAll(sFileChartGroup);
@@ -6974,6 +7399,7 @@ function trimColName(cname) {
     var cnameOrig = cname;
     if (cname.trim().length===0) cname = "blank"+(++iUid);
     else {
+        cname = cname.replace(/\#/g,"_");    // replace hash
         cname = cname.replace(/\?/g,"_");    // replace QuestionMark
         cname = cname.replace(/\&/g,"_");    // replace ampersands
         cname = cname.replace(/\./g,"_");    // replace periods
@@ -7076,9 +7502,15 @@ gda.addButton = function(dElHost, theValue, sLabel, callback) {
         .on("click", function() { callback(this); });
     return gda;
 }
+
+// review below for onchange, button.multiple = true, etc. 
+// 'files' in button.id  button.files[] and .length
+// button.name
+// http://www.w3schools.com/jsref/dom_obj_fileupload.asp
 gda.addUploader = function(dElHost, theValue, callback) {
     var button = document.createElement("input");
     button.type = "file";
+    button.accept = ".csv,.txt,.json";
     button.id = "c"+dElHost.id+"c"+theValue;
     dElHost.appendChild(button);
     if (!callback) callback=gda.dataReady;
@@ -7088,6 +7520,8 @@ gda.addUploader = function(dElHost, theValue, callback) {
 gda.addSlideOpen = function(dElHost, theValue) {
     var button = document.createElement("input");
     button.type = "file";
+    button.accept = ".sjs,.json";
+    button.autofocus = true;
     button.id = "c"+dElHost.id+"c"+theValue;
     dElHost.appendChild(button);
     button.textContent = "Open Slides";

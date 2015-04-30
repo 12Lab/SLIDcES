@@ -22,6 +22,17 @@ siteSpecific.selectAndFilter = function(data) {
                 d["Product number"] = +d["Product number"]
             });
         }
+        else if (gda.utils.fieldExists(data[0]["Sub-issue"])) {
+            var format = d3.time.format("%m/%d/%Y");
+            _.each(data, function(d) {
+                d.Received = format.parse(d["Date received"]);
+                gda.utils.addDateOption(d,"Received","Month");
+                gda.utils.addDateOption(d,"Received","Months");
+                gda.utils.addDateOption(d,"Received","Year");
+                d.Sent = format.parse(d["Date sent to company"]);
+                gda.utils.addDateOption(d,"Sent","Month");
+            });
+        }
         else if (gda.utils.fieldExists(data[0]["Issue"])) {
             var format = d3.time.format("%m/%d/%Y");
             _.each(data, function(d) {

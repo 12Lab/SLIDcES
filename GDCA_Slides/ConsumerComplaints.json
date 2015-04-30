@@ -1,0 +1,252 @@
+{
+    "version": "0.099",
+    "minor": "107d",
+    "branch": "gdca-dev",
+    "help": "Manually Save: Right-Click, View Source, File/SaveAs name.csv",
+    "dataSources": {
+        "CCcsub1000": {
+            "dataprovider": "/CSV_Samples/",
+            "datafile": "ConsumerComplaints.csv",
+            "bLocalFile": true,
+            "bListOfMany": false,
+            "bAggregate": false,
+            "bSparseData": false,
+            "bTimestamp": false,
+            "_idCounter": 1998,
+            "keymap": {
+                "Complaint ID": "Complaint_ID",
+                "ZIP code": "ZIP_code",
+                "Submitted via": "Submitted_via",
+                "Date received": "Date_received",
+                "Date sent to company": "Date_sent_to_company",
+                "Company response": "Company_response",
+                "Timely response": "Timely_response",
+                "Consumer disputed": "Consumer_disputed"
+            },
+            "columns": [
+                "Complaint_ID",
+                "Product",
+                "Sub-product",
+                "Issue",
+                "Sub-issue",
+                "State",
+                "ZIP_code",
+                "Submitted_via",
+                "Date_received",
+                "Date_sent_to_company",
+                "Company",
+                "Company_response",
+                "Timely_response",
+                "Consumer_disputed",
+                "_qty",
+                "_counter",
+                "Received",
+                "ReceivedMonth",
+                "Sent",
+                "SentMonth",
+                "cumFileUnits",
+                "ReceivedYear"
+            ],
+            "dataLastModifiedDate": "2015-04-22T02:33:20.000Z",
+            "Timestamp_get": "2015-04-22T02:58:49.570Z",
+            "Timestamp_complete": "2015-04-22T02:58:49.606Z"
+        }
+    },
+    "slides": [
+        {
+            "title": "Blank1",
+            "comment": "",
+            "columns": [],
+            "filters": {},
+            "myCols": {
+                "CCcsub1000": {
+                    "csetupDimsCols": [
+                        "ReceivedYear",
+                        "ReceivedMonths"
+                    ]
+                }
+            },
+            "charts": [
+                {
+                    "Title": "Complaint Volume",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "ReceivedMonth",
+                            "_qty"
+                        ]
+                    },
+                    "type": "Timeline",
+                    "sChartGroup": "CCcsub1000",
+                    "overrides": {
+                        "elasticX": false,
+                        "elasticY": true,
+                        "onFilteredChart": false,
+                        "reduce": false,
+                        "xAxisResolution": false,
+                        "xAxis rotate labels": false,
+                        "xAxis ticks": "1",
+                        "xAxis gap": "5",
+                        "normalize": false,
+                        "min": false,
+                        "nominal": false,
+                        "hChart": "300",
+                        "wChart": "800"
+                    }
+                },
+                {
+                    "Title": "Top Companies",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Company"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "CCcsub1000",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "Others",
+                        "top": "50",
+                        "dropOthers": false,
+                        "ordering": true,
+                        "xAxis ticks": 6,
+                        "hChart": "1200",
+                        "wChart": "300"
+                    }
+                },
+                {
+                    "Title": "Top 7 Products",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Product"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "CCcsub1000",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "Others",
+                        "top": "7",
+                        "dropOthers": false,
+                        "ordering": true,
+                        "xAxis ticks": 6,
+                        "wChart": "300"
+                    }
+                },
+                {
+                    "Title": "Top 7 Sub Products",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Sub-product"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "CCcsub1000",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "Others",
+                        "top": "7",
+                        "dropOthers": false,
+                        "ordering": true,
+                        "xAxis ticks": 6,
+                        "wChart": "300"
+                    }
+                },
+                {
+                    "Title": "Top 7 Issues",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Issue"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "CCcsub1000",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "Others",
+                        "top": "7",
+                        "dropOthers": false,
+                        "ordering": true,
+                        "xAxis ticks": 6,
+                        "wChart": "300"
+                    }
+                },
+                {
+                    "Title": "Top 7 Sub Issues",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Sub-issue"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "CCcsub1000",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "Others",
+                        "top": "7",
+                        "dropOthers": false,
+                        "ordering": true,
+                        "xAxis ticks": 6,
+                        "wChart": "300"
+                    }
+                },
+                {
+                    "Title": "Company Response",
+                    "myCols": {
+                        "csetupChartCols": [
+                            "Company_response"
+                        ]
+                    },
+                    "type": "Row",
+                    "sChartGroup": "CCcsub1000",
+                    "overrides": {
+                        "legend": false,
+                        "ignoreZeroValue": false,
+                        "ignoreValuesBelow": 1,
+                        "ignoreKey": "Others",
+                        "top": "7",
+                        "dropOthers": false,
+                        "ordering": true,
+                        "xAxis ticks": 6,
+                        "wChart": "600"
+                    }
+                }
+            ],
+            "tables": [
+                {
+                    "bUseTable": true,
+                    "bHideShowTable": false,
+                    "bShowTable": false,
+                    "bShowLinksInTable": false,
+                    "bShowPicturesInTable": false,
+                    "bShowTableColumnSelectors": false,
+                    "csetupSortTableCols": [
+                        "Complaint_ID"
+                    ],
+                    "csetupHiddenTableCols": [],
+                    "dataSource": "CCcsub1000",
+                    "sChartGroup": "CCcsub1000"
+                }
+            ],
+            "bShowDataSource": false,
+            "bShowSlidesSource": false,
+            "bPollTimer": false,
+            "bPollAggregate": false,
+            "nPollTimerMS": 5000,
+            "bAllowOverrideChanges": false,
+            "bAccessOverrides": true,
+            "bAccessSelectors": false,
+            "myId": 0
+        }
+    ]
+}
+
