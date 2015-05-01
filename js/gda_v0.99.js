@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "108",
+    minor:   "108a",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -5553,15 +5553,22 @@ gda.newScatterDisplay = function(chtObj) {
             if( chtObj.overrides["circle"]) {
                 var nP = chtObj.overrides["circle"]; 
                 var sC = nP.split(",");
-                var nX = sC[0];
-                var nY = sC[1];
-                var nR = sC[2];
-                var sColor = sC[3];
+                for (var i = 0; i < sC.length; i+=4) {
+                    var sColor = sC[i+3];
+                    if (sColor && sColor.length > 0) {
+                        var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                        var path = c.svg().selectAll('circle'+sColorTerm);
+                        path.remove();
+                    }
+                }
+                for (var i = 0; i < sC.length; ) {
+                var nX = sC[i];
+                var nY = sC[i+1];
+                var nR = sC[i+2];
+                var sColor = sC[i+3];
                 if (!sColor || sColor.length === 0) sColor = "orange";
+                i = i + 4;
 
-                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
-                var path = c.svg().selectAll('circle'+sColorTerm);
-                path.remove();
 
                 if (nX.length>0 && nY.length>0 && nR.length>0 && sColor.length>0) {
                     var yv = nY;
@@ -5590,6 +5597,7 @@ gda.newScatterDisplay = function(chtObj) {
                         .attr("fill","none")
                         .attr("stroke",sColor);
                         //.attr("stroke-dasharray","10,10");
+                }
             }
         });
         }
@@ -5599,16 +5607,22 @@ gda.newScatterDisplay = function(chtObj) {
             if( chtObj.overrides["ellipse"]) {
                 var nP = chtObj.overrides["ellipse"]; 
                 var sC = nP.split(",");
-                var nX = sC[0];
-                var nY = sC[1];
-                var nRx = sC[2];
-                var nRy = sC[3];
-                var sColor = sC[4];
+                for (var i = 0; i < sC.length; i+=5) {
+                    var sColor = sC[i+4];
+                    if (sColor && sColor.length > 0) {
+                        var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                        var path = c.svg().selectAll('ellipse'+sColorTerm);
+                        path.remove();
+                    }
+                }
+                for (var i = 0; i < sC.length; ) {
+                var nX = sC[i];
+                var nY = sC[i+1];
+                var nRx = sC[i+2];
+                var nRy = sC[i+3];
+                var sColor = sC[i+4];
                 if (!sColor || sColor.length === 0) sColor = "orange";
-
-                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
-                var path = c.svg().selectAll('ellipse'+sColorTerm);
-                path.remove();
+                i = i + 5;
 
                 if (nX.length>0 && nY.length>0 && nRx.length>0 && nRy.length>0 && sColor.length>0) {
                     var yv = nY;
@@ -5639,23 +5653,31 @@ gda.newScatterDisplay = function(chtObj) {
                         .attr("fill","none")
                         .attr("stroke",sColor);
                         //.attr("stroke-dasharray","10,10");
+                }
             }
         });
         }
         if( chtObj.overrides["rect"]) {
         scatterChart
         .renderlet(function(c) {
-            if( true) { //chtObj.overrides["rect"] 
-              _.each(chtObj.overrides, function(value, key) {
-               if (key.substring(0,4).localeCompare("rect")==0 && !key.localeCompare("rect")==0) {
-                var nP = value;//chtObj.overrides["rect"];  // x range, y range, perimeter Color
+            if( chtObj.overrides["rect"] ) {
+                var nP = chtObj.overrides["rect"];
                 var sC = nP.split(",");
-                var sXr = sC[0].split("..");
-                var sYr = sC[1].split("..");
-                var sColor = sC[2];
-                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
-                var path = c.svg().selectAll('rect'+sColorTerm);
-                path.remove();
+                for (var i = 0; i < sC.length; i+=3) {
+                    var sColor = sC[i+2];
+                    if (sColor && sColor.length > 0) {
+                        var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                        var path = c.svg().selectAll('rect'+sColorTerm);
+                        path.remove();
+                    }
+                }
+                for (var i = 0; i < sC.length; ) {
+                var sXr = sC[i].split("..");
+                var sYr = sC[i+1].split("..");
+                var sColor = sC[i+2];
+
+                i = i + 3;
+
                 if (sXr.length>0 && sYr.length>0 && sColor.length>0) {
                     var xLeft = c.x().domain()[0];
                     var xRight = c.x().domain()[1];
@@ -5696,7 +5718,6 @@ gda.newScatterDisplay = function(chtObj) {
                         .attr("stroke",sColor.toLowerCase());
                 }
                }
-              });
             }
         });
         }

@@ -86,10 +86,7 @@
                         "xAxis ticks": 6,
                         "xAxisResolution": "months",
                         "expand": 1.05,
-                        "rect": true,
-                        "rect1": "xMin..1470,0..30.5,green",
-                        "rect2": "1471..xMax,0..yMax,orange",
-                        "rect3": "xMin..1470,30.5..yMax,orange",
+                        "rect": "xMin..1470,0..30.5,green,1471..xMax,0..yMax,orange,xMin..1470,30.5..yMax,orange",
                         "circle": "1283,1,1287,purple",
                         "ellipse": "1473,15,1480,10,red"
                     }
