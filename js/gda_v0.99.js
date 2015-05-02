@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "108a",
+    minor:   "108b",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -4697,19 +4697,10 @@ gda.newTimelineDisplay = function(chtObj) {
         if (chtObj.overrides["legend"])
             ftX
                 .legend(dc.legend());
-        if( chtObj.overrides["trend"] && gda.utils.fieldExists(science)) {
-            var loess = science.stats.loess().bandwidth(.2);
-            ftX
-            .renderlet(function(c) {
-                if( chtObj.overrides["trend"]) {
-                    var sFit = chtObj.overrides["trend"]; 
-                    if (sFit.localeCompare("linear")) {
-                        //var xVal = 
-                        //var loessData = loess(xVal, yVal);
-                    }
-                }
-            });
-        }
+        if( chtObj.overrides["trend"] && gda.utils.fieldExists(science))
+            ftX.renderlet(function(c) { gda.trenderlet(c, chtObj.overrides["trend"]); });
+
+
         if( chtObj.overrides["nominalX"]) {
         ftX
         .renderlet(function(c) {
@@ -4737,6 +4728,55 @@ gda.newTimelineDisplay = function(chtObj) {
         return true;
     }
     return false;
+}
+
+gda.trenderlet = function(c, sFit) {
+    if (sFit.localeCompare("linear")==0) {
+        var d = c.data()[0].group.top(Infinity);
+        d = _.sortBy(d, function(num)
+            { return num.key; });
+        var xVal = _.pluck(d, "key");
+        xVal = _.map( xVal, function(num) { return +num; });
+        var yVal = _.pluck(d, "value");
+        var fBandwidth = .5;//.2;
+        if (fBandwidth * xVal.length<2) fBandwidth = 2/xVal.length;
+        var loess = science.stats.loess().bandwidth(fBandwidth);
+        var loessData = loess(xVal, yVal);
+        
+        var line = d3.svg.line()
+            .interpolate("linear")
+            .x(function(d) { return d[0]; })
+            .y(function(d) { return d[1]; });
+
+        c.svg().append("path")
+            .datum(function() {
+                xVal = _.map( xVal, function(num)
+                    { return c.margins().left + c.x()( +num ); });
+                loessData = _.map( loessData, function(num)
+                    { return c.margins().top + c.y()( +num ); });
+                
+                return d3.zip(xVal, loessData);
+            })
+            .attr({"class"  : "line",
+                    "d"     : line
+            })
+            .attr("stroke-width",2)
+            .attr("stroke","grey")
+            .attr("stroke-opacity","0.5")
+            .attr("stroke-dasharray","10,10");
+// this might work well for camera temperature/gain trend data
+
+        if (false)
+        c.svg().append("line")
+            .attr("x1", xVal[0]) //c.margins().left + c.x()( xVal[0] ))
+            .attr("x2", xVal[xVal.length-1]) //c.margins().left + c.x()( xVal[xVal.length-1] ))
+            .attr("y1", loessData[0]) //c.margins().top + c.y()( loessData[0] ))
+            .attr("y2", loessData[loessData.length-1]) //c.margins().top + c.y()( loessData[loessData.length-1] ))
+            .attr("stroke-width",2)
+            .attr("stroke","grey")
+            .attr("stroke-opacity","0.5")
+            .attr("stroke-dasharray","10,10");
+    }
 }
 
 // start with one dimension, expand to more later
@@ -5542,6 +5582,7 @@ gda.newScatterDisplay = function(chtObj) {
                         //.attr("y1", c.margins().top + yv )
                         //.attr("y2", c.margins().top + yv )
                         .attr("stroke-width",2)
+                        .attr("stroke-opacity","0.5")
                         .attr("stroke",sColor)
                         .attr("stroke-dasharray","10,10");
             }
@@ -5580,7 +5621,23 @@ gda.newScatterDisplay = function(chtObj) {
                                 xv = new Date(+xv + gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
                         }
                     }
-                    nR = Math.abs(c.x()( xv ) - c.x()( nR ));
+                    if (nR.substring(0,1).localeCompare("+")==0) {
+                        var wv = xv;
+                        if (nR.localeCompare("+Day")==0) {
+                            wv = new Date(+xv + gda.TdayIncMsecs);
+                            nR = Math.abs(c.x()(xv) - c.x()(wv));
+                        }
+                        else if (nR.localeCompare("+Week")==0) {
+                            wv = new Date(+xv + gda.TweekIncMsecs);
+                            nR = Math.abs(c.x()(xv) - c.x()(wv));
+                        }
+                        else {
+                            nR = +xv + +(nR.substring(1));
+                            nR = Math.abs(c.x()(xv) - c.x()(nR));
+                        }
+                    }
+                    else
+                        nR = Math.abs(c.x()(xv) - c.x()(nR));
                 }
                 //else
                     //xv = c.x()( +(nX) ); 
@@ -5595,6 +5652,7 @@ gda.newScatterDisplay = function(chtObj) {
                         //.attr("y2", c.margins().top + yv )
                         .attr("stroke-width",2)
                         .attr("fill","none")
+                        .attr("stroke-opacity","0.5")
                         .attr("stroke",sColor);
                         //.attr("stroke-dasharray","10,10");
                 }
@@ -5634,11 +5692,20 @@ gda.newScatterDisplay = function(chtObj) {
                                 xv = new Date(+xv + gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
                         }
                     }
+                    if (nRx.substring(0,3).localeCompare("Now")==0) {
+                        var wv = xv;
+                        if (nRx.length>3) {
+                            if (nRx.substring(3).localeCompare("+Day")==0)
+                                wv = new Date(+wv + gda.TdayIncMsecs);
+                        }
+                        nRx = Math.abs(c.x()(xv) - c.x()(wv));
+                    }
+                    else
+                        nRx = Math.abs(c.x()(xv) - c.x()(nRx));
                     if (nRy.localeCompare("allY")==0)
                         nRy = 0.50 * Math.abs( c.y()(c.y().domain()[0]) - c.y()(c.y().domain()[1]) ); 
                     else
                         nRy = Math.abs(c.y()(yv) - c.y()(nRy));
-                    nRx = Math.abs(c.x()(xv) - c.x()(nRx));
                 }
                 //else
                     //xv = c.x()( +(nX) ); 
@@ -5651,6 +5718,7 @@ gda.newScatterDisplay = function(chtObj) {
                         .attr("ry", nRy)
                         .attr("stroke-width",2)
                         .attr("fill","none")
+                        .attr("stroke-opacity","0.5")
                         .attr("stroke",sColor);
                         //.attr("stroke-dasharray","10,10");
                 }
@@ -5721,6 +5789,8 @@ gda.newScatterDisplay = function(chtObj) {
             }
         });
         }
+        if( chtObj.overrides["trend"] && gda.utils.fieldExists(science))
+            scatterChart.renderlet(function(c) { gda.trenderlet(c, chtObj.overrides["trend"]); });
 
 // try something similar for scatter, since Y doesn't appear to be properly elastic.
 //        var currentMax = 0,
