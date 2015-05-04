@@ -4738,6 +4738,8 @@ gda.trenderlet = function(c, sFit) {
         var xVal = _.pluck(d, "key");
         xVal = _.map( xVal, function(num) { return +num; });
         var yVal = _.pluck(d, "value");
+
+        // http://www.itl.nist.gov/div898/handbook/pmd/section1/pmd144.htm
         var fBandwidth = .5;//.2;
         if (fBandwidth * xVal.length<2) fBandwidth = 2/xVal.length;
         var loess = science.stats.loess().bandwidth(fBandwidth);
