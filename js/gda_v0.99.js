@@ -98,7 +98,7 @@ document.onkeyup = function(evt) {
 
 var gda = {
     version: "0.099",
-    minor:   "108b",
+    minor:   "109",
     branch:  "gdca-dev",
 
     T8hrIncMsecs     : 1000*60*60*8,      // 8 hours
@@ -189,7 +189,7 @@ var gda = {
     // registered simple or aggregated charts
     availCharts : ["Format_Newline", "Timeline", "Scatter", "Pareto", "Bar", "Row", "Line", "Hist", "Series", "Bubble", "ScatterHist", "Choropleth", "Box", "Stats"],
 
-    numFormats : [".2f", "%Y%m%d", ".0f" ], // not a great idea. turn into an object
+    numFormats : [".2f", "%Y%m%d", ".0f", ".1f" ], // not a great idea. turn into an object
     defFormat : 0,
     clickModifiers: [],
     layoutRow : 0,
@@ -317,7 +317,54 @@ gda.mySpinner = document.getElementById(gda.spinnerDef.container.substring(1)) ?
 gda.numberFormat = d3.format(gda.numFormats[gda.defFormat]);
 gda.dateFormat = d3.time.format(gda.numFormats[1]);  // hmm not great
 gda.daysFormat = d3.format(gda.numFormats[2]); 
+gda.tenthFormat = d3.format(gda.numFormats[3]); 
 gda.counterFormat = d3.format("08d");
+
+gda.dateParseWithDateMath = function(sDateMath) {
+    var v = undefined;
+    if (sDateMath.substring(0,3).localeCompare("Now")==0) {
+        v = new Date();
+        if (sDateMath.length>3) {
+            if (sDateMath.substring(3).localeCompare("+Quarter")==0)
+                v = new Date(+v + gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-Quarter")==0)
+                v = new Date(+v - gda.TquarterIncMsecs - 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("+2*Quarter")==0)
+                v = new Date(+v + 2*gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-2*Quarter")==0)
+                v = new Date(+v - 2*gda.TquarterIncMsecs - 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("+Month")==0)
+                v = new Date(+v + gda.TmonthIncMsecs + 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-Month")==0)
+                v = new Date(+v - gda.TmonthIncMsecs - 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("+2*Month")==0)
+                v = new Date(+v + 2*gda.TmonthIncMsecs + 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-2*Month")==0)
+                v = new Date(+v - 2*gda.TmonthIncMsecs - 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("+4*Month")==0)
+                v = new Date(+v + 4*gda.TmonthIncMsecs + 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-4*Month")==0)
+                v = new Date(+v - 4*gda.TmonthIncMsecs - 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("+5*Month")==0)
+                v = new Date(+v + 5*gda.TmonthIncMsecs + 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-5*Month")==0)
+                v = new Date(+v - 5*gda.TmonthIncMsecs - 2*gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("+Week")==0)
+                v = new Date(+v + gda.TweekIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-Week")==0)
+                v = new Date(+v - gda.TweekIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("+Day")==0)
+                v = new Date(+v + gda.TdayIncMsecs);
+            else if (sDateMath.substring(3).localeCompare("-Day")==0)
+                v = new Date(+v - gda.TdayIncMsecs);
+        }
+    }
+    else {
+        var format = d3.time.format("%m/%d/%Y");
+        v = format.parse(sDateMath);
+    }
+    return v;
+}
 
 gda.newTableState = function() {
     var _aTable= {};
@@ -353,6 +400,7 @@ gda.newDataSourceState = function() {
     _aDatasource.bLocalFile = true;
     _aDatasource.bLoaded = false;
     _aDatasource.bListOfMany = false;
+    _aDatasource.loadAs = false;
     _aDatasource.bAggregate = false;
     _aDatasource.bSparseData = false;
     _aDatasource.bTimestamp = false;
@@ -398,6 +446,9 @@ gda.activeDatasource = function() { // one of sEdS or sEmS should be active
 
 gda.metaSources = {};
 gda.metaSources.map = {};
+gda.metaSources.remove = function(mS) {
+    delete gda.metaSources.map[dS];
+};
 //gda.metaSources.map.none = gda.newMetaSourceState();
 gda.metaSources.asText = function() {
     var dss = gda.metaSources.map;
@@ -437,6 +488,9 @@ gda.log = function(L,a,b,c) {
 
 gda.dataSources = {};
 gda.dataSources.map = {};
+gda.dataSources.remove = function(dS) {
+    delete gda.dataSources.map[dS];
+};
 //gda.dataSources.map.none = gda.newDataSourceState();
 gda.dataSources.uniqueId = function(ds) {
     if (ds === undefined) {
@@ -566,6 +620,21 @@ gda.dataSources.restoreOne = function(dS, dsRecord) {
         }
     }
     return dS;
+}
+
+// this might be better hosted in gda.slide
+gda.dataSources.current = function() {
+    var dS = gda.sEdS;
+    var ds = gda.dataSources.map[dS];
+    if (dS) {
+    }
+    else {
+        dS = "New";
+        gda.sEdS = dS;
+        ds = gda.newDataSourceState();
+        gda.dataSources.map[dS] = ds;
+    }
+    return ds;
 }
 
 gda.metaSources.uniqueIndex = 0;
@@ -807,7 +876,7 @@ gda.utils.titleFunction = function (d,v,i) {
 // eventually replace addDateOptions with this everywhere, but for the short term don't incur too much work updating
 gda.utils.addDateOption = function(d,base,just) {
     var insHere = d;
-    var tset = ["Year", "Quarter", "QoY", "Month", "Week", "Day", "DoW"];
+    var tset = ["Year", "Quarter", "QoY", "Month", "Week", "Day", "DoW", "Minute"];
     if (just !== undefined) {
 	tset = [just];
     }
@@ -837,6 +906,9 @@ gda.utils.addDateOption = function(d,base,just) {
 			break;
 		case "dow":
 			insHere[base+j ] = d[base].getDay();
+			break;
+		case "minute":
+			insHere[base+j ] = d3.time.month(d[base]);
 			break;
 	}
     });
@@ -969,6 +1041,9 @@ gda.slide = function( _slide ) {
         // move this to Chosen, then active loads based on the sChartGroups (aka dS)?
 
 // should this be conditional at edit time?
+        // 6/12/15 added for loadAs
+        var ds = gda.dataSources.map[dS];
+        if (!ds || !ds.bLoadingAs)
         gda.fileLoadImmediate (); // at 'run' time this causes multiple loads
 //        gda.log(4,"slide.display: continuing after fLoadI");
 // see, used to load here, which would be appropriate in Chosen just after setupSlideContents.
@@ -1712,7 +1787,10 @@ gda.dataCompleteAction = function(dS) {
     if (!gda.bPollTimer || !gda.bPolledAndViewDrawn || !gda.bPolledAndViewDrawn[dS])// || !gda.bPollAggregate
     {
         //if (!gda.bPolledAndViewDrawn) {
-        gda.view.redraw(dS);
+        
+        // 6/12/15 added for loadAs
+        //if (!ds.bLoadingAs)
+            gda.view.redraw(dS);
         gda.bPolledAndViewDrawn[dS] = true; // should this be by dS
         //}
     }
@@ -2280,6 +2358,7 @@ gda.slides = function() {
                         var dTxtT = gda.addTextNode(dEl,"Data Source");
                         // add radio buttons for current dataSource to use
                         var dCEl = gda.addElementWithId(dTd,"div","dataProvider");
+                            if (gda.dataSources.map["New"] === undefined)
                             gda.addRadioB(dCEl, "sEdS", "new", "New", 'dSource', !gda.sEdS, 
                                 function (t) {
                                     gda.sEdS = null;    // until specified and file loaded successfully
@@ -2303,28 +2382,38 @@ gda.slides = function() {
             var dTb = gda.addElement(dTd,"table");
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
+                        gda.addTextEntry(dTd, "Name", "Name", gda.sEdS,
+                                function(newVal) {
+                                    var dS = newVal;
+                                    if (gda.dataSources.map[gda.sEdS] && gda.sEdS !== dS) {
+                                        gda.dataSources.map[dS] = gda.dataSources.map[gda.sEdS];
+                                        delete gda.dataSources.map[gda.sEdS];
+                                    }
+                                    gda.sEdS = dS;
+                                    gda.sEmS = null;	// clear the Meta Source selection
+// needs to update charts, etc, too
+                                    gda.view.redraw();
+                        });
+                    var dTd = gda.addElement(dTr,"td");
+                        gda.addButton(dTd, "deleteDS", "X", function() {
+                            gda.dataSources.remove(gda.sEdS);
+                            gda.sEdS = "";
+                            gda.view.redraw();
+                        });
+                var dTr = gda.addElement(dTb,"tr");
+                    var dTd = gda.addElement(dTr,"td");
                         var dCEl = gda.addElementWithId(dTd,"div","dataProviderType");
                         gda.addRadioB(dCEl, "SLFile", "SLFile", "Local File", 'objmemberSource', ds.bLocalFile, 
                                 function () {
                                     gda.log(4,"as Local");
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
+                                    var ds = gda.dataSources.current();
                                     ds.bLocalFile = true;   // needs to be for the 'new' dS.
                                     gda.view.redraw();
                             })
                             .addRadioB(dCEl, "SHttp", "SHttp", "Http Source", 'objmemberSource', !ds.bLocalFile, 
                                 function () {
                                     gda.log(4,"as Http");
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
-                                    if (dS) {
-                                    }
-                                    else {
-                                        dS = "NameMe";
-                                        gda.sEdS = dS;
-                                        ds = gda.newDataSourceState();
-                                        gda.dataSources.map[dS] = ds;
-                                    }
+                                    var ds = gda.dataSources.current();
                                     ds.bLocalFile = false;  // needs to be for the 'new' dS.
                                     gda.view.redraw();
                             });
@@ -2343,20 +2432,16 @@ gda.slides = function() {
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
                         var dCEl = gda.addElementWithId(dTd,"div","dataFileQty");
-                        //var dS = gda.sEdS;
-                        //var ds = gda.dataSources.map[dS];
                         gda.addRadioB(dCEl, "One", "One", "Single CSV File", 'objmember', !ds.bListOfMany, 
                                 function () {
                                     gda.log(4,"newOne");
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
+                                    var ds = gda.dataSources.current();
                                     ds.bListOfMany = false;
                             })
                             .addRadioB(dCEl, "Many", "Many", "CSV File of File List", 'objmember', ds.bListOfMany, 
                                 function () {
                                     gda.log(4,"newMany");
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
+                                    var ds = gda.dataSources.current();
                                     ds.bListOfMany = true;
                             });
 
@@ -2364,22 +2449,19 @@ gda.slides = function() {
                         gda.addCheckB(dTd, "aggregate", "Aggregate Data", 'objmember', ds.bAggregate, 
                                 function (t) {
                                     gda.log(4,"Aggregate? " + t.checked);
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
+                                    var ds = gda.dataSources.current();
                                     ds.bAggregate = t.checked;
                         });
                         gda.addCheckB(dTd, "sparse", "Sparse Data", 'objmember', ds.bSparseData, 
                                 function (t) {
                                     gda.log(4,"Sparse? " + t.checked);
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
+                                    var ds = gda.dataSources.current();
                                     ds.bSparseData = t.checked;
                         });
                         gda.addCheckB(dTd, "timestamp", "Timestamp Data", 'objmember', ds.bTimestamp, 
                                 function (t) {
                                     gda.log(4,"Sparse? " + t.checked);
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
+                                    var ds = gda.dataSources.current();
                                     ds.bTimestamp = t.checked;
                                     if (t.checked)
                                         ds.columns = _.union(ds.columns, ["Timestamp"]);
@@ -2466,9 +2548,16 @@ gda.slides = function() {
                                     }
                                     //var ms = gda.metaSources.map[mS];
                                     gda.sEmS = mS;
-				    gda.sEdS = null;	// clear the Data Source selection
+                                    gda.sEdS = null;	// clear the Data Source selection
                                     gda.metaSources.map[mS] = gda.newMetaSourceState();
+// needs to update charts, etc, too
                                     gda.view.redraw();
+                        });
+                    var dTd = gda.addElement(dTr,"td");
+                        gda.addButton(dTd, "deleteMS", "X", function() {
+                            gda.metaSources.remove(gda.sEmS);
+                            gda.sEmS = "";
+                            gda.view.redraw();
                         });
                 var dTr = gda.addElement(dTb,"tr");
                     var dTd = gda.addElement(dTr,"td");
@@ -2808,9 +2897,8 @@ gda.view = function() {
             }
 
             // slide specific items, poss refactor as hinted above
-            var dS = gda.sEdS;          // needs gda.active... ?
-            var ds = gda.dataSources.map[dS];
-            if (!ds) ds = gda.newDataSourceState();
+            var ds = gda.dataSources.current();
+            //if (!ds) ds = gda.newDataSourceState();
             if (gda.allowEdit() ) {
                 var dElTE = document.getElementById("slideTitleEntry");
                 if (dElTE) {    // prob belongs elsewhere
@@ -2827,19 +2915,11 @@ gda.view = function() {
                             });
 
                     var dElDPE = document.getElementById("dataProviderEntry");
-                    if (dElDPE) {
+                    if (dElDPE && ds) {
                         dElDPE[gda.sTextHTML] = "";
                         gda.addTextEntry(dElDPE, "FolderEntry", (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) ? "Folder" : "Provider", ds.dataprovider,
                                 function(newVal) {
-                                    var dS = gda.sEdS;
-                                    var ds = gda.dataSources.map[dS];
-                                    if (dS) {
-                                    } else {
-                                        dS = "NameMe";
-                                        gda.sEdS = dS;
-                                        ds = gda.newDataSourceState();
-                                        gda.dataSources.map[dS] = ds;
-                                    }
+                                    var ds = gda.dataSources.current();
                                     if (!gda.utils.fieldExists(ds.bLocalFile) || ds.bLocalFile) {
                                     if (!(endsWith(newVal,"/") || endsWith(newVal,"\\")))
                                         newVal = newVal + "/";  // preserve form?
@@ -2849,7 +2929,7 @@ gda.view = function() {
                                 });
                     }
                     var dElFDE = document.getElementById("dataFilenameDisplay");
-                    if (dElFDE) {
+                    if (dElFDE && ds) {
                         dElFDE[gda.sTextHTML] = "";
                         var dTxtT = gda.addTextNode(dElFDE,ds.datafile);
                         if (ds.dataLastModifiedDate)
@@ -3187,7 +3267,8 @@ gda.newSelectorPieChart = function(i, dEl,cname,dDim, dGrp, sChtGroup) {
     chtObj.chart = ftChart;
     ftChart.gdca_chart = chtObj;
     ftChart
-        .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
+        .on("filtered", function(chart, filter)
+                        { gda.showFilter(chart, filter);})
         //.width(200)
         //.height(200)
         .width(chtObj.wChart)    // same as scatterChart
@@ -3302,20 +3383,60 @@ gda.newBoxChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"elasticX",true);
     gda.addOverride(chtObj,"elasticY",true);
     gda.addOverride(chtObj,"wChart",200);
+    gda.addOverride(chtObj,"hChart",200);
+    gda.addOverride(chtObj,"yAxisPadding",'1%');
+    gda.addOverride(chtObj,"yAxis ticks",false);
 
-    var xDimension = chtObj.cnameArray.length === 2 ?
+    // need, but don't yet have, UI support to select 'n' fields
+    // so, workarounds for > 1.
+    
+    var xDimension;
+    if (chtObj.cnameArray.length === 1) {
+        xDimension = chtObj.cf.dimension(function(d) {
+            var v = chtObj.cnameArray[0];
+            return v;
+        }) ;
+    } else {
+        xDimension = chtObj.cnameArray.length === 2 && chtObj.cnameArray[1].localeCompare("Bsel")===0 ? // special case for Box Test, needs improvement
         chtObj.cf.dimension(function(d) {
             var v = chtObj.cnameArray[0] + d[chtObj.cnameArray[1]];  // prefix + selector
             return v;
         }) :
         chtObj.cf.dimension(function(d) {
-            var v = chtObj.cnameArray[0];
+            var v = "";
+            _.each(chtObj.cnameArray, function(sCname) {
+                if (d[sCname]) {
+                    v = sCname;
+                    return v;
+                }
+            });
             return v;
         }) ;
+    }
     chtObj.dDims.push(xDimension);
     gda.dimensions[chtObj.sChartGroup].push({dName: ("box."+chtObj.cnameArray[0]), dFilter: true, dFixed: undefined, dDim: xDimension});
 
-    var dBoxXGrp = chtObj.cnameArray.length === 2 ?
+    var dBoxXGrp;
+    if (chtObj.cnameArray.length === 1) {
+        // two cases; do it on the named field only
+        // or, use that field to access the field (ie, [person]
+        dBoxXGrp = xDimension.group().reduce(
+            function(p,v) {
+              if (v[chtObj.cnameArray[0]])
+              p.push(+v[chtObj.cnameArray[0]]);
+              return p;
+            },
+            function(p,v) {
+              if (v[chtObj.cnameArray[0]])
+              p.splice(p.indexOf(v[chtObj.cnameArray[0]]),1);
+              return p;
+            },
+            function() {
+              return [];
+            }
+        )
+    } else {
+        dBoxXGrp = chtObj.cnameArray.length === 2 && chtObj.cnameArray[1].localeCompare("Bsel")===0 ?
         xDimension.group().reduce(
             function(p,v) {
               if (v[chtObj.cnameArray[0] + v[chtObj.cnameArray[1]]])
@@ -3333,19 +3454,24 @@ gda.newBoxChart = function(chtObj, cf) {
         ) :
         xDimension.group().reduce(
             function(p,v) {
-              if (v[chtObj.cnameArray[0]])
-              p.push(+v[chtObj.cnameArray[0]]);
+              _.each(chtObj.cnameArray, function(sCname) {
+                  if (+v[ sCname ])
+                      p.push(+v[ sCname ]);
+              });
               return p;
             },
             function(p,v) {
-              if (v[chtObj.cnameArray[0]])
-              p.splice(p.indexOf(v[chtObj.cnameArray[0]]),1);
+              _.each(chtObj.cnameArray, function(sCname) {
+                  if (+v[ sCname ])
+                      p.splice(p.indexOf(v[ sCname ]),1);
+              });
               return p;
             },
             function() {
               return [];
             }
         );
+    }
     
     chtObj.dGrps.push(dBoxXGrp);
 }
@@ -3353,9 +3479,13 @@ gda.newBoxChart = function(chtObj, cf) {
 gda.newHistChart = function(chtObj, cf) {
     if (!chtObj.nBins) chtObj.nBins = chtObj.wChart/20; // magic number
     gda.addOverride(chtObj,"elasticX",false);
+    gda.addOverride(chtObj,"elasticY",false);
     gda.addOverride(chtObj,"legend",false);
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
+    gda.addOverride(chtObj,"yMax",false);
+    gda.addOverride(chtObj,"xMin",false);
+    gda.addOverride(chtObj,"xMax",false);
     gda.addOverride(chtObj,"xAxis ticks",6);
     gda.addOverride(chtObj,"xAxis gap",30);
     gda.addOverride(chtObj,"xAxisResolution","months");
@@ -3421,6 +3551,8 @@ gda.newLineChart = function(chtObj, cf) {
         gda.addOverride(chtObj,"interpolate",false);
         gda.addOverride(chtObj,"log",false);
         gda.addOverride(chtObj,"yMin",false);
+        gda.addOverride(chtObj,"minX",false);
+        gda.addOverride(chtObj,"maxX",false);
         gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
         gda.addOverride(chtObj,"UCL",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
         gda.addOverride(chtObj,"stats",false);//['avg','min','max','pNsigma','mNsigma']);
@@ -3442,7 +3574,20 @@ gda.newLineChart = function(chtObj, cf) {
         chtObj.dDims.push(yDimension);
     var dXGrp;
     if (!xDimension.isDate)
-        dXGrp = xDimension.group();//.reduceCount();
+    {
+        var o = chtObj.overrides["reduce"];
+        if (o) {
+            if (o.indexOf(';')<0)  { // assume just a field accessor
+                var dF = new Function("d", 'return +d["' + chtObj.cnameArray[1] + '"];'); //"return +d." + o + ";"
+                dXGrp = xDimension.group()["reduce"+o](dF);  // def=reduceCount. reduceSum, ...
+            }
+            else {
+                alert('not implemented yet');
+            }
+        }
+        else
+            dXGrp = xDimension.group();//.reduceCount();
+    }
     else
     {
             // Temporary partial implementation of specifying reduce operators.
@@ -3550,13 +3695,19 @@ gda.newTimelineChart = function(chtObj, cf) {
         gda.addOverride(chtObj,"reduce",false);
         gda.addOverride(chtObj,"xAxisResolution","months");
         gda.addOverride(chtObj,"xAxis rotate labels",false);
-        gda.addOverride(chtObj,"xAxis ticks",false);
         gda.addOverride(chtObj,"xAxis gap",30);
+        gda.addOverride(chtObj,"xAxis ticks",false);
+        gda.addOverride(chtObj,"yAxis ticks",false);
         gda.addOverride(chtObj,"normalize",false);
         gda.addOverride(chtObj,"min",false);
+        gda.addOverride(chtObj,"minX",false);
+        gda.addOverride(chtObj,"maxX",false);
         gda.addOverride(chtObj,"brushOn",true);
         gda.addOverride(chtObj,"nominalX",false);
         gda.addOverride(chtObj,"valueLabels",false);
+        gda.addOverride(chtObj,"bar color",false);
+        gda.addOverride(chtObj,"trend color",false);
+        gda.addOverride(chtObj,"flipY",false);
                                                     // or change normalization to be done in a separate dimension?
         gda.addOverride(chtObj,"nominal",false);    // none if false, or constant value (horizontal line) showing something like expected or average value.
 
@@ -3571,6 +3722,20 @@ gda.newTimelineChart = function(chtObj, cf) {
             // Had been hardwired up to now.
             var o = chtObj.overrides["reduce"];
             if (o) {
+                if (o.localeCompare("Count")===0) {
+                    dXGrp = xDimension.group().reduceCount();
+                }
+                else
+                if (o.localeCompare("Sum")===0) {
+                    dXGrp = xDimension.group().reduceSum();
+                }
+                else
+                if (o.localeCompare("Avg")===0) {
+                    dXGrp = xDimension.group().reduce(reduceAddAvg(chtObj.cnameArray[1]),
+                                           reduceRemoveAvg(chtObj.cnameArray[1]),
+                                           reduceInitAvg);
+                }
+                else {
                     if (o.indexOf(';')<0)  { // assume just a field accessor
                         var dF = new Function("d", 'return +d["' + chtObj.cnameArray[1] + '"];'); //"return +d." + o + ";"
                         dXGrp = xDimension.group()["reduce"+o](dF);  // def=reduceCount. reduceSum, ...
@@ -3578,6 +3743,7 @@ gda.newTimelineChart = function(chtObj, cf) {
                     else {
                         alert('not implemented yet');
                     }
+                }
             }
             else {
                 dXGrp = xDimension.group().reduceCount();
@@ -3595,6 +3761,10 @@ gda.newTimelineChart = function(chtObj, cf) {
         // 'hardwired' here for now, refactor later
         if (chtObj.overrides["normalize"]) {
             var mS = chtObj.overrides["normalize"];  // grab the metaSource
+            if (mS === true || mS.localeCompare("true")===0)
+            {   // not used, experiment
+            }
+            else {
             var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
             var cf = gda.cf[ms.dataSources[0]];
 	    if (cf) {	// if source is loaded, cf will exist
@@ -3619,10 +3789,8 @@ gda.newTimelineChart = function(chtObj, cf) {
             }
             else {
                 dD = gda.dimensionByCol(ms.dataSources[0], ms.columns[0], cf);
-
-//              //dXGrp = xDimension.group().reduceCount(); // newTimelineChart uses this
-              dG = dD.group().reduceSum(function(d) { // this was the default
-                  return +d[chtObj.cnameArray[1]]; });
+                dG = dD.group().reduceSum(function(d) { // this was the default
+                    return +d[chtObj.cnameArray[1]]; });
             cf[ms.columns[0]] = dD;  // could 'name' the dimension in an object instead of numbering in an array, then add this in.
             cf['G'+ms.columns[0]] = dG;
             }
@@ -3647,6 +3815,7 @@ gda.newTimelineChart = function(chtObj, cf) {
 // http://stackoverflow.com/questions/24225364/apply-filter-from-one-crossfilter-dataset-to-another-crossfilter
 
 // http://stackoverflow.com/questions/18941665/adding-filter-in-dc-js-from-another-dataset
+        }
         }
     }
 }
@@ -3802,11 +3971,15 @@ gda.newScatterChart = function(chtObj, cf) {
     gda.addOverride(chtObj,"log",false);
     gda.addOverride(chtObj,"yMin",false);
     gda.addOverride(chtObj,"yMax",false);
+    gda.addOverride(chtObj,"minX",false);
+    gda.addOverride(chtObj,"maxX",false);
     gda.addOverride(chtObj,"xAxis rotate labels",false);
     gda.addOverride(chtObj,"xAxis ticks",6);
     //gda.addOverride(chtObj,"timefield","Month");    // arbitrary, and may be "ClosedMonth" etc.
     gda.addOverride(chtObj,"xAxisResolution","months");
     gda.addOverride(chtObj,"expand",1.03);
+    gda.addOverride(chtObj,"trend",false);
+    gda.addOverride(chtObj,"trend color",false);
     if (chtObj.cnameArray.length>1) {
         var xDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[0],chtObj.cf,true);
         var yDimension = gda.dimensionByCol(chtObj.sChartGroup, chtObj.cnameArray[1],chtObj.cf,true);
@@ -4096,38 +4269,43 @@ gda.newLineDisplay = function(chtObj) {
             .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1] +" <= "+chtObj.numberFormat(ymax));
         }
         if (chtObj.overrides["normalize"]) {
-                var mS = chtObj.overrides["normalize"];  // grab the metaSource
+            var mS = chtObj.overrides["normalize"];  // grab the metaSource
+            if (mS === true || mS.localeCompare("true")===0)
+            {
+            }
+            else {
                 var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
                 var cf = gda.cf[ms.dataSources[0]];
-		if (cf) { // if source loaded cf will exist
-;
-                var dD;
-                var dG;
-                if (ms.overrides && ms.overrides.reduce) {
-                    dD = cf[ms.columns[1]];
-                    dG = cf['G'+ms.columns[1]];
-                }
-                else {
-                    dD = cf[ms.columns[0]];
-                    dG = cf['G'+ms.columns[0]];
-                }
-		var fMin = chtObj.overrides["min"] !== false ? +(chtObj.overrides["min"]) : false ;
+            if (cf) { // if source loaded cf will exist
+    ;
+                    var dD;
+                    var dG;
+                    if (ms.overrides && ms.overrides.reduce) {
+                        dD = cf[ms.columns[1]];
+                        dG = cf['G'+ms.columns[1]];
+                    }
+                    else {
+                        dD = cf[ms.columns[0]];
+                        dG = cf['G'+ms.columns[0]];
+                    }
+            var fMin = chtObj.overrides["min"] !== false ? +(chtObj.overrides["min"]) : false ;
 
 
-                // need to register with crossfilter or via dc to receive filter changes that affect this cf.
-                // might be able to get the desired effect by creating a fake group on the dimension and use
-                // that here
-            ftX
-                .valueAccessor(function(d){
-                        dD.filterExact(d.key);      // for this reason, it shouldn't be shared.
-                        var t = dD.top(Infinity).length;    // dGrp.value()?
-                        gda.log(5,"norm: "+ d.value + " " + t, t>0 ? gda.numberFormat(d.value/t) : 0, d.key);
-                        dD.filterAll();             // undo the filter, at the least while shared.
-			t = t>0 ? d.value/t : 0;
-			if (fMin !== false && t<fMin) t = fMin;
-                        return t;
-                })
-		}
+                    // need to register with crossfilter or via dc to receive filter changes that affect this cf.
+                    // might be able to get the desired effect by creating a fake group on the dimension and use
+                    // that here
+                ftX
+                    .valueAccessor(function(d){
+                            dD.filterExact(d.key);      // for this reason, it shouldn't be shared.
+                            var t = dD.top(Infinity).length;    // dGrp.value()?
+                            gda.log(5,"norm: "+ d.value + " " + t, t>0 ? gda.numberFormat(d.value/t) : 0, d.key);
+                            dD.filterAll();             // undo the filter, at the least while shared.
+                t = t>0 ? d.value/t : 0;
+                if (fMin !== false && t<fMin) t = fMin;
+                            return t;
+                    })
+            }
+            }
         }
         if (chtObj.overrides["xAxis rotate labels"]) {
         ftX
@@ -4364,6 +4542,9 @@ gda.newTimelineDisplay = function(chtObj) {
         chtObj.chart = ftX;
         ftX.gdca_chart = chtObj;
     }
+    if (chtObj.overrides["bar color"]) {
+        ftX.colors(chtObj.overrides["bar color"]);
+    }
 
     if (chtObj.overrides["xAxis rotate labels"]) {
     ftX.stdMarginBottom = ftX.margins().bottom;
@@ -4391,14 +4572,18 @@ gda.newTimelineDisplay = function(chtObj) {
     {
         v0 = chtObj.cnameArray[0];
         xmin = b1[0][v0];
+        if (chtObj.overrides["minX"]) xmin = chtObj.overrides["minX"]; 
         xmax = t1[0][v0];
+        if (chtObj.overrides["maxX"]) xmax = chtObj.overrides["maxX"]; 
         if (isNaN(xmin)) xmin = 0;
         if (isNaN(xmax)) xmax = 0;
     } else
     {
         v0 = chtObj.cnameArray[0];
         xmin = b1[0][v0];
+        if (chtObj.overrides["minX"]) xmin = gda.dateParseWithDateMath(chtObj.overrides["minX"]); 
         xmax = t1[0][v0];
+        if (chtObj.overrides["maxX"]) xmax = gda.dateParseWithDateMath(chtObj.overrides["maxX"]); 
         if (xmin === undefined) xmin = new Date();
         if (xmax === undefined) {
             var Now = new Date();
@@ -4491,29 +4676,33 @@ gda.newTimelineDisplay = function(chtObj) {
 
 
     ftX
-        .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
-        .dimension(dDims[0])
-        .group(chtObj.dGrps[0]);
+        .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);});
+    if (!(chtObj.overrides["normalize"]) &&
+        !(chtObj.overrides["normalize"]===true) )
+        ftX
+            .dimension(dDims[0])
+            .group(chtObj.dGrps[0]);
     ftX
         .centerBar(dDims[0].isDate === false);//true  or perhaps is ordinal?
     
     ftX
         .elasticX(chtObj.overrides["elasticX"])
         .elasticY(chtObj.overrides["elasticY"])
-        //.keyAccessor(function(d) {
-        //    var m = d.key;
-        //    m.setMilliseconds(0);
-        //    m.setSeconds(0);
-        //    m.setMinutes(0);
-        //    m.setHours(0);
-        //    m.setDate(0); // setDays
-        //    //.get(as)Month();   // this pays a speed penalty. Prefer to just bump up the max by 1 unit.
-        //                        // harder to generalize resolution too
-        //    return m;  // build from chosen override, hardwired for test
-        //})
         ;
         if (chtObj.overrides["normalize"]) {
-                var mS = chtObj.overrides["normalize"];  // grab the metaSource
+            var mS = chtObj.overrides["normalize"];  // grab the metaSource
+            if (mS === true || mS.localeCompare("true")===0)
+            {
+                dD = cf[ms.columns[1]];
+                dG = cf['G'+ms.columns[1]];
+                ftX
+                    .dimension(dD)
+                    .group(dG);
+                //ftX
+                //    .valueAccessor(function(d){
+                //});
+            }
+            else {
                 var ms = gda.metaSources.map[mS];  // grab the metaSource. refactor out the "map", or add in elsewhere, for consistency
                 var cf = gda.cf[ms.dataSources[0]];
 		if (cf) { // if source loaded cf will exist
@@ -4549,8 +4738,14 @@ gda.newTimelineDisplay = function(chtObj) {
                         if (fMin !== false && t<fMin) t = fMin;
                         return gda.numberFormat(t);
                 });
-		}
+            }
+            }
         }
+    if (chtObj.overrides["reduce"] &&
+        chtObj.overrides["reduce"].localeCompare("Avg")===0  ) {
+        ftX
+            .valueAccessor(reduceValueAvg);
+    }
     //if (dDims[0].isDate)
     {
      //   var dR = (xmax-xmin)/1000/60/60/24;
@@ -4597,12 +4792,19 @@ gda.newTimelineDisplay = function(chtObj) {
             .attr('fill', vLcolor);
             if (vLuseAcc === "true")
                 gLabelsData
-                .text(function(d){
-                    return chart.valueAccessor()(d3.select(d).data()[0].data)
-                });
+                    .text(function(d){
+                        var d = d3.select(d).data()[0].data;
+                        var v = chart.valueAccessor()(d);
+                        return gda.tenthFormat(v);
+                    });
             else
                 gLabelsData
-                    .text(function(d){ return d3.select(d).data()[0].data.value });
+                    .text(function(d){
+                        var d = d3.select(d).data()[0].data;
+                        var v = chart.valueAccessor()(d);
+                        //return d3.select(d).data()[0].data.value
+                        return gda.tenthFormat(v);
+                    });
             gLabelsData
             .attr('x', function(d){
                 return +d.getAttribute('x') + (d.getAttribute('width')/2); 
@@ -4615,6 +4817,33 @@ gda.newTimelineDisplay = function(chtObj) {
         })
     }
 
+    if (chtObj.overrides["yAxis ticks"]) {
+        if (chtObj.overrides["yAxis ticks"] === "maxValue") 
+            ftX.yAxis().ticks( chtObj.dGrps[0].top(1)[0].value );
+        else
+            ftX.yAxis().ticks(chtObj.overrides["yAxis ticks"]);
+    }
+
+    if (chtObj.overrides["flipY"]) {
+    var t1 = chtObj.dGrps[0].top(1);
+    if (t1.length>0)
+        ftX.y(d3.scale.linear().domain([-t1[0].value, 0]));
+    else
+        ftX.y(d3.scale.linear().domain([1, 0]));
+    ftX.yAxis().tickFormat( function(v) { 
+                    return -1.0*v; });
+    if (t1.length>0)
+        ftX.yAxis().ticks( t1[0].value );
+    ftX
+        .valueAccessor(function(d) {
+                return -1*d.value;
+             })
+    ftX.xAxis().ticks(0);
+    ftX // new 8/25/2014
+        .renderlet(function(c) {
+                c.svg().select('g').select('.axis.x').attr("transform","translate("+ c.margins().left + "," + c.margins().top +")")
+        })
+    }
 
     if (chtObj.overrides["xAxis rotate labels"]) {
     ftX // new 8/25/2014
@@ -4669,7 +4898,7 @@ gda.newTimelineDisplay = function(chtObj) {
 			    dc.events.trigger(function () {
                     _.each(chart.gdca_toFilter, function(cname) {
                         var oFCchart = _.findWhere(gda.charts, {Title: cname});  // Title must be unique in a slide!
-                    if (oFCchart.chart.focus) {
+                    if (oFCchart && oFCchart.chart.focus) {
                         gda.log(4,"period triggered");
                   // this is a test, to try to get scatter y axis to elasticY 
                   // next up try reapplying the new domain to Y's axis
@@ -4698,18 +4927,21 @@ gda.newTimelineDisplay = function(chtObj) {
             ftX
                 .legend(dc.legend());
         if( chtObj.overrides["trend"] && gda.utils.fieldExists(science))
-            ftX.renderlet(function(c) { gda.trenderlet(c, chtObj.overrides["trend"]); });
+            ftX.renderlet(function(c) { gda.trenderlet(c, chtObj.overrides["trend"], chtObj.overrides["trend color"] ); });
 
 
         if( chtObj.overrides["nominalX"]) {
         ftX
         .renderlet(function(c) {
-            //c.svg().selectAll('line').remove();
+            var sColor = "blue";
+            var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+            var path = c.svg().selectAll('line'+sColorTerm);
+            path.remove();
+
             if( chtObj.overrides["nominalX"]) {
                 var nX = chtObj.overrides["nominalX"]; 
-                var xv = 0;
-                if (nX.localeCompare("Now")==0)
-                    xv = new Date();
+                var xv = gda.dateParseWithDateMath(nX); 
+                if (xv === undefined) xv = 0;
                 //else
                     //xv = c.x()( +(nX) ); 
                 c.svg().append("line")
@@ -4718,7 +4950,7 @@ gda.newTimelineDisplay = function(chtObj) {
                     .attr("y1", c.margins().top + c.y()( c.y().domain()[0] ))
                     .attr("y2", c.margins().top + c.y()( c.y().domain()[1] ))
                     .attr("stroke-width",2)
-                    .attr("stroke","blue")
+                    .attr("stroke",sColor)
                     .attr("stroke-opacity","0.5")
                     .attr("stroke-dasharray","10,10");
             }
@@ -4730,17 +4962,51 @@ gda.newTimelineDisplay = function(chtObj) {
     return false;
 }
 
-gda.trenderlet = function(c, sFit) {
+gda.trenderlet = function(c, sFit, sFitColor) {
     if (sFit.localeCompare("linear")==0) {
-        var d = c.data()[0].group.top(Infinity);
-        d = _.sortBy(d, function(num)
-            { return num.key; });
-        var xVal = _.pluck(d, "key");
-        xVal = _.map( xVal, function(num) { return +num; });
-        var yVal = _.pluck(d, "value");
+
+        var t1 = c.data();
+        var d;
+        var xVal;
+        if (t1.length>1) {
+            d = c.data();
+            xVal = _.pluck(d, "key");
+            xVal = _.map(xVal, function(kA) { return kA[0]; });
+            yVal = _.pluck(d, "value");
+        }
+        else if (t1.length === 1) {
+            if (t1[0].values) {
+                xVal = _.pluck(t1[0].values, "x");
+                yVal = _.pluck(t1[0].values, "y");
+            }
+            else {
+            d = c.data()[0].group.top(Infinity);
+            d = _.sortBy(d, function(num)
+                { return num.key; });
+            xVal = _.pluck(d, "key");
+            xVal = _.map( xVal, function(num) { return +num; });
+            var yVal = _.map(d, function(v) {
+                return c.valueAccessor()(v);
+            });
+            }
+        }
+        else return;
+
+        var sColor = "midnightblue";
+        if (sFitColor !== undefined && sFitColor) sColor = ""+sFitColor;
+        var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+        var path = c.svg().selectAll('path[class=line]'+sColorTerm);
+        path.remove();
+
+        //xVal = _.map( xVal, function(num) { return +num; });
+        //var yVal = _.pluck(d, "value");
+        //var yVal = _.map(yVal, c.valueAccessor);
+        //var yVal = _.map(d, function(v) {
+        //    return c.valueAccessor()(v);
+        //});
 
         // http://www.itl.nist.gov/div898/handbook/pmd/section1/pmd144.htm
-        var fBandwidth = .5;//.2;
+        var fBandwidth = 0.5;//.2;
         if (fBandwidth * xVal.length<2) fBandwidth = 2/xVal.length;
         var loess = science.stats.loess().bandwidth(fBandwidth);
         var loessData = loess(xVal, yVal);
@@ -4763,7 +5029,7 @@ gda.trenderlet = function(c, sFit) {
                     "d"     : line
             })
             .attr("stroke-width",2)
-            .attr("stroke","grey")
+            .attr("stroke",sColor)
             .attr("stroke-opacity","0.5")
             .attr("stroke-dasharray","10,10");
 // this might work well for camera temperature/gain trend data
@@ -4775,7 +5041,7 @@ gda.trenderlet = function(c, sFit) {
             .attr("y1", loessData[0]) //c.margins().top + c.y()( loessData[0] ))
             .attr("y2", loessData[loessData.length-1]) //c.margins().top + c.y()( loessData[loessData.length-1] ))
             .attr("stroke-width",2)
-            .attr("stroke","grey")
+            .attr("stroke",sColor)
             .attr("stroke-opacity","0.5")
             .attr("stroke-dasharray","10,10");
     }
@@ -5159,7 +5425,8 @@ gda.newRowDisplay = function(chtObj) {
         .dimension(dDims[0])
         .group(chtObj.dGrps[0]);
     ftX .xAxis().ticks(chtObj.overrides["xAxis ticks"]);
-    if (chtObj.Title === "Escalation Status" && gda.utils.fieldExists(statusColors)) {
+    if ((chtObj.Title === "Escalation Status" || chtObj.Title === "Statuses, Escalation Backlog" ) &&
+        gda.utils.fieldExists(statusColors)) {
         ftX.colors(statusColors);
     }
     else if (chtObj.Title === "Max Status" && gda.utils.fieldExists(statusColors)) {
@@ -5276,7 +5543,7 @@ gda.newBoxDisplay = function(chtObj) {
         .margins({top: 10, right: 50, bottom: 30, left: 60})
         .elasticX(chtObj.overrides["elasticX"])
         .elasticY(chtObj.overrides["elasticY"])
-        .yAxisPadding('1%') // default is 12 y units !
+        .yAxisPadding(chtObj.overrides["yAxisPadding"])//'1%') // default is 12 y units !
         .dimension(dDims[0])
         .boxPadding(chtObj.overrides["boxPadding"])
         .outerPadding(chtObj.overrides["outerPadding"])
@@ -5286,6 +5553,8 @@ gda.newBoxDisplay = function(chtObj) {
     ftBoxX
         .boxWidth(chtObj.overrides["boxWidth"]);
 
+    if (chtObj.overrides["yAxis ticks"])
+        ftBoxX .yAxis().ticks(chtObj.overrides["yAxis ticks"]);
 //        if (dDims[0].isDate)
 //            ftBoxX .xAxis().ticks(d3.time.months,6);   // months should be a setting
 //        else
@@ -5310,11 +5579,13 @@ gda.newHistDisplay = function(chtObj) {
             cname = cname + ((cname.length>0) ? "," : "") + sCname; // prob never used
         });
     var xmin = dDims[0].bottom(1)[0][chtObj.cnameArray[0]];
+    var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
     if (!dDims[0].isDate)
     {
         if (isNaN(xmin)) xmin = 0;
+        if (chtObj.overrides["xMin"]) xmin = chtObj.overrides["xMin"];
+        if (chtObj.overrides["xMax"]) xmax = chtObj.overrides["xMax"];
     }
-    var xmax = dDims[0].top   (1)[0][chtObj.cnameArray[0]];
 
     var ftHistX = dc.barChart("#"+chtObj.dElid,chtObj.sChartGroup) //"#ftHistXEl",chtObj.sChartGroup
         .dimension(dDims[0])
@@ -5327,6 +5598,8 @@ gda.newHistDisplay = function(chtObj) {
     var logMin = chtObj.overrides["yMin"] ? +chtObj.overrides["yMin"] : 1.0;
     if (chtObj.overrides["log"]) {
         var ymax = ftHistX.yAxisMax();
+        if (chtObj.overrides["yMax"]) ymax = chtObj.overrides["yMax"];
+
         maxBarHeight = chtObj.hChart*.88;   // ugh. need to know the height of the text
                                         // how about using the axis height in the renderlet?
         pixPerUnit = maxBarHeight / (Math.log(ymax)-Math.log(logMin));
@@ -5340,18 +5613,14 @@ gda.newHistDisplay = function(chtObj) {
         .on("filtered", function(chart, filter){ gda.showFilter(chart, filter);})
         .width(chtObj.wChart)    // same as scatterChart
         .height(chtObj.hChart)        // not nearly as high
-        // ScatterHist needs to un-elasticY?
         .elasticX(chtObj.overrides["elasticX"])
-        //.elasticY(true)
+        .elasticY(chtObj.overrides["elasticY"])
         //.x(d3.scale.linear().domain([0,chtObj.nBins]))//.range([xmin,xmax])
         .x(d3.scale.linear().domain([xmin,xmax]))
 // simplify the Hists since fp.precision exists
         .xUnits(dc.units.fp.precision((xmax-xmin)/chtObj.nBins))  // try alternative (already implemented) workaround for brush selecting right-most sample on a fp axis. Don't like it due to the 'unknown' precision where we're using arbitrary (csv) data.
-        // brush is off, as scale needs to be corrected manually
         .brushOn(true)
         .centerBar(true)
-        //.barPadding(0.2)  // these two don't seem to work right in 2.0
-        //.gap(10)
     .xAxisLabel(chtObj.numberFormat(xmin)+" => "+ chtObj.cnameArray[0] +" (binned) <= "+chtObj.numberFormat(xmax));
 
     if (chtObj.overrides["log"]) {
@@ -5568,9 +5837,8 @@ gda.newScatterDisplay = function(chtObj) {
 
             if( chtObj.overrides["nominalX"]) {
                 var nX = chtObj.overrides["nominalX"]; 
-                var xv = 0;
-                if (nX.localeCompare("Now")==0)
-                    xv = new Date();
+                var xv = gda.dateParseWithDateMath(nX); 
+                if (xv === undefined) xv = 0;
                 //else
                     //xv = c.x()( +(nX) ); 
                 //if (yv>=0)
@@ -5587,6 +5855,37 @@ gda.newScatterDisplay = function(chtObj) {
                         .attr("stroke-opacity","0.5")
                         .attr("stroke",sColor)
                         .attr("stroke-dasharray","10,10");
+            }
+        });
+        }
+        if( chtObj.overrides["line"]) {
+        scatterChart
+        .renderlet(function(c) {
+
+                var sColor = "gray";
+                var sColorTerm = '[stroke='+sColor.toLowerCase()+']';
+                var path = c.svg().selectAll('line'+sColorTerm);
+                path.remove();
+
+            if( chtObj.overrides["line"]) {
+                var nX = chtObj.overrides["line"]; 
+                var xv1 = c.x().domain()[0];
+                var yv1 = c.y().domain()[0];
+                if (xv1>yv1) yv1 = xv1  // = largest for both, stay within extents
+                else xv1 = yv1;
+                var xv2 = c.x().domain()[1];
+                var yv2 = c.y().domain()[1];
+                if (xv2<yv2) yv2 = xv2  // = smallest for both
+                else xv2 = yv2;
+                c.svg().append("line")
+                        .attr("x1", c.margins().left + c.x()( xv1 ))
+                        .attr("x2", c.margins().left + c.x()( xv2 ))
+                        .attr("y1", c.margins().top + c.y()( yv1 ))
+                        .attr("y2", c.margins().top + c.y()( yv2 ))
+                        .attr("stroke-width",2)
+                        .attr("stroke-opacity","0.5")
+                        .attr("stroke",sColor)
+                        .attr("stroke-dasharray","2,2");
             }
         });
         }
@@ -5615,14 +5914,8 @@ gda.newScatterDisplay = function(chtObj) {
 
                 if (nX.length>0 && nY.length>0 && nR.length>0 && sColor.length>0) {
                     var yv = nY;
-                    var xv = nX;
-                    if (nX.substring(0,3).localeCompare("Now")==0) {
-                        xv = new Date();
-                        if (nX.length>3) {
-                            if (nX.substring(3).localeCompare("+Quarter")==0)
-                                xv = new Date(+xv + gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
-                        }
-                    }
+                    //var xv = nX;
+                    var xv = gda.dateParseWithDateMath(nX); 
                     if (nR.substring(0,1).localeCompare("+")==0) {
                         var wv = xv;
                         if (nR.localeCompare("+Day")==0) {
@@ -5686,36 +5979,29 @@ gda.newScatterDisplay = function(chtObj) {
 
                 if (nX.length>0 && nY.length>0 && nRx.length>0 && nRy.length>0 && sColor.length>0) {
                     var yv = nY;
-                    var xv = nX;
-                    if (nX.substring(0,3).localeCompare("Now")==0) {
-                        xv = new Date();
-                        if (nX.length>3) {
-                            if (nX.substring(3).localeCompare("+Quarter")==0)
-                                xv = new Date(+xv + gda.TquarterIncMsecs + 2*gda.TdayIncMsecs);
-                        }
-                    }
-                    if (nRx.substring(0,3).localeCompare("Now")==0) {
-                        var wv = xv;
-                        if (nRx.length>3) {
-                            if (nRx.substring(3).localeCompare("+Day")==0)
-                                wv = new Date(+wv + gda.TdayIncMsecs);
-                        }
+                    //var xv = nX;
+                    var xv = gda.dateParseWithDateMath(nX); 
+                    var wv = gda.dateParseWithDateMath(nRx); 
+                    if (wv !== undefined) {
                         nRx = Math.abs(c.x()(xv) - c.x()(wv));
                     }
                     else
                         nRx = Math.abs(c.x()(xv) - c.x()(nRx));
+                    var cy;
+                    if (nY.localeCompare("allY")==0)
+                        cy = (c.y()(c.y().domain()[0]) + c.y()(c.y().domain()[1]) )/2;
+                    else if (nY.localeCompare("yMin")==0)
+                        cy = c.y()(c.y().domain()[0]);
+                    else
+                        cy = c.y()( nY );
                     if (nRy.localeCompare("allY")==0)
                         nRy = 0.50 * Math.abs( c.y()(c.y().domain()[0]) - c.y()(c.y().domain()[1]) ); 
                     else
-                        nRy = Math.abs(c.y()(yv) - c.y()(nRy));
+                        nRy = Math.abs(cy - c.y()(nRy));
                 }
-                //else
-                    //xv = c.x()( +(nX) ); 
-                //if (yv>=0)
-                    c.svg().append("ellipse")
+                c.svg().append("ellipse")
                         .attr("cx", c.margins().left + c.x()( xv ))
-                        .attr("cy", c.margins().top  +
-                            (c.y()(c.y().domain()[0]) + c.y()(c.y().domain()[1]) )/2)
+                        .attr("cy", c.margins().top  + cy )
                         .attr("rx", nRx)
                         .attr("ry", nRy)
                         .attr("stroke-width",2)
@@ -5752,17 +6038,15 @@ gda.newScatterDisplay = function(chtObj) {
                     var xLeft = c.x().domain()[0];
                     var xRight = c.x().domain()[1];
                     if (sXr[0].localeCompare("xMin")==0) xLeft = c.x().domain()[0];
-                    else
-                    if (sXr[0].localeCompare("Now")==0) xLeft = new Date();
-                    else xLeft = sXr[0];
-                    if (sXr[1].substring(0,3).localeCompare("Now")==0) {
-                        var xRight = new Date();
-                        if (sXr[1].length>3) {
-                            if (sXr[1].substring(3).localeCompare("+Month")==0)
-                                xRight = new Date(+xRight + gda.TmonthIncMsecs + 2*gda.TdayIncMsecs);
-                            if (sXr[1].substring(3).localeCompare("-Day")==0)
-                                xRight = new Date(+xRight - gda.TdayIncMsecs);
-                        }
+                    else {
+                        var tl = gda.dateParseWithDateMath(sXr[0]);
+                        if (!tl) xLeft = sXr[0];
+                        else
+                            xLeft = tl;
+                    }
+                    var tr = gda.dateParseWithDateMath(sXr[1]);
+                    if (tr) {
+                        xRight = tr;
                     } else
                     if (sXr[1].localeCompare("xMax")==0) xRight = c.x().domain()[1];
                     else xRight = sXr[1];
@@ -5792,7 +6076,7 @@ gda.newScatterDisplay = function(chtObj) {
         });
         }
         if( chtObj.overrides["trend"] && gda.utils.fieldExists(science))
-            scatterChart.renderlet(function(c) { gda.trenderlet(c, chtObj.overrides["trend"]); });
+            scatterChart.renderlet(function(c) { gda.trenderlet(c, chtObj.overrides["trend"], chtObj.overrides["trend color"] ); });
 
 // try something similar for scatter, since Y doesn't appear to be properly elastic.
 //        var currentMax = 0,
@@ -5838,6 +6122,15 @@ gda.lineDomains = function(chtObj,bInitial) {
     }
     var t1 = dDims[0].top(1);
     var xmax = t1.length==0? 0 : t1[0][chtObj.cnameArray[0]];
+    gda.log(3,"lineD: xmin,xmax " + xmin + "," + xmax);
+    if (!dDims[0].isDate) {
+    if (chtObj.overrides["minX"]) xmin = chtObj.overrides["minX"]; 
+    if (chtObj.overrides["maxX"]) xmax = chtObj.overrides["maxX"]; 
+    }
+    else {
+    if (chtObj.overrides["minX"]) xmin = gda.dateParseWithDateMath(chtObj.overrides["minX"]); 
+    if (chtObj.overrides["maxX"]) xmax = gda.dateParseWithDateMath(chtObj.overrides["maxX"]); 
+    }
     gda.log(3,"lineD: xmin,xmax " + xmin + "," + xmax);
 
     var yb1 = dDims[1].bottom(1);
@@ -5935,6 +6228,15 @@ gda.scatterDomains = function(chtObj, bInitial){
     }
     var t1 = dDims[0].top(1);
     var xmax = t1.length==0? 0 : t1[0][chtObj.cnameArray[0]];
+    gda.log(3,"scatterD: xmin,xmax " + xmin + "," + xmax);
+    if (!dDims[0].isDate) {
+    if (chtObj.overrides["minX"]) xmin = chtObj.overrides["minX"]; 
+    if (chtObj.overrides["maxX"]) xmax = chtObj.overrides["maxX"]; 
+    }
+    else {
+    if (chtObj.overrides["minX"]) xmin = gda.dateParseWithDateMath(chtObj.overrides["minX"]); 
+    if (chtObj.overrides["maxX"]) xmax = gda.dateParseWithDateMath(chtObj.overrides["maxX"]); 
+    }
     gda.log(3,"scatterD: xmin,xmax " + xmin + "," + xmax);
 
     var yb1 = dDims[1].bottom(1);
@@ -6043,8 +6345,8 @@ gda.scatterDomains = function(chtObj, bInitial){
             .xUnits(xu)
             .y(ys)//.y(d3.scale.linear().domain(ydomain)) //.nice() // to use nice, need to adjust histograms
             .xAxisLabel(xl)
-            //.xAxisLabel(xLabelFormat(xmin)+" => "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
-            .yAxisLabel(chtObj.numberFormat(ymin)+" => "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
+            //.xAxisLabel(xLabelFormat(xmin)+" <= "+ chtObj.cnameArray[0] +" <= "+xLabelFormat(xmax))
+            .yAxisLabel(chtObj.numberFormat(ymin)+" <= "+ chtObj.cnameArray[1]  +" <= "+chtObj.numberFormat(ymax));
         if (dDims[0].isDate && !chtObj.overrides["xAxis ticks"])
             chtObj.chart
             .xAxis().tickFormat(function (s) {
@@ -6565,6 +6867,7 @@ gda.slidesSources.restore = function(opt, bDashOnly, nSlideRef) {
             restoredSlide.bLoaded = false;  // workaround for old files
             gda.utils.moveField("bLoaded",      restoredSlide,dsNew);
             gda.utils.moveField("bListOfMany",  restoredSlide,dsNew);
+            gda.utils.moveField("loadAs",       restoredSlide,dsNew);
             gda.utils.moveField("bLocalFile",   restoredSlide,dsNew);
             gda.utils.moveField("bAggregate",   restoredSlide,dsNew);
             gda.utils.moveField("bTimestamp",   restoredSlide,dsNew);
@@ -6662,7 +6965,7 @@ gda.slidesSources.restore = function(opt, bDashOnly, nSlideRef) {
                         // piecemeal for now
                         var dS = _aChart.sChartGroup;
                         gda.addChartGroup(dS);
-                        _aChart.overrides.slideRef = gda.slideRefs[nSlideRef];  // eff? gda.slideRefs[n]
+                        gda.addOverride(_aChart, "slideRef", gda.slideRefs[nSlideRef]);
                         s.charts.push(_aChart);
                     }
                 }
@@ -6774,6 +7077,7 @@ function tryParseJSON (jsonString){
 gda.connect_upload_button = function(elULbutton) {
   var uploader = document.getElementById(elULbutton);  
 
+    gda.log(0,"===============HHHHHHHH");
   fileReaderMethod(uploader,gda.dataReady);
 }
 
@@ -6798,16 +7102,15 @@ function fileReaderMethod(uiObject,callback) {
         return false;
     }
     if (gda && gda._slide) {
-        var dsNew = gda.newDataSourceState();
+        var dsNew;
+        if (!(gda.sEdS === "New"))
+            dsNew = gda.newDataSourceState();
+        else
+            dsNew = gda.dataSources.current();
         dsNew.dataLastModifiedDate = file.lastModifiedDate;
         dsNew.datafile = file.name;
         dsNew.dataprovider = "/";
-        //dsNew.bLocalFile = true;
-        //dsNew.bLoaded = false;
-        //dsNew.bListOfMany = false;
         //dsNew.bAggregate = false;
-        //dsNew._idCounter = 0;
-        //dsNew.keymap = {};
 
         var dS = "blank";
         if (dsNew.datafile.length>0) {
@@ -6815,12 +7118,20 @@ function fileReaderMethod(uiObject,callback) {
             if (i>0) dS = dsNew.datafile.substring(0,i);
             else    dS = dsNew.datafile;    // punt
         }
+        if (dS !== gda.sEdS)    // map entry rename needed
+        {
+            gda.dataSources.map[dS] = gda.dataSources.map[gda.sEdS];
+            delete gda.dataSources.map[gda.sEdS];
+            gda.sEdS = dS;
+        }
 
         var dsNameUnique = gda.dataSources.restoreOne(dS, dsNew);   // cleanup
-        if (dsNameUnique) {
-            gda.sEdS = dsNameUnique; // was gda._slide().dataSource = 
-            // perhaps not until file is read?
-        }
+        if (dsNameUnique !== dS)
+            gda.log(0,"mismatch on dS " + dS + " " + dsNameUnique);
+        //if (dsNameUnique) {
+        //    gda.sEdS = dsNameUnique; // was gda._slide().dataSource = 
+        //    // perhaps not until file is read?
+        //}
     }
     reader.readAsText(file);
   };
@@ -7315,6 +7626,9 @@ function dataArrayReady(dS, dataArray) {    // error   [ [{},{}] , ... ]
     if (ds) {
     gda.log(4,"bListOfMany " + ds.bListOfMany);
     if (dataArray && dataArray.length>0)  {
+        var ldS = dS;
+        if (ds.bListOfMany && ds.loadAs) ldS = ds.loadAs;
+        gda.log(0,"dataArrayReady bLoM,lA ", ds.bListOfMany,ds.loadAs);
         gda.log(4,"dataArrayReady Lin ", dataArray.length);
         gda.log(4,"dataArrayReady "+JSON.stringify(dataArray) );
 
@@ -7330,6 +7644,7 @@ function dataArrayReady(dS, dataArray) {    // error   [ [{},{}] , ... ]
         gda.log(4,"dAR: File Table dimension ***=-=-=-=-=-=-=-=-=-=-=-=***");
         var dateDimension2 = cf2.dimension(function (d) { return d.dd; });
         var iTable2 = gda.createTable(cf2, dateDimension2, ["Tests"], sFileChartGroup);// needs it's own group
+// consider adding a temporary pie chart or row chart selector?
         var s9 = document.getElementById('FileTable');
         gda.newTableDisplay(s9,iTable2, 30);//, ".dc-list-table", ".dc-list-count"
         gda.addChartGroup(sFileChartGroup);
@@ -7358,7 +7673,13 @@ function dataArrayReady(dS, dataArray) {    // error   [ [{},{}] , ... ]
         qA.awaitAll(//allDataLoaded  // read them all, then continue
                     function(error, dataArray) {
                         if (errorCheck("allDataLoaded", error)) return;
-                        allDataLoaded(sFileChartGroup, dataArray);
+
+                        // workaround hack
+                        var lds = gda.dataSources.map[ldS];
+                        lds.bLoaded = false;
+                        lds.bLoadingAs = true;
+
+                        allDataLoaded(ldS, dataArray);//sFileChartGroup,
                     });
     }
     }
@@ -7606,7 +7927,13 @@ gda.addUploader = function(dElHost, theValue, callback) {
     button.accept = ".csv,.txt,.json";
     button.id = "c"+dElHost.id+"c"+theValue;
     dElHost.appendChild(button);
-    if (!callback) callback=gda.dataReady;
+    if (!callback) {
+        var ds = gda.dataSources.current();
+        //if (ds.bListOfMany)
+        //    callback=gda.
+        //else
+            callback=gda.dataReady;
+    }
     fileReaderMethod(button,callback);
     return gda;
 }
@@ -7716,5 +8043,34 @@ function indexOfNonMatch (str1, str2) {
             return 0;
         });
     };
+
+// create functions to generate averages for any attribute
+function reduceAddAvg(attr) {
+  return function(p,v) {
+    if (!isNaN(v[attr])) {//_.isLegitNumber
+      ++p.count
+      p.sums += v[attr];
+      p.averages = (p.count === 0) ? 0 : p.sums/p.count; // gaurd against dividing by zero
+    }
+    return p;
+  };
+}
+function reduceRemoveAvg(attr) {
+  return function(p,v) {
+    if (!isNaN(v[attr])) {//_.isLegitNumber
+      --p.count
+      p.sums -= v[attr];
+      p.averages = (p.count === 0) ? 0 : p.sums/p.count;
+    }
+    return p;
+  };
+}
+function reduceValueAvg(p) {
+    return p.value.averages;
+}
+function reduceInitAvg() {
+  return {count:0, sums:0, averages:0};
+}
+//var group = dim.group().reduce(reduceAddAvg(attr), reduceRemoveAvg(attr), reduceInitAvg);
 
 return gda; })();

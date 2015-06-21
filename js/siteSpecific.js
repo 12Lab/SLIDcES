@@ -1,5 +1,32 @@
 
-siteSpecific = {};
+siteSpecific = {
+    version: "0.0.1-dev"
+};
+
+
+siteSpecific.isInt = function( obj ) {
+    var r = (obj - parseInt( obj ) + 1) >= 0;
+    return r;
+}
+
+
+siteSpecific.isNullOrEmpty = function(d) {
+    return (!d || d.length === 0);
+};
+siteSpecific.dateParse = function(v, parseFn, defValue) {
+    var result = null;
+    if (!siteSpecific.isNullOrEmpty(v)) {
+        if (/^[-\/0-9]/.test(v))
+        result = parseFn.parse(v);
+        else
+            var ij=1;
+    }
+    if (result === null)
+        result = defValue;
+    return result;
+};
+//        d.DateApp = siteSpecific.dateParse(
+//                d["Date Approved"], format, null);
 
 siteSpecific.selectAndFilter = function(data) {
     if (data && data.length>0) {

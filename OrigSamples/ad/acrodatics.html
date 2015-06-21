@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<!-- start: Meta -->
+	<meta charset="utf-8">
+	<title>Stock Market Selection Strategies, by Acrodatics.com</title> 
+	<meta name="description" content="Stock Market Selection Strategies - strategy backtesting analysis"/>
+	<meta name="keywords" content="stock market strategies, backtesting, data visualization" />
+	<meta name="author" content="Lon Riesberg"/>
+	<!-- end: Meta -->
+	
+	<!-- start: Mobile Specific -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!-- end: Mobile Specific -->
+	
+    <!-- start: CSS -->
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:400,700">
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Serif">
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Boogaloo">
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Economica:700,400italic">
+    <link rel="stylesheet" type="text/css" href="/OrigSamples/css/dc.css">
+    <link rel="stylesheet" type="text/css" href="/OrigSamples/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/OrigSamples/css/bootstrap-responsive.css"> 
+    <link rel="stylesheet" type="text/css" href="/OrigSamples/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/OrigSamples/css/slider.css">
+    <link rel="stylesheet" type="text/css" href="/OrigSamples/css/jquery-ui-1.10.3.custom.min.css">
+    
+    <style>
+        #time-range-selector{width:"84%";}
+        #time-range-selector,#time{margin-left:25px;margin-top:10px;margin-bottom:10px;display:block;}
+    </style>
+
+	<!--[if lt IE 9 ]>
+	  <link href="css/styleIE.css" rel="stylesheet">
+	<![endif]-->
+	
+	<!--[if IE 9 ]>
+	  <link href="css/styleIE9.css" rel="stylesheet">
+	<![endif]-->
+	
+	<!-- end: CSS -->
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery.fancybox.pack.js"></script>
+    <link rel="stylesheet" type="text/css" href="js/jquery.fancybox.css">
+
+	<script type="text/javascript">
+		$(document).ready(function(){
+
+
+
+		    $("#surveylink").fancybox({
+		    	 'type' : 'iframe',
+		    	 'scrolling': 'no',
+		    	 'iframe': {'scrolling': 'no'},
+		         'width' : '435px',
+		         'autoScale' : false,
+		         'transitionIn' : 'none',
+		         'transitionOut' : 'none',
+				 'helpers' 			: {
+	            						  overlay : 
+	            						  {
+							                  css : { 'background' : 'rgba(202, 223, 234, 0.75)' }
+						           	  	  }
+	        						  }
+		     });
+		 
+		});
+	</script>
+
+</head>
+<body>
+
+	<!--start: Header -->
+	<header>
+
+		<!--start: Container -->
+		<div class="container">
+ 
+  			<!-- start: Survey Link -->
+<!-- 		    <div class="surveylinkbtn">
+		        <a id="surveylink" href="http://optin.sndlp.com/3Q0/s78/7afc3a83">Updates</a>
+		    </div> -->
+		    <!-- end: Survey Link -->
+
+
+			<!--start: Logo Row -->
+			<div class="row">
+				<div class="logo span6">
+					<a class="brand" href="http://www.acrodatics.com/"><img type="image/png" src="/OrigSamples/img/acrodatics-logo.png" alt="logo"></a>					
+				</div>
+				
+				<div class="social-links span6 hidden-phone">	
+					<ul class="social-links">
+						<li><a href="https://twitter.com/lonriesberg" target="_blank"><i class="fa-icon-twitter"></i></a></li>
+						<li><a href="https://www.linkedin.com/in/lonriesberg" target="_blank"><i class="fa-icon-linkedin"></i></a></li>
+						<li><a href="/cdn-cgi/l/email-protection#4a23242c250a2b2938252e2b3e23293964292527"><i class="fa-icon-envelope-alt"></i></a></li>				
+					</ul>	
+				</div>
+			</div>
+			<!--end: Logo Row -->
+			
+			<!--start: Nav Row -->
+			<div class="row-fluid">
+				<div class="navigation"> 
+					<div class="navbar navbar-inverse span9">
+			    		<div class="navbar-inner">
+		            		<ul class="nav">
+								<li class="active"><a href="index.html">Home</a></li>
+		              			<li ><a href="tutorial.html">Tutorial</a></li>	
+		              			<li ><a id="surveylink" href="http://optin.sndlp.com/3Q0/s78/7afc3a83">Mailing List</a></li>
+		            		</ul>
+			        	</div>
+			      	</div>
+				</div>						
+			</div>
+			<!--end: Nav Row -->
+
+		<!--end: Container -->
+		</div>
+
+	</header>
+	<!--end: Header -->
+
+	<!--start: Container -->
+	<div class="container">
+				
+		<!--start: Wrapper-->
+		<div id="wrapper">	
+
+			<!-- start: Page Title -->
+			<div id="page-title">
+				<div id="page-title-inner">
+					<h2>Stock Market Selection Strategies</h2>
+				</div>	
+			</div>
+			<!-- end: Page Title -->	
+
+	        <div class="container-fluid"> 
+
+				<!-- start: Row -->
+				<div class="row-fluid">
+				
+					<div class="span12">
+						<h3>Which strategies are worth paying attention to?  This interactive tool is based on a fantastic dataset by the <a href="http://www.aaii.com/">American Association of Independent Investors.</a> To learn how to use this tool, <a href="tutorial.html" > see the tutorial >></a></h3><br><br>
+					</div>
+				
+				</div>
+				<!-- end: Row -->
+
+	            <div class="row-fluid"> 
+	                <div class="span2">
+						<div class="btn-group">
+						  <div class="btn-group">
+						    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+						      Time Range - Presets
+						      <span class="caret"></span>
+						    </button>
+                            <ul class="dropdown-menu">
+								<li><a href='javascript:aaiiScreener.setRelativeTimeRange(36)'>Previous 3 Years</a></li>
+                                <li><a href='javascript:aaiiScreener.setRelativeTimeRange(60)'>Previous 5 Years</a></li>
+                                <li><a href='javascript:aaiiScreener.setRelativeTimeRange(120)'>Previous 10 Years</a></li>
+                                <li class="divider"></li>
+                                <li><a href='javascript:aaiiScreener.setTimeRange(new Date("Mar 1, 2009"), new Date("Feb 14, 2013"))'>Bull: March 1, 2009 - Feb 28, 2013</a></li>
+                                <li><a href='javascript:aaiiScreener.setTimeRange(new Date("Oct 1, 2002"), new Date("Sept 15, 2007"))'>Bull: Oct 1, 2002 - Sept 30, 2007</a></li>
+                                <li class="divider"></li>
+                                <li><a href='javascript:aaiiScreener.setTimeRange(new Date("Apr 1, 2000"), new Date("Sept 15, 2001"))'>Bear: Apr 1, 2000 - Sept 30, 2001</a></li>
+                                <li><a href='javascript:aaiiScreener.setTimeRange(new Date("Oct 1, 2007"), new Date("Nov 15, 2008"))'>Bear: Oct 1, 2007 - Nov 30, 2008</a></li>
+                            </ul>
+						  </div>
+	                    </div>
+	                </div>
+	                <div class="span10">
+	                    <div id="time-range-selector"></div><br><br>
+	                </div>
+	            </div>
+	            <div class="row-fluid">
+	                <div class="span12">
+	                    <div id="returns-chart" class="chart"> <div id="returnsLabel"></div>
+	                        <div class="clear"></div>
+	                    </div>
+	                    <div id="std-dev-chart" class="chart"> <span>Std Deviation</span>
+	                        <a class="reset" href="javascript:aaiiScreener.stdDevChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	                        <div class="clear"></div>
+	                    </div>
+	                    <div id="risk-index-chart" class="chart"> <span>Risk Index</span>
+	                        <a class="reset" href="javascript:aaiiScreener.riskIdxChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	                        <div class="clear"></div>
+	                    </div>
+	                    <div id="sharpe-ratio-chart" class="chart"> <span>Sharpe Ratio</span>
+	                        <a class="reset" href="javascript:aaiiScreener.sharpeRatioChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	                        <div class="clear"></div>
+	                    </div>
+	                    <div id="turnover-chart" class="chart"> <span>Average Turnover</span>
+	                        <a class="reset" href="javascript:aaiiScreener.turnoverChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	                        <div class="clear"></div>
+	                    </div>
+	                </div>     
+	            </div>
+	            <div class="row-fluid">
+		            <div class="span12">
+		                <div id="categories-chart" class="chart"> <span>Strategy Types (select one or none)</span>
+		                    <a class="reset" href="javascript:aaiiScreener.resetScreenCategory();dc.redrawAll();" style="display: none;">reset</a>
+		                    <div class="clear"></div>
+		                </div>
+		            </div>
+	            </div>
+	            <div class="row-fluid">
+	                <div class="span12">
+	                    <div class="dc-data-count"><span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll();aaiiScreener.resetScreenCategory();dc.renderAll();">Reset All</a></div>
+	                </div>
+	            </div>
+	            <div class="row-fluid">
+	                <div class="span12">
+	                    <div id="stats-table"></div>
+	                </div>
+	            </div>
+
+	            <div class="clear"></div>
+
+	        </div>
+					
+		</div>
+		<!--end: Container-->
+	
+	</div>
+	<!-- end: Wrapper  -->			
+
+	<!-- start: Container -->
+	<div class="container">
+
+		<!-- start: Under Footer -->
+		<div id="under-footer">
+			<div class="row-fluid">
+				<div class="span11">			
+					<div id="under-footer-copyright">
+						&copy; 2014 <a href="https://www.linkedin.com/in/lonriesberg" target="_blank">Lon Riesberg</a>
+					</div>				
+				</div>
+				<div class="span1">						
+					<div id="under-footer-back-to-top">
+						<a href="#"></a>
+					</div>			
+				</div>
+			</div>		
+		</div>	
+		<!-- end: Under Footer -->
+		
+	</div>
+	<!-- end: Container  -->	
+
+	<!-- start: Container -->
+	<div class="container-fluid" >
+
+		<!-- start: sliding message -->
+		<div id="slidingdiv" >
+			<div class="row">	
+				<div class="slidingdiv-latch open" id="latch" align="right">
+					<a href="javascript:;"></a>
+				</div>
+				<p class="lead" id="slidingMsg" align="center";>
+					If you LOVE DATA, check out my newsletter for the best data-related inspirations from around the web - <a href="http://dataelixir.com/?referred=true" target="_blank">Data Elixir >></a>
+				</p>			
+			</div>
+
+		</div>	
+		<!-- end: sliding message -->
+
+	</div>
+	<!-- end: Container  -->	
+
+<!-- start: Java Script -->
+
+<script type="text/javascript" src="js/d3.min.js"></script>
+<script type="text/javascript" src="js/dc.js"></script>
+<script type="text/javascript" src="js/crossfilter.min.js"></script>
+<script type="text/javascript" src="js/psMathStats.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.10.3.custom.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/jQDateRangeSlider-min.js"></script>
+<script type="text/javascript" src="js/app.min.js"></script>
+<script defer="defer" src="js/custom.js"></script>
+
+<script type="text/javascript">
+	$('#latch').on('click', function(){
+		var $this = $(this);
+		if ($this.hasClass('closed')) {    
+			$("#slidingdiv").animate({ right : '0px' }, 400);
+			$this.removeClass('closed');  
+			$this.addClass('open');       
+		} else {
+			var offsetWidth = document.getElementById("slidingdiv").offsetWidth - 35;
+			$("#slidingdiv").animate({ right : offsetWidth }, 200);  
+			$this.removeClass('open'); 
+			$this.addClass('closed');
+		}
+	});
+</script>
+
+<!-- Sendloop Subscription Widget - Start -->
+<script type="text/javascript" charset="utf-8">
+	window.sendloopSubscribeSettings = {
+	selector: ".sendloop-subscribe",
+	key: "3Q0/s78/7afc3a83",
+	account: "l591da7-037451",
+	showSubscriberCount: false
+	};
+</script>
+<script type="text/javascript" charset="utf-8">(function() {var w = window;var d = document;function l() {var s = d.createElement('script');s.type = 'text/javascript';s.async = true;s.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'sendloop.com/media/button/subscribeme.js';var x = d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s, x);}if (w.attachEvent) {w.attachEvent('onload', l);} else {w.addEventListener('load', l, false);}})();
+</script>
+<!-- Sendloop Subscription Widget - End -->
+
+<!-- end: Java Script -->
+
+
+<script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l=document.getElementsByTagName("a"),t=document.createElement("textarea");for(i=0;l.length-i;i++){try{a=l[i].getAttribute("href");if(a&&a.indexOf("/cdn-cgi/l/email-protection") > -1  && (a.length > 28)){s='';j=27+ 1 + a.indexOf("/cdn-cgi/l/email-protection");if (a.length > j) {r=parseInt(a.substr(j,2),16);for(j+=2;a.length>j&&a.substr(j,1)!='X';j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}j+=1;s+=a.substr(j,a.length-j);}t.innerHTML=s.replace(/</g,"&lt;").replace(/>/g,"&gt;");l[i].setAttribute("href","mailto:"+t.value);}}catch(e){}}}catch(e){}})();
+/* ]]> */
+</script>
+</body>
+</html>

@@ -6017,7 +6017,7 @@ dc.rowChart = function (parent, chartGroup) {
         _rowData = _chart.data();
         if (_ignoreZeroValue){
             _rowData = _chart.data().filter(function(d){
-                return _chart.valueAccessor()(d) >= _ignoreValuesBelow && (_ignoreKey === null || _ignoreKey !== d.key);
+                return _chart.valueAccessor()(d) >= _ignoreValuesBelow && (_ignoreKey === null || _ignoreKey != d.key); // key comparison must support conversion
             });
         }else{
             _rowData = _chart.data();

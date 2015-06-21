@@ -2493,7 +2493,10 @@
       return format;
     }
     function d3_time_parse(date, template, string, j) {
-      var c, p, t, i = 0, n = template.length, m = string.length;
+      var c, p, t, i = 0, n = template.length;
+      if (!string)
+        alert("missing string");
+      var m = string.length;
       while (i < n) {
         if (j >= m) return -1;
         c = template.charCodeAt(i++);
