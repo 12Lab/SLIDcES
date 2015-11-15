@@ -12,10 +12,10 @@
 {"Title":"Model Years Available","myCols":{"csetupChartCols":["Model_Yr"]},"type":"Row","sChartGroup":"one","overrides":{"wChart":200}},
 {"Title":"Additional Miles","myCols":{"csetupChartCols":["Each_Additional_Mile"]},"type":"Row","sChartGroup":"one","overrides":{"wChart":200}},
 {"Title":"Deals by Manufacturer","myCols":{"csetupChartCols":["Make"]},"type":"Bar","sChartGroup":"one"},
-{"Title":"Cost per Mile","myCols":{"csetupChartCols":["Cost_per_Mile"]},"type":"Hist","sChartGroup":"one"},
+{"Title":"Cost per Mile","myCols":{"csetupChartCols":["Cost_per_Mile"]},"type":"Hist","sChartGroup":"one", "overrides":{"xAxis gap": 5}},
 {"Title":"Model/Trim","myCols":{"csetupChartCols":["Model_Trim"]},"type":"Row","sChartGroup":"one", "overrides":{"top": "15"}},
-{"Title":"Total Lease Cost","myCols":{"csetupChartCols":["Lease_Cost"]},"type":"Hist","sChartGroup":"one"},
-{"Title":"Initial Payment","myCols":{"csetupChartCols":["Initial_Payment"]},"type":"Hist","sChartGroup":"one", "overrides":{"hChart": "300"}}
+{"Title":"Total Lease Cost","myCols":{"csetupChartCols":["Lease_Cost"]},"type":"Hist","sChartGroup":"one", "overrides":{"xAxis gap": 5}},
+{"Title":"Initial Payment","myCols":{"csetupChartCols":["Initial_Payment"]},"type":"Hist","sChartGroup":"one", "overrides":{"hChart": "300", "xAxis gap": 5}}
 ],"bUseTable":true,"bShowTable":true,"bShowTableColumnSelectors":false,"bShowLinksInTable":false,"myId":0,"dataLastModifiedDate":"2014-08-22T20:11:15.860Z"}]
 
 }
